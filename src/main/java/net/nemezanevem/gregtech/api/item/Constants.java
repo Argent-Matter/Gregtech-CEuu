@@ -1,4 +1,4 @@
-package net.nemezanevem.gregtech.api.item.set;
+package net.nemezanevem.gregtech.api.item;
 
 public class Constants {
     public static final String INGOT_KEY = "_ingot";
