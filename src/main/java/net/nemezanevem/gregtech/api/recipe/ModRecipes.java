@@ -18,16 +18,6 @@ public class ModRecipes {
         RECIPE_TYPES.register(bus);
         RECIPE_SERIALIZERS.register(bus);
         for (Machine machine : MachineRegistry.MACHINES_BUILTIN.get()) {
-            RECIPE_TYPES.register(machine.name, () -> new SimpleMachineRecipe(machine));
-            RECIPE_SERIALIZERS.register(machine.name, () -> new SimpleMachineRecipeSerializer(machine));
-        }
-    }
-
-
-    public void registerRecipeTypes(IEventBus bus) {
-        RECIPE_TYPES.register(bus);
-        RECIPE_SERIALIZERS.register(bus);
-        for (Machine machine : MachineRegistry.MACHINES_BUILTIN.get()) {
             RECIPE_TYPES.register(machine.name, () -> new EBFRecipe(machine));
             RECIPE_SERIALIZERS.register(machine.name, () -> new EBFRecipeSerializer(machine));
 
