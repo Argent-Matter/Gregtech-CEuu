@@ -67,22 +67,22 @@ public class IngotProperty implements IMaterialProperty<IngotProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        properties.ensureSet(GtMaterialProperties.DUST.get(), true);
-        if (properties.hasProperty(GtMaterialProperties.GEM.get())) {
+        properties.ensureSet(GtMaterialProperties.DUST.getId(), true);
+        if (properties.hasProperty(GtMaterialProperties.GEM.getId())) {
             throw new IllegalStateException(
                     "Material " + properties.getMaterial() +
                             " has both Ingot and Gem Property, which is not allowed!");
         }
 
         if (smeltInto == null) smeltInto = properties.getMaterial();
-        else smeltInto.getProperties().ensureSet(PropertyKey.INGOT, true);
+        else smeltInto.getProperties().ensureSet(GtMaterialProperties.INGOT.getId(), true);
 
         if (arcSmeltInto == null) arcSmeltInto = properties.getMaterial();
-        else arcSmeltInto.getProperties().ensureSet(PropertyKey.INGOT, true);
+        else arcSmeltInto.getProperties().ensureSet(GtMaterialProperties.INGOT.getId(), true);
 
         if (macerateInto == null) macerateInto = properties.getMaterial();
-        else macerateInto.getProperties().ensureSet(PropertyKey.INGOT, true);
+        else macerateInto.getProperties().ensureSet(GtMaterialProperties.INGOT.getId(), true);
 
-        if (magneticMaterial != null) magneticMaterial.getProperties().ensureSet(PropertyKey.INGOT, true);
+        if (magneticMaterial != null) magneticMaterial.getProperties().ensureSet(GtMaterialProperties.INGOT.getId(), true);
     }
 }

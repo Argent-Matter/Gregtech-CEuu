@@ -1,7 +1,6 @@
 package net.nemezanevem.gregtech.api.unification.material;
 
-import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
-import net.nemezanevem.gregtech.api.unification.material.info.MaterialFlag;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 
 import java.util.Arrays;
 import java.util.Collection;

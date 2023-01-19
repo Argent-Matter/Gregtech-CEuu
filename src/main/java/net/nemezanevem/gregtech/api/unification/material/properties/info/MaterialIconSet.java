@@ -1,4 +1,4 @@
-package net.nemezanevem.gregtech.api.unification.material.info;
+package net.nemezanevem.gregtech.api.unification.material.properties.info;
 
 import com.google.common.base.Preconditions;
 

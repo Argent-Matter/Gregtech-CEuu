@@ -5,8 +5,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.unification.material.info.MaterialFlag;
-import net.nemezanevem.gregtech.api.unification.material.info.MaterialIconSet;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 
 import java.util.function.Supplier;
 

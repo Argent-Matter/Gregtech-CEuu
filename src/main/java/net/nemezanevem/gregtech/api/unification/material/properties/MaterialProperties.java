@@ -29,8 +29,8 @@ public class MaterialProperties {
         return propertySet.isEmpty();
     }
 
-    public IMaterialProperty<?> getProperty(ResourceLocation key) {
-        return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getValue(key);
+    public <T extends IMaterialProperty<T>> T getProperty(ResourceLocation key) {
+        return (T) MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getValue(key);
     }
 
     public <T extends IMaterialProperty<T>> boolean hasProperty(ResourceLocation key) {

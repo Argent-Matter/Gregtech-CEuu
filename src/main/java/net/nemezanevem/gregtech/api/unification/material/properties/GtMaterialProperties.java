@@ -16,5 +16,7 @@ public class GtMaterialProperties {
     public static final RegistryObject<IMaterialProperty<IngotProperty>> INGOT = MATERIAL_PROPERTIES.register("ingot", IngotProperty::new);
     public static final RegistryObject<IMaterialProperty<OreProperty>> ORE = MATERIAL_PROPERTIES.register("ore", OreProperty::new);
     public static final RegistryObject<IMaterialProperty<PlasmaProperty>> PLASMA = MATERIAL_PROPERTIES.register("plasma", PlasmaProperty::new);
-    public static final RegistryObject<IMaterialProperty<PlasmaProperty>> PLASMA = MATERIAL_PROPERTIES.register("plasma", PlasmaProperty::new);
+    public static final RegistryObject<IMaterialProperty<PlasmaProperty>> TOOL = MATERIAL_PROPERTIES.register("tool", PlasmaProperty::new);
+    public static final RegistryObject<IMaterialProperty<PolymerProperty>> POLYMER = MATERIAL_PROPERTIES.register("polymer", PolymerProperty::new);
+    public static final RegistryObject<IMaterialProperty<RotorProperty>> ROTOR = MATERIAL_PROPERTIES.register("rotor", () -> new RotorProperty(0, 0, 0));
 }

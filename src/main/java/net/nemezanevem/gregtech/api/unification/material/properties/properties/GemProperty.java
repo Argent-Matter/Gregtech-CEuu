@@ -8,7 +8,7 @@ public class GemProperty implements IMaterialProperty<GemProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        properties.ensureSet(GtMaterialProperties.DUST.get(), true);
+        properties.ensureSet(GtMaterialProperties.DUST.getId(), true);
         if (properties.hasProperty(GtMaterialProperties.INGOT.getId())) {
             throw new IllegalStateException(
                     "Material " + properties.getMaterial() +

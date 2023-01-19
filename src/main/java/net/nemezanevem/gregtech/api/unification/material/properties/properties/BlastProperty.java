@@ -1,5 +1,7 @@
 package net.nemezanevem.gregtech.api.unification.material.properties.properties;
 
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
 
@@ -77,9 +79,9 @@ public class BlastProperty implements IMaterialProperty<BlastProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        properties.ensureSet(, true);
+        properties.ensureSet(GtMaterialProperties.INGOT.getId(), true);
 
-        FluidProperty fluidProperty = properties.getProperty(PropertyKey.FLUID);
+        FluidProperty fluidProperty = properties.getProperty(GtMaterialProperties.FLUID.getId());
         if (fluidProperty != null && fluidProperty.getFluidTemperature() == FluidProperty.BASE_TEMP)
             fluidProperty.setFluidTemperature(blastTemperature);
     }
@@ -92,8 +94,7 @@ public class BlastProperty implements IMaterialProperty<BlastProperty> {
         else if (gasTierName.equalsIgnoreCase("HIGHER")) return GasTier.HIGHER;
         else if (gasTierName.equalsIgnoreCase("HIGHEST")) return GasTier.HIGHEST;
         else {
-            CraftTweakerAPI.logError("Gas Tier must be either \"LOW\", \"MID\", \"HIGH\", \"HIGHER\", or \"HIGHEST\"");
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Gas Tier must be either \"LOW\", \"MID\", \"HIGH\", \"HIGHER\", or \"HIGHEST\"");
         }
     }
 

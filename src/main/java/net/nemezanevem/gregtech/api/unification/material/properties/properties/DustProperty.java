@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.unification.material.properties.properties;
 
+import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
 
@@ -52,7 +53,7 @@ public class DustProperty implements IMaterialProperty<DustProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        FluidProperty prop = properties.getProperty(PropertyKey.FLUID);
+        FluidProperty prop = properties.getProperty(GtMaterialProperties.FLUID.getId());
         if (prop != null && prop.getFluidTemperature() == FluidProperty.BASE_TEMP) {
             prop.setFluidTemperature(1200);
         }

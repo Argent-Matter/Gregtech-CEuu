@@ -1,26 +1,21 @@
-package net.nemezanevem.gregtech.api.unification.material.info;
+package net.nemezanevem.gregtech.api.unification.material.properties.info;
 
 import net.minecraft.resources.ResourceLocation;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.util.Util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MaterialFlag {
 
     private static final Set<MaterialFlag> FLAG_REGISTRY = new HashSet<>();
 
-    private final String name;
-
     private final Set<MaterialFlag> requiredFlags;
     private final Set<ResourceLocation> requiredProperties;
 
-    private MaterialFlag(String name, Set<MaterialFlag> requiredFlags, Set<ResourceLocation> requiredProperties) {
-        this.name = name;
+    private MaterialFlag(Set<MaterialFlag> requiredFlags, Set<ResourceLocation> requiredProperties) {
         this.requiredFlags = requiredFlags;
         this.requiredProperties = requiredProperties;
         FLAG_REGISTRY.add(this);
@@ -28,8 +23,8 @@ public class MaterialFlag {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof MaterialFlag) {
-            return ((MaterialFlag) o).name.equals(this.name);
+        if (o instanceof MaterialFlag flag) {
+            return Objects.equals(Util.getId(flag), Util.getId(this));
         }
         return false;
     }
@@ -37,7 +32,7 @@ public class MaterialFlag {
     public Set<MaterialFlag> verifyFlag(Material material) {
         requiredProperties.forEach(key -> {
             if (!material.hasProperty(key)) {
-                GregTech.LOGGER.warn("Material {} does not have required property {} for flag {}!", material.getUnlocalizedName(), key.toString(), this.name);
+                GregTech.LOGGER.warn("Material {} does not have required property {} for flag {}!", material.getUnlocalizedName(), key.toString(), Util.getId(this));
             }
         });
 
@@ -52,7 +47,7 @@ public class MaterialFlag {
 
     @Override
     public String toString() {
-        return this.name;
+        return Util.getId(this).toString();
     }
 
     public static MaterialFlag getByName(String name) {
@@ -61,14 +56,10 @@ public class MaterialFlag {
 
     public static class Builder {
 
-        final String name;
-
         final Set<MaterialFlag> requiredFlags = new HashSet<>();
         final Set<ResourceLocation> requiredProperties = new HashSet<>();
 
-        public Builder(String name) {
-            this.name = name;
-        }
+        public Builder() { }
 
         public Builder requireFlags(MaterialFlag... flags) {
             requiredFlags.addAll(Arrays.asList(flags));
@@ -81,7 +72,7 @@ public class MaterialFlag {
         }
 
         public MaterialFlag build() {
-            return new MaterialFlag(name, requiredFlags, requiredProperties);
+            return new MaterialFlag(requiredFlags, requiredProperties);
         }
     }
 }

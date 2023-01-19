@@ -15,7 +15,7 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
 
-public class SimpleMultiBlockRecipe implements Recipe<CraftingContainer> {
+public class SimpleMultiblockRecipe implements Recipe<CraftingContainer> {
     private final ResourceLocation id;
     final String group;
     final NonNullList<ItemStack> results;
@@ -24,7 +24,7 @@ public class SimpleMultiBlockRecipe implements Recipe<CraftingContainer> {
 
     private final Machine machine;
 
-    public SimpleMachineRecipe(ResourceLocation pId, String pGroup, NonNullList<ItemStack> results, NonNullList<Ingredient> pIngredients, Machine machine) {
+    public SimpleMultiblockRecipe(ResourceLocation pId, String pGroup, NonNullList<ItemStack> results, NonNullList<Ingredient> pIngredients, Machine machine) {
         this.machine = machine;
         this.id = pId;
         this.group = pGroup;
@@ -106,15 +106,15 @@ public class SimpleMultiBlockRecipe implements Recipe<CraftingContainer> {
         return pWidth * pHeight >= this.ingredients.size();
     }
 
-    public static class Serializer implements RecipeSerializer<SimpleMachineRecipe> {
-        public SimpleMachineRecipe fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
+    public static class Serializer implements RecipeSerializer<SimpleMultiblockRecipe> {
+        public SimpleMultiblockRecipe fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
             String s = GsonHelper.getAsString(pJson, "group", "");
             NonNullList<Ingredient> nonnulllist = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "ingredients"));
             if (nonnulllist.isEmpty()) {
                 throw new JsonParseException("No ingredients for shapeless recipe");
             }
             NonNullList<ItemStack> results = resultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
-            return new SimpleMachineRecipe(pRecipeId, s, results, nonnulllist);
+            return new SimpleMultiblockRecipe(pRecipeId, s, results, nonnulllist);
         }
 
         private static NonNullList<Ingredient> itemsFromJson(JsonArray pIngredientArray) {
@@ -143,7 +143,7 @@ public class SimpleMultiBlockRecipe implements Recipe<CraftingContainer> {
             return results;
         }
 
-        public SimpleMachineRecipe fromNetwork(ResourceLocation pRecipeId, FriendlyByteBuf pBuffer) {
+        public SimpleMultiblockRecipe fromNetwork(ResourceLocation pRecipeId, FriendlyByteBuf pBuffer) {
             String s = pBuffer.readUtf();
             int i = pBuffer.readVarInt();
             NonNullList<Ingredient> nonnulllist = NonNullList.withSize(i, Ingredient.EMPTY);
@@ -161,10 +161,10 @@ public class SimpleMultiBlockRecipe implements Recipe<CraftingContainer> {
 
             ResourceLocation machineId = new ResourceLocation(pBuffer.readUtf());
 
-            return new SimpleMachineRecipe(pRecipeId, s, results, nonnulllist, MachineRegistry.MACHINES_INTERNAL.get().getValue(machineId));
+            return new SimpleMultiblockRecipe(pRecipeId, s, results, nonnulllist, MachineRegistry.MACHINES_INTERNAL.get().getValue(machineId));
         }
 
-        public void toNetwork(FriendlyByteBuf pBuffer, SimpleMachineRecipe pRecipe) {
+        public void toNetwork(FriendlyByteBuf pBuffer, SimpleMultiblockRecipe pRecipe) {
             pBuffer.writeUtf(pRecipe.group);
             pBuffer.writeVarInt(pRecipe.ingredients.size());
 

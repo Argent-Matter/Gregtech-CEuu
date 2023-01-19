@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
+import net.nemezanevem.gregtech.api.util.Util;
 
 public class SimpleMachineRecipe implements Recipe<CraftingContainer> {
     private final ResourceLocation id;
@@ -180,5 +181,4 @@ public class SimpleMachineRecipe implements Recipe<CraftingContainer> {
         }
     }
 }
-
 
