@@ -12,9 +12,9 @@ public class PolymerProperty implements IMaterialProperty<PolymerProperty> {
     @Override
     public void verifyProperty(MaterialProperties properties) {
 
-        properties.ensureSet(GtMaterialProperties.DUST.getId(), true);
-        properties.ensureSet(GtMaterialProperties.INGOT.getId(), true);
-        properties.ensureSet(GtMaterialProperties.FLUID.getId(), true);
+        properties.ensureSet(GtMaterialProperties.DUST.get(), true);
+        properties.ensureSet(GtMaterialProperties.INGOT.get(), true);
+        properties.ensureSet(GtMaterialProperties.FLUID.get(), true);
 
         properties.getMaterial().addFlags(GtMaterialFlags.FLAMMABLE.get(), GtMaterialFlags.NO_SMASHING.get(), GtMaterialFlags.DISABLE_DECOMPOSITION.get());
 

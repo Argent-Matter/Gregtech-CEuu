@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.unification.material.properties.info;
 import net.minecraft.resources.ResourceLocation;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.util.Util;
 
 import java.util.*;
@@ -13,9 +14,9 @@ public class MaterialFlag {
     private static final Set<MaterialFlag> FLAG_REGISTRY = new HashSet<>();
 
     private final Set<MaterialFlag> requiredFlags;
-    private final Set<ResourceLocation> requiredProperties;
+    private final Set<PropertyKey<?>> requiredProperties;
 
-    private MaterialFlag(Set<MaterialFlag> requiredFlags, Set<ResourceLocation> requiredProperties) {
+    private MaterialFlag(Set<MaterialFlag> requiredFlags, Set<PropertyKey<?>> requiredProperties) {
         this.requiredFlags = requiredFlags;
         this.requiredProperties = requiredProperties;
         FLAG_REGISTRY.add(this);
@@ -57,7 +58,7 @@ public class MaterialFlag {
     public static class Builder {
 
         final Set<MaterialFlag> requiredFlags = new HashSet<>();
-        final Set<ResourceLocation> requiredProperties = new HashSet<>();
+        final Set<PropertyKey<?>> requiredProperties = new HashSet<>();
 
         public Builder() { }
 
@@ -66,7 +67,7 @@ public class MaterialFlag {
             return this;
         }
 
-        public Builder requireProps(ResourceLocation... propertyKeys) {
+        public Builder requireProps(PropertyKey<?>... propertyKeys) {
             requiredProperties.addAll(Arrays.asList(propertyKeys));
             return this;
         }

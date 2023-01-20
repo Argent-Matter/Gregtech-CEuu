@@ -161,7 +161,7 @@ public class ToolProperty implements IMaterialProperty<ToolProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        if (!properties.hasProperty(GtMaterialProperties.GEM.getId())) properties.ensureSet(GtMaterialProperties.INGOT.getId(), true);
+        if (!properties.hasProperty(GtMaterialProperties.GEM.get())) properties.ensureSet(GtMaterialProperties.INGOT.get(), true);
     }
 
     public void addEnchantmentForTools(Enchantment enchantment, int level) {

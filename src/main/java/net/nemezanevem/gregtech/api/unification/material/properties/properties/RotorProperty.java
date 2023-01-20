@@ -64,6 +64,6 @@ public class RotorProperty implements IMaterialProperty<RotorProperty> {
 
     @Override
     public void verifyProperty(@Nonnull MaterialProperties properties) {
-        properties.ensureSet(GtMaterialProperties.INGOT.getId(), true);
+        properties.ensureSet(GtMaterialProperties.INGOT.get(), true);
     }
 }

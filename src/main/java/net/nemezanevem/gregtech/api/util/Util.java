@@ -5,9 +5,9 @@ import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.properties.MaterialPropertyRegistry;
+import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
-import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 
 public class Util {
 
@@ -54,12 +54,11 @@ public class Util {
 
     public static ResourceLocation getId(MaterialFlag flag) {
         return MaterialFlagRegistry.MATERIAL_FLAGS_BUILTIN.get().getKey(flag);
-        return MaterialFlagRegistry.MATERIAL_FLAGS_BUILTIN.get().getKeys().toArray(ResourceLocation[]::new)[0].getPath()
     }
     public static ResourceLocation getId(MaterialIconSet set) {
-        return MaterialIconSetRegistry.MATERIAL_ICONS_BUILTIN.get().getKey(set);
+        return MaterialIconSetRegistry.MATERIAL_ICON_SETS_BUILTIN.get().getKey(set);
     }
-    public static ResourceLocation getId(IMaterialProperty<?> set) {
-        return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getKey(set);
+    public static ResourceLocation getId(PropertyKey<?> key) {
+        return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getKey(key);
     }
 }

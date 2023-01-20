@@ -2,24 +2,20 @@ package net.nemezanevem.gregtech.api.unification.material;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.fluids.FluidType;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
-import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
-import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
-import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
+import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
+import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.*;
 import net.nemezanevem.gregtech.api.unification.stack.MaterialStack;
 import net.nemezanevem.gregtech.api.util.SmallDigits;
@@ -135,7 +131,7 @@ public class Material implements Comparable<Material> {
             boolean onlyMetalMaterials = true;
             for (MaterialStack materialStack : materialInfo.componentList) {
                 Material material = materialStack.material;
-                onlyMetalMaterials &= material.hasProperty(GtMaterialProperties.INGOT.getId());
+                onlyMetalMaterials &= material.hasProperty(GtMaterialProperties.INGOT.get());
             }
             //allow centrifuging of alloy materials only
             if (onlyMetalMaterials) {
@@ -147,7 +143,7 @@ public class Material implements Comparable<Material> {
     }
 
     public Fluid getFluid() {
-        FluidProperty prop = this.getProperty(GtMaterialProperties.FLUID.getId());
+        FluidProperty prop = this.getProperty(GtMaterialProperties.FLUID.get());
         if (prop == null)
             throw new IllegalArgumentException("Material " + materialInfo.name + " does not have a Fluid!");
 
@@ -163,16 +159,16 @@ public class Material implements Comparable<Material> {
     }
 
     public int getBlockHarvestLevel() {
-        if (!hasProperty(GtMaterialProperties.DUST.getId()))
+        if (!hasProperty(GtMaterialProperties.DUST.get()))
             throw new IllegalArgumentException("Material " + materialInfo.name + " does not have a harvest level! Is probably a Fluid");
-        int harvestLevel = this.<DustProperty>getProperty(GtMaterialProperties.DUST.getId()).getHarvestLevel();
+        int harvestLevel = this.<DustProperty>getProperty(GtMaterialProperties.DUST.get()).getHarvestLevel();
         return harvestLevel > 0 ? harvestLevel - 1 : harvestLevel;
     }
 
     public int getToolHarvestLevel() {
-        if (!hasProperty(GtMaterialProperties.TOOL.getId()))
+        if (!hasProperty(GtMaterialProperties.TOOL.get()))
             throw new IllegalArgumentException("Material " + materialInfo.name + " does not have a tool harvest level! Is probably not a Tool Material");
-        return this.<ToolProperty>getProperty(GtMaterialProperties.TOOL.getId()).getToolHarvestLevel();
+        return this.<ToolProperty>getProperty(GtMaterialProperties.TOOL.get()).getToolHarvestLevel();
     }
 
     public void setMaterialRGB(int materialRGB) {
@@ -244,12 +240,12 @@ public class Material implements Comparable<Material> {
     }
 
     public int getBlastTemperature() {
-        BlastProperty prop = properties.getProperty(GtMaterialProperties.BLAST.getId());
+        BlastProperty prop = properties.getProperty(GtMaterialProperties.BLAST.get());
         return prop == null ? 0 : prop.getBlastTemperature();
     }
 
     public FluidStack getPlasma(int amount) {
-        PlasmaProperty prop = properties.getProperty(GtMaterialProperties.PLASMA.getId());
+        PlasmaProperty prop = properties.getProperty(GtMaterialProperties.PLASMA.get());
         return prop == null ? null : prop.getPlasma(amount);
     }
 
@@ -280,15 +276,15 @@ public class Material implements Comparable<Material> {
         return properties;
     }
 
-    public boolean hasProperty(ResourceLocation key) {
+    public <T extends IMaterialProperty<T>> boolean hasProperty(PropertyKey<T> key) {
         return getProperty(key) != null;
     }
 
-    public <T extends IMaterialProperty<T>> T getProperty(ResourceLocation key) {
+    public <T extends IMaterialProperty<T>> T getProperty(PropertyKey<T> key) {
         return properties.getProperty(key);
     }
 
-    public <T extends IMaterialProperty<T>> void setProperty(ResourceLocation key, IMaterialProperty<T> property) {
+    public <T extends IMaterialProperty<T>> void setProperty(PropertyKey<T> key, IMaterialProperty<T> property) {
         /*if (GregTechAPI.MATERIAL_REGISTRY.isFrozen()) {
             throw new IllegalStateException("Cannot add properties to a Material when registry is frozen!");
         }*/
@@ -297,11 +293,11 @@ public class Material implements Comparable<Material> {
     }
 
     public boolean isSolid() {
-        return hasProperty(GtMaterialProperties.INGOT.getId()) || hasProperty(GtMaterialProperties.GEM.getId());
+        return hasProperty(GtMaterialProperties.INGOT.get()) || hasProperty(GtMaterialProperties.GEM.get());
     }
 
     public boolean hasFluid() {
-        return hasProperty(GtMaterialProperties.FLUID.getId());
+        return hasProperty(GtMaterialProperties.FLUID.get());
     }
 
     public void verifyMaterial() {
@@ -334,15 +330,14 @@ public class Material implements Comparable<Material> {
          * Constructs a {@link Material}. This Builder replaces the old constructors, and
          * no longer uses a class hierarchy, instead using a {@link MaterialProperties} system.
          *
-         * @param id   The MetaItemSubID for this Material. Must be unique.
          * @param name The Name of this Material. Will be formatted as
          *             "material.<name>" for the Translation Key.
          * @since GTCEu 2.0.0
          */
-        public Builder(int id, String name) {
+        public Builder(String name) {
             if (name.charAt(name.length() - 1) == '_')
                 throw new IllegalArgumentException("Material name cannot end with a '_'!");
-            materialInfo = new MaterialInfo(id, name);
+            materialInfo = new MaterialInfo(name);
             properties = new MaterialProperties();
             flags = new MaterialFlags();
         }
@@ -353,12 +348,12 @@ public class Material implements Comparable<Material> {
 
         /**
          * Add a {@link FluidProperty} to this Material.<br>
-         * Will be created as a {@link FluidTypes#LIQUID}, without a Fluid Block.
+         * Will be created as a {@link GtFluidTypes#LIQUID}, without a Fluid Block.
          *
          * @throws IllegalArgumentException If a {@link FluidProperty} has already been added to this Material.
          */
         public Builder fluid() {
-            properties.ensureSet(GtMaterialProperties.FLUID.getId());
+            properties.ensureSet(GtMaterialProperties.FLUID.get());
             return this;
         }
 
@@ -381,7 +376,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If a {@link FluidProperty} has already been added to this Material.
          */
         public Builder fluid(FluidType type, boolean hasBlock) {
-            properties.setProperty(GtMaterialProperties.FLUID.getId(), new FluidProperty(type, hasBlock));
+            properties.setProperty(GtMaterialProperties.FLUID.get(), new FluidProperty(type, hasBlock));
             return this;
         }
 
@@ -392,7 +387,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If a {@link PlasmaProperty} has already been added to this Material.
          */
         public Builder plasma() {
-            properties.ensureSet(GtMaterialProperties.PLASMA.getId());
+            properties.ensureSet(GtMaterialProperties.PLASMA.get());
             return this;
         }
 
@@ -403,7 +398,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If a {@link DustProperty} has already been added to this Material.
          */
         public Builder dust() {
-            properties.ensureSet(GtMaterialProperties.DUST.getId());
+            properties.ensureSet(GtMaterialProperties.DUST.get());
             return this;
         }
 
@@ -430,7 +425,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If a {@link DustProperty} has already been added to this Material.
          */
         public Builder dust(int harvestLevel, int burnTime) {
-            properties.setProperty(GtMaterialProperties.DUST.getId(), new DustProperty(harvestLevel, burnTime));
+            properties.setProperty(GtMaterialProperties.DUST.get(), new DustProperty(harvestLevel, burnTime));
             return this;
         }
 
@@ -442,7 +437,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If an {@link IngotProperty} has already been added to this Material.
          */
         public Builder ingot() {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
             return this;
         }
 
@@ -474,13 +469,13 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If an {@link IngotProperty} has already been added to this Material.
          */
         public Builder ingot(int harvestLevel, int burnTime) {
-            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.getId());
+            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.get());
             if (prop == null) dust(harvestLevel, burnTime);
             else {
                 if (prop.getHarvestLevel() == 2) prop.setHarvestLevel(harvestLevel);
                 if (prop.getBurnTime() == 0) prop.setBurnTime(burnTime);
             }
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
             return this;
         }
 
@@ -492,7 +487,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If a {@link GemProperty} has already been added to this Material.
          */
         public Builder gem() {
-            properties.ensureSet(GtMaterialProperties.GEM.getId());
+            properties.ensureSet(GtMaterialProperties.GEM.get());
             return this;
         }
 
@@ -523,13 +518,13 @@ public class Material implements Comparable<Material> {
          *                     If this Material already had a Burn Time defined, it will be overridden.
          */
         public Builder gem(int harvestLevel, int burnTime) {
-            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.getId());
+            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.get());
             if (prop == null) dust(harvestLevel, burnTime);
             else {
                 if (prop.getHarvestLevel() == 2) prop.setHarvestLevel(harvestLevel);
                 if (prop.getBurnTime() == 0) prop.setBurnTime(burnTime);
             }
-            properties.ensureSet(GtMaterialProperties.GEM.getId());
+            properties.ensureSet(GtMaterialProperties.GEM.get());
             return this;
         }
 
@@ -541,7 +536,7 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If an {@link PolymerProperty} has already been added to this Material.
          */
         public Builder polymer() {
-            properties.ensureSet(GtMaterialProperties.POLYMER.getId());
+            properties.ensureSet(GtMaterialProperties.POLYMER.get());
             return this;
         }
 
@@ -557,19 +552,19 @@ public class Material implements Comparable<Material> {
          * @throws IllegalArgumentException If an {@link PolymerProperty} has already been added to this Material.
          */
         public Builder polymer(int harvestLevel) {
-            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.getId());
+            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.get());
             if (prop == null) dust(harvestLevel, 0);
             else if (prop.getHarvestLevel() == 2) prop.setHarvestLevel(harvestLevel);
-            properties.ensureSet(GtMaterialProperties.POLYMER.getId());
-            properties.ensureSet(GtMaterialProperties.FLUID.getId());
+            properties.ensureSet(GtMaterialProperties.POLYMER.get());
+            properties.ensureSet(GtMaterialProperties.FLUID.get());
             return this;
         }
 
         public Builder burnTime(int burnTime) {
-            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.getId());
+            DustProperty prop = properties.getProperty(GtMaterialProperties.DUST.get());
             if (prop == null) {
                 dust();
-                prop = properties.getProperty(GtMaterialProperties.DUST.getId());
+                prop = properties.getProperty(GtMaterialProperties.DUST.get());
             }
             prop.setBurnTime(burnTime);
             return this;
@@ -656,8 +651,8 @@ public class Material implements Comparable<Material> {
 
         /**
          * Add {@link MaterialFlags} to this Material.<br>
-         * Dependent Flags (for example, {@link MaterialFlags#GENERATE_LONG_ROD} requiring
-         * {@link MaterialFlags#GENERATE_ROD}) will be automatically applied.
+         * Dependent Flags (for example, {@link GtMaterialFlags#GENERATE_LONG_ROD} requiring
+         * {@link GtMaterialFlags#GENERATE_ROD}) will be automatically applied.
          */
         public Builder flags(MaterialFlag... flags) {
             this.flags.addFlags(flags);
@@ -666,8 +661,8 @@ public class Material implements Comparable<Material> {
 
         /**
          * Add {@link MaterialFlags} to this Material.<br>
-         * Dependent Flags (for example, {@link MaterialFlags#GENERATE_LONG_ROD} requiring
-         * {@link MaterialFlags#GENERATE_ROD}) will be automatically applied.
+         * Dependent Flags (for example, {@link GtMaterialFlags#GENERATE_LONG_ROD} requiring
+         * {@link GtMaterialFlags#GENERATE_ROD}) will be automatically applied.
          *
          * @param f1 A {@link Collection} of {@link MaterialFlag}. Provided this way for easy Flag presets to be applied.
          * @param f2 An Array of {@link MaterialFlag}. If no {@link Collection} is required, use {@link Builder#flags(MaterialFlag...)}.
@@ -688,112 +683,112 @@ public class Material implements Comparable<Material> {
          * Use {@link ToolProperty.Builder} instead to create a Tool Property.
          */
         public Builder toolStats(ToolProperty toolProperty) {
-            properties.setProperty(GtMaterialProperties.TOOL.getId(), toolProperty);
+            properties.setProperty(GtMaterialProperties.TOOL.get(), toolProperty);
             return this;
         }
 
         public Builder rotorStats(float speed, float damage, int durability) {
-            properties.setProperty(GtMaterialProperties.ROTOR.getId(), new RotorProperty(speed, damage, durability));
+            properties.setProperty(GtMaterialProperties.ROTOR.get(), new RotorProperty(speed, damage, durability));
             return this;
         }
 
         public Builder blastTemp(int temp) {
-            properties.setProperty(GtMaterialProperties.BLAST.getId(), new BlastProperty(temp));
+            properties.setProperty(GtMaterialProperties.BLAST.get(), new BlastProperty(temp));
             return this;
         }
 
         public Builder blastTemp(int temp, BlastProperty.GasTier gasTier) {
-            properties.setProperty(PropertyKey.BLAST, new BlastProperty(temp, gasTier, -1, -1));
+            properties.setProperty(GtMaterialProperties.BLAST.get(), new BlastProperty(temp, gasTier, -1, -1));
             return this;
         }
 
         public Builder blastTemp(int temp, BlastProperty.GasTier gasTier, int eutOverride) {
-            properties.setProperty(PropertyKey.BLAST, new BlastProperty(temp, gasTier, eutOverride, -1));
+            properties.setProperty(GtMaterialProperties.BLAST.get(), new BlastProperty(temp, gasTier, eutOverride, -1));
             return this;
         }
 
         public Builder blastTemp(int temp, BlastProperty.GasTier gasTier, int eutOverride, int durationOverride) {
-            properties.setProperty(PropertyKey.BLAST, new BlastProperty(temp, gasTier, eutOverride, durationOverride));
+            properties.setProperty(GtMaterialProperties.BLAST.get(), new BlastProperty(temp, gasTier, eutOverride, durationOverride));
             return this;
         }
 
         public Builder ore() {
-            properties.ensureSet(PropertyKey.ORE);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
             return this;
         }
 
         public Builder ore(boolean emissive) {
-            properties.setProperty(PropertyKey.ORE, new OreProperty(1, 1, emissive));
+            properties.setProperty(GtMaterialProperties.ORE.get(), new OreProperty(1, 1, emissive));
             return this;
         }
 
         public Builder ore(int oreMultiplier, int byproductMultiplier) {
-            properties.setProperty(PropertyKey.ORE, new OreProperty(oreMultiplier, byproductMultiplier));
+            properties.setProperty(GtMaterialProperties.ORE.get(), new OreProperty(oreMultiplier, byproductMultiplier));
             return this;
         }
 
         public Builder ore(int oreMultiplier, int byproductMultiplier, boolean emissive) {
-            properties.setProperty(PropertyKey.ORE, new OreProperty(oreMultiplier, byproductMultiplier, emissive));
+            properties.setProperty(GtMaterialProperties.ORE.get(), new OreProperty(oreMultiplier, byproductMultiplier, emissive));
             return this;
         }
 
         public Builder fluidTemp(int temp) {
-            properties.ensureSet(GtMaterialProperties.FLUID.getId());
-            properties.getProperty(GtMaterialProperties.FLUID.getId()).setFluidTemperature(temp);
+            properties.ensureSet(GtMaterialProperties.FLUID.get());
+            properties.<FluidProperty>getProperty(GtMaterialProperties.FLUID.get()).setFluidTemperature(temp);
             return this;
         }
 
         public Builder washedIn(Material m) {
-            properties.ensureSet(PropertyKey.ORE);
-            properties.getProperty(PropertyKey.ORE).setWashedIn(m);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
+            properties.<OreProperty>getProperty(GtMaterialProperties.ORE.get()).setWashedIn(m);
             return this;
         }
 
         public Builder washedIn(Material m, int washedAmount) {
-            properties.ensureSet(PropertyKey.ORE);
-            properties.getProperty(PropertyKey.ORE).setWashedIn(m, washedAmount);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
+            properties.<OreProperty>getProperty(GtMaterialProperties.ORE.get()).setWashedIn(m, washedAmount);
             return this;
         }
 
         public Builder separatedInto(Material... m) {
-            properties.ensureSet(PropertyKey.ORE);
-            properties.getProperty(PropertyKey.ORE).setSeparatedInto(m);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
+            properties.<OreProperty>getProperty(GtMaterialProperties.ORE.get()).setSeparatedInto(m);
             return this;
         }
 
         public Builder oreSmeltInto(Material m) {
-            properties.ensureSet(PropertyKey.ORE);
-            properties.getProperty(PropertyKey.ORE).setDirectSmeltResult(m);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
+            properties.<OreProperty>getProperty(GtMaterialProperties.ORE.get()).setDirectSmeltResult(m);
             return this;
         }
 
         public Builder polarizesInto(Material m) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.getProperty(GtMaterialProperties.INGOT.getId()).setMagneticMaterial(m);
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.<IngotProperty>getProperty(GtMaterialProperties.INGOT.get()).setMagneticMaterial(m);
             return this;
         }
 
         public Builder arcSmeltInto(Material m) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.getProperty(GtMaterialProperties.INGOT.getId()).setArcSmeltingInto(m);
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.<IngotProperty>getProperty(GtMaterialProperties.INGOT.get()).setArcSmeltingInto(m);
             return this;
         }
 
         public Builder macerateInto(Material m) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.getProperty(GtMaterialProperties.INGOT.getId()).setMacerateInto(m);
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.<IngotProperty>getProperty(GtMaterialProperties.INGOT.get()).setMacerateInto(m);
             return this;
         }
 
         public Builder ingotSmeltInto(Material m) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.getProperty(GtMaterialProperties.INGOT.getId()).setSmeltingInto(m);
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.<IngotProperty>getProperty(GtMaterialProperties.INGOT.get()).setSmeltingInto(m);
             return this;
         }
 
         public Builder addOreByproducts(Material... byproducts) {
-            properties.ensureSet(PropertyKey.ORE);
-            properties.getProperty(PropertyKey.ORE).setOreByProducts(byproducts);
+            properties.ensureSet(GtMaterialProperties.ORE.get());
+            properties.<OreProperty>getProperty(GtMaterialProperties.ORE.get()).setOreByProducts(byproducts);
             return this;
         }
 
@@ -803,14 +798,14 @@ public class Material implements Comparable<Material> {
         }
 
         public Builder cableProperties(long voltage, int amperage, int loss, boolean isSuperCon) {
-            properties.ensureSet(GtMaterialProperties.DUST.getId());
-            properties.setProperty(PropertyKey.WIRE, new WireProperties((int) voltage, amperage, loss, isSuperCon));
+            properties.ensureSet(GtMaterialProperties.DUST.get());
+            properties.setProperty(GtMaterialProperties.WIRE.get(), new WireProperty((int) voltage, amperage, loss, isSuperCon));
             return this;
         }
 
         public Builder cableProperties(long voltage, int amperage, int loss, boolean isSuperCon, int criticalTemperature) {
-            properties.ensureSet(GtMaterialProperties.DUST.getId());
-            properties.setProperty(PropertyKey.WIRE, new WireProperties((int) voltage, amperage, loss, isSuperCon, criticalTemperature));
+            properties.ensureSet(GtMaterialProperties.DUST.get());
+            properties.setProperty(GtMaterialProperties.WIRE.get(), new WireProperty((int) voltage, amperage, loss, isSuperCon, criticalTemperature));
             return this;
         }
 
@@ -819,22 +814,22 @@ public class Material implements Comparable<Material> {
         }
 
         public Builder fluidPipeProperties(int maxTemp, int throughput, boolean gasProof, boolean acidProof, boolean cryoProof, boolean plasmaProof) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.setProperty(GtMaterialProperties.FLUID.getId()_PIPE, new FluidPipeProperties(maxTemp, throughput, gasProof, acidProof, cryoProof, plasmaProof));
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.setProperty(GtMaterialProperties.FLUID_PIPE.get(), new FluidPipeProperty(maxTemp, throughput, gasProof, acidProof, cryoProof, plasmaProof));
             return this;
         }
 
-        /*public Builder itemPipeProperties(int priority, float stacksPerSec) {
-            properties.ensureSet(GtMaterialProperties.INGOT.getId());
-            properties.setProperty(PropertyKey.ITEM_PIPE, new ItemPipeProperties(priority, stacksPerSec));
+        public Builder itemPipeProperties(int priority, float stacksPerSec) {
+            properties.ensureSet(GtMaterialProperties.INGOT.get());
+            properties.setProperty(GtMaterialProperties.ITEM_PIPE.get(), new ItemPipeProperty(priority, stacksPerSec));
             return this;
-        }*/
+        }
 
         @Deprecated
         public Builder addDefaultEnchant(Enchantment enchant, int level) {
-            if (!properties.hasProperty(GtMaterialProperties.TOOL.getId())) // cannot assign default here
+            if (!properties.hasProperty(GtMaterialProperties.TOOL.get())) // cannot assign default here
                 throw new IllegalArgumentException("Material cannot have an Enchant without Tools!");
-            properties.<ToolProperty>getProperty(GtMaterialProperties.TOOL.getId()).addEnchantmentForTools(enchant, level);
+            properties.<ToolProperty>getProperty(GtMaterialProperties.TOOL.get()).addEnchantmentForTools(enchant, level);
             return this;
         }
 
@@ -903,15 +898,15 @@ public class Material implements Comparable<Material> {
 
             // Verify IconSet
             if (iconSet == null) {
-                if (props.hasProperty(GtMaterialProperties.GEM.getId())) {
+                if (props.hasProperty(GtMaterialProperties.GEM.get())) {
                     iconSet = MaterialIconSet.GEM_VERTICAL;
-                } else if (props.hasProperty(GtMaterialProperties.DUST.getId()) || props.hasProperty(GtMaterialProperties.INGOT.getId()) || props.hasProperty(GtMaterialProperties.POLYMER.getId())) {
+                } else if (props.hasProperty(GtMaterialProperties.DUST.get()) || props.hasProperty(GtMaterialProperties.INGOT.get()) || props.hasProperty(GtMaterialProperties.POLYMER.get())) {
                     iconSet = MaterialIconSet.DULL;
-                } else if (props.hasProperty(GtMaterialProperties.FLUID.getId())) {
-                    if (props.<FluidProperty>getProperty(GtMaterialProperties.FLUID.getId()).isGas()) {
+                } else if (props.hasProperty(GtMaterialProperties.FLUID.get())) {
+                    if (props.<FluidProperty>getProperty(GtMaterialProperties.FLUID.get()).isGas()) {
                         iconSet = MaterialIconSet.GAS;
                     } else iconSet = MaterialIconSet.FLUID;
-                } else if (props.hasProperty(GtMaterialProperties.PLASMA.getId()))
+                } else if (props.hasProperty(GtMaterialProperties.PLASMA.get()))
                     iconSet = MaterialIconSet.FLUID;
                 else iconSet = MaterialIconSet.DULL;
             }

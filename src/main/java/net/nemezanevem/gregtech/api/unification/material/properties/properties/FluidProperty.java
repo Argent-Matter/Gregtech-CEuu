@@ -2,10 +2,13 @@ package net.nemezanevem.gregtech.api.unification.material.properties.properties;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidType;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
+import net.nemezanevem.gregtech.common.mixinutil.IMixinFluidType;
 
 import javax.annotation.Nonnull;
 
@@ -26,7 +29,7 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
 
     public FluidProperty(@Nonnull FluidType fluidType, boolean hasBlock) {
         this.fluidType = fluidType;
-        this.isGas = fluidType == FluidTypes.GAS;
+        this.isGas = fluidType.isLighterThanAir();
         this.hasBlock = hasBlock;
     }
 
@@ -34,7 +37,7 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
      * Default values of: no Block, not Gas.
      */
     public FluidProperty() {
-        this(FluidTypes.LIQUID, false);
+        this(ForgeMod.WATER_TYPE.get(), false);
     }
 
     public boolean isGas() {
@@ -79,7 +82,7 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
         else fluidTemperature += 273;
         this.fluidTemperature = fluidTemperature;
         if (fluid != null)
-            fluid.setTemperature(fluidTemperature);
+            ((IMixinFluidType) fluidType).setTemperature(fluidTemperature);
     }
 
     public int getFluidTemperature() {
@@ -93,7 +96,7 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        if (properties.hasProperty(GtMaterialProperties.PLASMA.getId())) {
+        if (properties.hasProperty(GtMaterialProperties.PLASMA.get())) {
             hasBlock = false;
         }
     }
