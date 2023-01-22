@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.GtGuiFactories;
 import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 
@@ -30,8 +31,8 @@ public class PlayerInventoryHolder implements IUIHolder {
         this.validityCheck = () -> ItemStack.matches(sampleItem, player.getItemInHand(hand));
     }
 
-    public PlayerInventoryHolder(Player entityPlayer, InteractionHand hand) {
-        this.player = entityPlayer;
+    public PlayerInventoryHolder(Player Player, InteractionHand hand) {
+        this.player = Player;
         this.hand = hand;
         this.sampleItem = player.getItemInHand(hand);
         this.validityCheck = () -> ItemStack.matches(sampleItem, player.getItemInHand(hand));
@@ -42,13 +43,13 @@ public class PlayerInventoryHolder implements IUIHolder {
         return this;
     }
 
-    ModularUI createUI(Player entityPlayer) {
+    ModularUI createUI(Player Player) {
         ItemUIFactory uiFactory = (ItemUIFactory) sampleItem.getItem();
-        return uiFactory.createUI(this, entityPlayer);
+        return uiFactory.createUI(this, Player);
     }
 
     public void openUI() {
-        PlayerInventoryUIFactory.INSTANCE.openUI(this, (ServerPlayer) player);
+        GtGuiFactories.PLAYER_INV.get().openUI(this, (ServerPlayer) player);
     }
 
     @Override

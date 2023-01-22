@@ -147,6 +147,11 @@ repositories {
     maven {
         url "https://maven.covers1624.net"
     }
+    maven {
+        // location of the maven that hosts JEI files before January 2023
+        name = "Progwml6's maven"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
 }
 
 dependencies {
@@ -164,6 +169,12 @@ dependencies {
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
 
     implementation fg.deobf("codechicken:CodeChickenLib:1.19.2-4.3.0.470:universal")
+
+    // compile against the JEI API but do not include it at runtime
+    compileOnly(fg.deobf("mezz.jei:jei-1.19.2-common-api:11.5.0.297"))
+    compileOnly(fg.deobf("mezz.jei:jei-1.19.2-forge-api:11.5.0.297"))
+    // at runtime, use the full JEI jar for Forge
+    runtimeOnly(fg.deobf("mezz.jei:jei-1.19.2-forge:11.5.0.297"))
 
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

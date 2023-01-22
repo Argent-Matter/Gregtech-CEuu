@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TagsUpdatedEvent;
@@ -10,6 +11,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
@@ -21,6 +24,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMater
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -31,6 +35,13 @@ public class GregTech {
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    private static final String PROTOCOL_VERSION = "1";
+    public static final SimpleChannel NETWORK_HANDLER = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(MODID, "main"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals
+    );
 
     public GregTech() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -63,7 +74,8 @@ public class GregTech {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-
+        int packetIndex = 0;
+        NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, )
     }
 
     private void register(RegisterEvent event) {

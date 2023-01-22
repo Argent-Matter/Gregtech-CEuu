@@ -1,8 +1,24 @@
 package net.nemezanevem.gregtech.api.gui;
 
+import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.phys.Vec2;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
 import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
@@ -161,22 +177,19 @@ public abstract class Widget {
     /**
      * Called each draw tick to draw this widget in GUI
      */
-    @SideOnly(Side.CLIENT)
     public void drawInForeground(int mouseX, int mouseY) {
     }
 
     /**
      * Called each draw tick to draw this widget in GUI
      */
-    @SideOnly(Side.CLIENT)
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
     }
 
     /**
      * Called when mouse wheel is moved in GUI
      * For some -redacted- reason mouseX position is relative against GUI not game window as in other mouse events
      */
-    @SideOnly(Side.CLIENT)
     public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
         return false;
     }
@@ -184,7 +197,6 @@ public abstract class Widget {
     /**
      * Called when mouse is clicked in GUI
      */
-    @SideOnly(Side.CLIENT)
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         return false;
     }
@@ -192,7 +204,6 @@ public abstract class Widget {
     /**
      * Called when mouse is pressed and hold down in GUI
      */
-    @SideOnly(Side.CLIENT)
     public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
         return false;
     }
@@ -200,7 +211,6 @@ public abstract class Widget {
     /**
      * Called when mouse is released in GUI
      */
-    @SideOnly(Side.CLIENT)
     public boolean mouseReleased(int mouseX, int mouseY, int button) {
         return false;
     }
@@ -208,7 +218,6 @@ public abstract class Widget {
     /**
      * Called when key is typed in GUI
      */
-    @SideOnly(Side.CLIENT)
     public boolean keyTyped(char charTyped, int keyCode) {
         return false;
     }
@@ -216,11 +225,10 @@ public abstract class Widget {
     /**
      * Read data received from server's {@link #writeUpdateInfo}
      */
-    @SideOnly(Side.CLIENT)
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
     }
 
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
     }
 
     public List<INativeWidget> getNativeWidgets() {
@@ -233,161 +241,143 @@ public abstract class Widget {
     /**
      * Writes data to be sent to client's {@link #readUpdateInfo}
      */
-    protected void writeUpdateInfo(int id, Consumer<PacketBuffer> packetBufferWriter) {
+    protected void writeUpdateInfo(int id, Consumer<FriendlyByteBuf> packetBufferWriter) {
         if (uiAccess != null && gui != null) {
             uiAccess.writeUpdateInfo(this, id, packetBufferWriter);
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    protected void writeClientAction(int id, Consumer<PacketBuffer> packetBufferWriter) {
+    protected void writeClientAction(int id, Consumer<FriendlyByteBuf> packetBufferWriter) {
         if (uiAccess != null) {
             uiAccess.writeClientAction(this, id, packetBufferWriter);
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawBorder(int x, int y, int width, int height, int color, int border) {
-        drawSolidRect(x - border, y - border, width + 2 * border, border, color);
-        drawSolidRect(x - border, y + height, width + 2 * border, border, color);
-        drawSolidRect(x - border, y, border, height, color);
-        drawSolidRect(x + width, y, border, height, color);
+    public static void drawBorder(PoseStack poseStack, int x, int y, int width, int height, int color, int border) {
+        drawSolidRect(poseStack, x - border, y - border, width + 2 * border, border, color);
+        drawSolidRect(poseStack, x - border, y + height, width + 2 * border, border, color);
+        drawSolidRect(poseStack, x - border, y, border, height, color);
+        drawSolidRect(poseStack, x + width, y, border, height, color);
     }
 
-    @SideOnly(Side.CLIENT)
-    public void drawHoveringText(ItemStack itemStack, List<String> tooltip, int maxTextWidth, int mouseX, int mouseY) {
-        Minecraft mc = Minecraft.getMinecraft();
+    public void drawHoveringText(ItemStack itemStack, List<Component> tooltip, int maxTextWidth, int mouseX, int mouseY) {
+        Minecraft mc = Minecraft.getInstance();
         GuiUtils.drawHoveringText(itemStack, tooltip, mouseX, mouseY,
                 sizes.getScreenWidth(),
-                sizes.getScreenHeight(), maxTextWidth, mc.fontRenderer);
-        GlStateManager.disableLighting();
+                sizes.getScreenHeight(), maxTextWidth, mc.font);
+        RenderSystem.disableBlend();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawStringSized(String text, double x, double y, int color, boolean dropShadow, float scale, boolean center) {
-        GlStateManager.pushMatrix();
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        double scaledTextWidth = center ? fontRenderer.getStringWidth(text) * scale : 0.0;
-        GlStateManager.translate(x - scaledTextWidth / 2.0, y, 0.0f);
-        GlStateManager.scale(scale, scale, scale);
-        fontRenderer.drawString(text, 0, 0, color, dropShadow);
-        GlStateManager.popMatrix();
+    public static void drawStringSized(PoseStack poseStack, String text, double x, double y, int color, boolean dropShadow, float scale, boolean center) {
+        poseStack.pushPose();
+        Font fontRenderer = Minecraft.getInstance().font;
+        double scaledTextWidth = center ? fontRenderer.width(text) * scale : 0.0;
+        poseStack.translate(x - scaledTextWidth / 2.0, y, 0.0f);
+        poseStack.scale(scale, scale, scale);
+        fontRenderer.draw(poseStack, text, 0, 0, color);
+        if(dropShadow) fontRenderer.drawShadow(poseStack, text, 0, 0, color);
+        poseStack.popPose();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawStringFixedCorner(String text, double x, double y, int color, boolean dropShadow, float scale) {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        double scaledWidth = fontRenderer.getStringWidth(text) * scale;
-        double scaledHeight = fontRenderer.FONT_HEIGHT * scale;
-        drawStringSized(text, x - scaledWidth, y - scaledHeight, color, dropShadow, scale, false);
+    public static void drawStringFixedCorner(PoseStack poseStack, String text, double x, double y, int color, boolean dropShadow, float scale) {
+        Font fontRenderer = Minecraft.getInstance().font;
+        double scaledWidth = fontRenderer.width(text) * scale;
+        double scaledHeight = fontRenderer.lineHeight * scale;
+        drawStringSized(poseStack, text, x - scaledWidth, y - scaledHeight, color, dropShadow, scale, false);
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawText(String text, float x, float y, float scale, int color) {
-        drawText(text, x, y, scale, color, false);
+    public static void drawText(PoseStack poseStack, String text, float x, float y, float scale, int color) {
+        drawText(poseStack, text, x, y, scale, color, false);
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawText(String text, float x, float y, float scale, int color, boolean shadow) {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        GlStateManager.disableBlend();
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, 0f);
+    public static void drawText(PoseStack poseStack, String text, float x, float y, float scale, int color, boolean shadow) {
+        Font fontRenderer = Minecraft.getInstance().font;
+        RenderSystem.disableBlend();
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, 0f);
         float sf = 1 / scale;
-        fontRenderer.drawString(text, x * sf, y * sf, color, shadow);
-        GlStateManager.popMatrix();
-        GlStateManager.enableBlend();
+        fontRenderer.draw(poseStack, text, x * sf, y * sf, color);
+        if(shadow) fontRenderer.drawShadow(poseStack, text, 0, 0, color);
+        poseStack.popPose();
+        RenderSystem.enableBlend();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawItemStack(ItemStack itemStack, int x, int y, @Nullable String altTxt) {
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0.0F, 0.0F, 32.0F);
-        GlStateManager.color(1F, 1F, 1F, 1F);
-        GlStateManager.enableDepth();
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.enableLighting();
+    public static void drawItemStack(PoseStack poseStack, ItemStack itemStack, int x, int y, @Nullable String altTxt) {
+        poseStack.pushPose();
+        poseStack.translate(0.0F, 0.0F, 32.0F);
+        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        RenderSystem.enableDepthTest();
+        RenderSystem.enablePolygonOffset();
         RenderHelper.enableGUIStandardItemLighting();
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0f, 240.0f);
-        Minecraft mc = Minecraft.getMinecraft();
-        RenderItem itemRender = mc.getRenderItem();
-        itemRender.renderItemAndEffectIntoGUI(itemStack, x, y);
-        itemRender.renderItemOverlayIntoGUI(mc.fontRenderer, itemStack, x, y, altTxt);
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.disableLighting();
-        GlStateManager.color(1F, 1F, 1F, 1F);
-        GlStateManager.popMatrix();
-        GlStateManager.enableBlend();
-        GlStateManager.disableDepth();
+        Minecraft mc = Minecraft.getInstance();
+        ItemRenderer itemRender = mc.getItemRenderer();
+        itemRender.renderGuiItem(itemStack, x, y);
+        itemRender.renderGuiItemDecorations(mc.font, itemStack, x, y, altTxt);
+        RenderSystem.disablePolygonOffset();
+        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        poseStack.popPose();
+        RenderSystem.enableBlend();
+        RenderSystem.disableDepthTest();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static List<String> getItemToolTip(ItemStack itemStack) {
-        Minecraft mc = Minecraft.getMinecraft();
-        ITooltipFlag flag = mc.gameSettings.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL;
-        List<String> tooltip = itemStack.getTooltip(mc.player, flag);
+    public static List<Component> getItemToolTip(ItemStack itemStack) {
+        Minecraft mc = Minecraft.getInstance();
+        TooltipFlag flag = mc.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL;
+        List<Component> tooltip = itemStack.getTooltipLines(mc.player, flag);
         for (int i = 0; i < tooltip.size(); ++i) {
             if (i == 0) {
-                tooltip.set(i, itemStack.getItem().getForgeRarity(itemStack).getColor() + tooltip.get(i));
+                tooltip.set(i, tooltip.get(i).copy().withStyle(itemStack.getItem().getRarity(itemStack).getStyleModifier()));
             } else {
-                tooltip.set(i, TextFormatting.GRAY + tooltip.get(i));
+                tooltip.set(i, tooltip.get(i).copy().withStyle(ChatFormatting.GRAY));
             }
         }
         return tooltip;
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawSelectionOverlay(int x, int y, int width, int height) {
-        GlStateManager.disableDepth();
-        GlStateManager.colorMask(true, true, true, false);
+        RenderSystem.disableDepthTest();
+        RenderSystem.colorMask(true, true, true, false);
         drawGradientRect(x, y, width, height, -2130706433, -2130706433);
-        GlStateManager.colorMask(true, true, true, true);
-        GlStateManager.enableDepth();
-        GlStateManager.enableBlend();
+        RenderSystem.colorMask(true, true, true, true);
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawSolidRect(int x, int y, int width, int height, int color) {
-        Gui.drawRect(x, y, x + width, y + height, color);
-        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-        GlStateManager.enableBlend();
+    public static void drawSolidRect(PoseStack poseStack, int x, int y, int width, int height, int color) {
+        Gui.fill(poseStack, x, y, x + width, y + height, color);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.enableBlend();
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawRectShadow(int x, int y, int width, int height, int distance) {
         drawGradientRect(x + distance, y + height, width - distance, distance, 0x4f000000, 0, false);
         drawGradientRect(x + width, y + distance, distance, height - distance, 0x4f000000, 0, true);
 
         float startAlpha = (float) (0x4f) / 255.0F;
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder buffer = tesselator.getBuilder();
+        buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
         x += width;
         y += height;
-        buffer.pos(x, y, 0).color(0, 0, 0, startAlpha).endVertex();
-        buffer.pos(x, y + distance, 0).color(0, 0, 0, 0).endVertex();
-        buffer.pos(x + distance, y + distance, 0).color(0, 0, 0, 0).endVertex();
+        buffer.vertex(x, y, 0).color(0, 0, 0, startAlpha).endVertex();
+        buffer.vertex(x, y + distance, 0).color(0, 0, 0, 0).endVertex();
+        buffer.vertex(x + distance, y + distance, 0).color(0, 0, 0, 0).endVertex();
 
-        buffer.pos(x, y, 0).color(0, 0, 0, startAlpha).endVertex();
-        buffer.pos(x + distance, y + distance, 0).color(0, 0, 0, 0).endVertex();
-        buffer.pos(x + distance, y, 0).color(0, 0, 0, 0).endVertex();
-        tessellator.draw();
-        GlStateManager.shadeModel(GL11.GL_FLAT);
-        GlStateManager.enableAlpha();
-        GlStateManager.enableTexture2D();
+        buffer.vertex(x, y, 0).color(0, 0, 0, startAlpha).endVertex();
+        buffer.vertex(x + distance, y + distance, 0).color(0, 0, 0, 0).endVertex();
+        buffer.vertex(x + distance, y, 0).color(0, 0, 0, 0).endVertex();
+        tesselator.end();
+        RenderSystem.enableTexture();
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawGradientRect(int x, int y, int width, int height, int startColor, int endColor) {
         drawGradientRect(x, y, width, height, startColor, endColor, false);
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawGradientRect(float x, float y, float width, float height, int startColor, int endColor, boolean horizontal) {
         float startAlpha = (float) (startColor >> 24 & 255) / 255.0F;
         float startRed = (float) (startColor >> 16 & 255) / 255.0F;
@@ -397,110 +387,102 @@ public abstract class Widget {
         float endRed = (float) (endColor >> 16 & 255) / 255.0F;
         float endGreen = (float) (endColor >> 8 & 255) / 255.0F;
         float endBlue = (float) (endColor & 255) / 255.0F;
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder buffer = tesselator.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         if (horizontal) {
-            buffer.pos(x + width, y, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            buffer.pos(x, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y + height, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x + width, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            tessellator.draw();
+            buffer.vertex(x + width, y, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            buffer.vertex(x, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y + height, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x + width, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            tesselator.end();
         } else {
-            buffer.pos(x + width, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            buffer.pos(x + width, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            tessellator.draw();
+            buffer.vertex(x + width, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y, 0).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            buffer.vertex(x + width, y + height, 0).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            tesselator.end();
         }
-        GlStateManager.shadeModel(GL11.GL_FLAT);
-        GlStateManager.enableAlpha();
-        GlStateManager.enableTexture2D();
+        RenderSystem.enableTexture();
     }
 
-    @SideOnly(Side.CLIENT)
     public static void setColor(int color) { // ARGB
-        GlStateManager.color((color >> 16 & 255) / 255.0F,
+        RenderSystem.setShaderColor((color >> 16 & 255) / 255.0F,
                 (color >> 8 & 255) / 255.0F,
                 (color & 255) / 255.0F,
                 (color >> 24 & 255) / 255.0F);
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawCircle(float x, float y, float r, int color, int segments) {
         if (color == 0) return;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
         setColor(color);
-        bufferbuilder.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int i = 0; i < segments; i++) {
-            bufferbuilder.pos(x + r * Math.cos(-2 * Math.PI * i / segments), y + r * Math.sin(-2 * Math.PI * i / segments), 0.0D).endVertex();
+            bufferbuilder.vertex(x + r * Math.cos(-2 * Math.PI * i / segments), y + r * Math.sin(-2 * Math.PI * i / segments), 0.0D).endVertex();
         }
-        tessellator.draw();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1, 1, 1, 1);
+        tesselator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawSector(float x, float y, float r, int color, int segments, int from, int to) {
         if (from > to || from < 0 || color == 0) return;
         if (to > segments) to = segments;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
         setColor(color);
-        bufferbuilder.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION);
+        bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION);
         for (int i = from; i < to; i++) {
-            bufferbuilder.pos(x + r * Math.cos(-2 * Math.PI * i / segments), y + r * Math.sin(-2 * Math.PI * i / segments), 0.0D).endVertex();
-            bufferbuilder.pos(x + r * Math.cos(-2 * Math.PI * (i + 1) / segments), y + r * Math.sin(-2 * Math.PI * (i + 1) / segments), 0.0D).endVertex();
-            bufferbuilder.pos(x, y, 0.0D).endVertex();
+            bufferbuilder.vertex(x + r * Math.cos(-2 * Math.PI * i / segments), y + r * Math.sin(-2 * Math.PI * i / segments), 0.0D).endVertex();
+            bufferbuilder.vertex(x + r * Math.cos(-2 * Math.PI * (i + 1) / segments), y + r * Math.sin(-2 * Math.PI * (i + 1) / segments), 0.0D).endVertex();
+            bufferbuilder.vertex(x, y, 0.0D).endVertex();
         }
-        tessellator.draw();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1, 1, 1, 1);
+        tesselator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     public static void drawTorus(float x, float y, float outer, float inner, int color, int segments, int from, int to) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
         setColor(color);
-        bufferbuilder.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION);
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int i = from; i <= to; i++) {
             float angle = (i / (float) segments) * 3.14159f * 2.0f;
-            bufferbuilder.pos(x + inner * Math.cos(-angle), y + inner * Math.sin(-angle), 0).endVertex();
-            bufferbuilder.pos(x + outer * Math.cos(-angle), y + outer * Math.sin(-angle), 0).endVertex();
+            bufferbuilder.vertex(x + inner * Math.cos(-angle), y + inner * Math.sin(-angle), 0).endVertex();
+            bufferbuilder.vertex(x + outer * Math.cos(-angle), y + outer * Math.sin(-angle), 0).endVertex();
         }
-        tessellator.draw();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1, 1, 1, 1);
+        tesselator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
-    @SideOnly(Side.CLIENT)
-    public static void drawLines(List<Vec2f> points, int startColor, int endColor, float width) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.glLineWidth(width);
+    public static void drawLines(List<Vec2> points, int startColor, int endColor, float width) {
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.lineWidth(width);
         if (startColor == endColor) {
             setColor(startColor);
-            bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION);
-            for (Vec2f point : points) {
-                bufferbuilder.pos(point.x, point.y, 0).endVertex();
+            bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION);
+            for (Vec2 point : points) {
+                bufferbuilder.vertex(point.x, point.y, 0).endVertex();
             }
         } else {
             float startAlpha = (float) (startColor >> 24 & 255) / 255.0F;
@@ -511,12 +493,12 @@ public abstract class Widget {
             float endRed = (float) (endColor >> 16 & 255) / 255.0F;
             float endGreen = (float) (endColor >> 8 & 255) / 255.0F;
             float endBlue = (float) (endColor & 255) / 255.0F;
-            bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
             int size = points.size();
 
             for (int i = 0; i < size; i++) {
                 float p = i * 1.0f / size;
-                bufferbuilder.pos(points.get(i).x, points.get(i).y, 0)
+                bufferbuilder.vertex(points.get(i).x, points.get(i).y, 0)
                         .color(startRed + (endRed - startRed) * p,
                                 startGreen + (endGreen - startGreen) * p,
                                 startBlue + (endBlue - startBlue) * p,
@@ -524,46 +506,44 @@ public abstract class Widget {
                         .endVertex();
             }
         }
-        tessellator.draw();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1, 1, 1, 1);
+        tesselator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
-    @SideOnly(Side.CLIENT)
     public static void drawTextureRect(double x, double y, double width, double height) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(x, y + height, 0.0D).tex(0, 0).endVertex();
-        buffer.pos(x + width, y + height, 0.0D).tex(1, 0).endVertex();
-        buffer.pos(x + width, y, 0.0D).tex(1, 1).endVertex();
-        buffer.pos(x, y, 0.0D).tex(0, 1).endVertex();
-        tessellator.draw();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder buffer = tesselator.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.vertex(x, y + height, 0.0D).uv(0, 0).endVertex();
+        buffer.vertex(x + width, y + height, 0.0D).uv(1, 0).endVertex();
+        buffer.vertex(x + width, y, 0.0D).uv(1, 1).endVertex();
+        buffer.vertex(x, y, 0.0D).uv(0, 1).endVertex();
+        tesselator.end();
     }
 
-    @SideOnly(Side.CLIENT)
-    public static List<Vec2f> genBezierPoints(Vec2f from, Vec2f to, boolean horizontal, float u) {
-        Vec2f c1;
-        Vec2f c2;
+    public static List<Vec2> genBezierPoints(Vec2 from, Vec2 to, boolean horizontal, float u) {
+        Vec2 c1;
+        Vec2 c2;
         if (horizontal) {
-            c1 = new Vec2f((from.x + to.x) / 2, from.y);
-            c2 = new Vec2f((from.x + to.x) / 2, to.y);
+            c1 = new Vec2((from.x + to.x) / 2, from.y);
+            c2 = new Vec2((from.x + to.x) / 2, to.y);
         } else {
-            c1 = new Vec2f(from.x, (from.y + to.y) / 2);
-            c2 = new Vec2f(to.x, (from.y + to.y) / 2);
+            c1 = new Vec2(from.x, (from.y + to.y) / 2);
+            c2 = new Vec2(to.x, (from.y + to.y) / 2);
         }
-        Vec2f[] controlPoint = new Vec2f[]{from, c1, c2, to};
+        Vec2[] controlPoint = new Vec2[]{from, c1, c2, to};
         int n = controlPoint.length - 1;
         int i, r;
-        List<Vec2f> bezierPoints = new ArrayList<>();
+        List<Vec2> bezierPoints = new ArrayList<>();
         for (u = 0; u <= 1; u += 0.01) {
-            Vec2f[] p = new Vec2f[n + 1];
+            Vec2[] p = new Vec2[n + 1];
             for (i = 0; i <= n; i++) {
-                p[i] = new Vec2f(controlPoint[i].x, controlPoint[i].y);
+                p[i] = new Vec2(controlPoint[i].x, controlPoint[i].y);
             }
             for (r = 1; r <= n; r++) {
                 for (i = 0; i <= n - r; i++) {
-                    p[i] = new Vec2f((1 - u) * p[i].x + u * p[i + 1].x, (1 - u) * p[i].y + u * p[i + 1].y);
+                    p[i] = new Vec2((1 - u) * p[i].x + u * p[i + 1].x, (1 - u) * p[i].y + u * p[i + 1].y);
                 }
             }
             bezierPoints.add(p[0]);
@@ -571,17 +551,14 @@ public abstract class Widget {
         return bezierPoints;
     }
 
-    @SideOnly(Side.CLIENT)
     protected void playButtonClickSound() {
-        Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        Minecraft.getInstance().getSoundManager().play(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
-    @SideOnly(Side.CLIENT)
     protected boolean isShiftDown() {
         return TooltipHelper.isShiftDown();
     }
 
-    @SideOnly(Side.CLIENT)
     protected boolean isCtrlDown() {
         return TooltipHelper.isCtrlDown();
     }
@@ -591,7 +568,7 @@ public abstract class Widget {
     }
 
     protected static boolean isClientSide() {
-        return FMLCommonHandler.instance().getSide().isClient();
+        return FMLLoader.getDist().isClient();
     }
 
     public static final class ClickData {
@@ -614,14 +591,14 @@ public abstract class Widget {
             this.isClient = isClient;
         }
 
-        public void writeToBuf(PacketBuffer buf) {
+        public void writeToBuf(FriendlyByteBuf buf) {
             buf.writeVarInt(button);
             buf.writeBoolean(isShiftClick);
             buf.writeBoolean(isCtrlClick);
             buf.writeBoolean(isClient);
         }
 
-        public static ClickData readFromBuf(PacketBuffer buf) {
+        public static ClickData readFromBuf(FriendlyByteBuf buf) {
             int button = buf.readVarInt();
             boolean shiftClick = buf.readBoolean();
             boolean ctrlClick = buf.readBoolean();
@@ -650,14 +627,14 @@ public abstract class Widget {
             this.isClient = isClient;
         }
 
-        public void writeToBuf(PacketBuffer buf) {
+        public void writeToBuf(FriendlyByteBuf buf) {
             buf.writeVarInt(wheelDelta);
             buf.writeBoolean(isShiftClick);
             buf.writeBoolean(isCtrlClick);
             buf.writeBoolean(isClient);
         }
 
-        public static WheelData readFromBuf(PacketBuffer buf) {
+        public static WheelData readFromBuf(FriendlyByteBuf buf) {
             int button = buf.readVarInt();
             boolean shiftClick = buf.readBoolean();
             boolean ctrlClick = buf.readBoolean();

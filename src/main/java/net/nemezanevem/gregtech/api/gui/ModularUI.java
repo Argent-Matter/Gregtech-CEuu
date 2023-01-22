@@ -1,12 +1,21 @@
 package net.nemezanevem.gregtech.api.gui;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.gui.components.Widget;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.gui.impl.ModularUIGui;
+import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.gui.widgets.*;
 import net.nemezanevem.gregtech.api.util.Position;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 /**
  * ModularUI is user-interface implementation concrete, based on widgets system
@@ -35,9 +44,9 @@ public final class ModularUI implements ISizeProvider {
      * UIHolder of this modular UI
      */
     public final IUIHolder holder;
-    public final Player Player;
+    public final Player player;
 
-    public ModularUI(ImmutableBiMap<Integer, Widget> guiWidgets, ImmutableList<Runnable> openListeners, ImmutableList<Runnable> closeListeners, IGuiTexture backgroundPath, int width, int height, IUIHolder holder, Player Player) {
+    public ModularUI(ImmutableBiMap<Integer, Widget> guiWidgets, ImmutableList<Runnable> openListeners, ImmutableList<Runnable> closeListeners, IGuiTexture backgroundPath, int width, int height, IUIHolder holder, Player player) {
         this.guiWidgets = guiWidgets;
         this.uiOpenCallback = openListeners;
         this.uiCloseCallback = closeListeners;
@@ -45,7 +54,7 @@ public final class ModularUI implements ISizeProvider {
         this.width = width;
         this.height = height;
         this.holder = holder;
-        this.Player = Player;
+        this.player = player;
     }
 
     public ModularUIGui getModularUIGui() {
@@ -205,29 +214,29 @@ public final class ModularUI implements ISizeProvider {
         }
 
         // todo this shouldn't exist, only RecipeProgressWidget should directly take a DoubleSupplier
-        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, MoveType moveType) {
+        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType) {
             return widget(new ProgressWidget(progressSupplier, x, y, width, height, texture, moveType));
         }
 
-        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, MoveType moveType, RecipeMap<?> recipeMap) {
+        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType, RecipeMap<?> recipeMap) {
             return widget(new RecipeProgressWidget(progressSupplier, x, y, width, height, texture, moveType, recipeMap));
         }
 
-        public Builder bindPlayerInventory(InventoryPlayer inventoryPlayer) {
+        public Builder bindPlayerInventory(Inventory inventoryPlayer) {
             bindPlayerInventory(inventoryPlayer, GuiTextures.SLOT, 0);
             return this;
         }
 
-        public Builder bindPlayerInventory(InventoryPlayer inventoryPlayer, int startY) {
+        public Builder bindPlayerInventory(Inventory inventoryPlayer, int startY) {
             bindPlayerInventory(inventoryPlayer, GuiTextures.SLOT, 7, startY);
             return this;
         }
 
-        public Builder bindPlayerInventory(InventoryPlayer inventoryPlayer, IGuiTexture imageLocation, int yOffset) {
+        public Builder bindPlayerInventory(Inventory inventoryPlayer, IGuiTexture imageLocation, int yOffset) {
             return bindPlayerInventory(inventoryPlayer, imageLocation, 7, 84 + yOffset);
         }
 
-        public Builder bindPlayerInventory(InventoryPlayer inventoryPlayer, IGuiTexture imageLocation, int x, int y) {
+        public Builder bindPlayerInventory(Inventory inventoryPlayer, IGuiTexture imageLocation, int x, int y) {
             for (int row = 0; row < 3; row++) {
                 for (int col = 0; col < 9; col++) {
                     this.widget(new SlotWidget(inventoryPlayer, col + (row + 1) * 9, x + col * 18, y + row * 18)
@@ -238,7 +247,7 @@ public final class ModularUI implements ISizeProvider {
             return bindPlayerHotbar(inventoryPlayer, imageLocation, x, y + 58);
         }
 
-        public Builder bindPlayerHotbar(InventoryPlayer inventoryPlayer, IGuiTexture imageLocation, int x, int y) {
+        public Builder bindPlayerHotbar(Inventory inventoryPlayer, IGuiTexture imageLocation, int x, int y) {
             for (int slot = 0; slot < 9; slot++) {
                 this.widget(new SlotWidget(inventoryPlayer, slot, x + slot * 18, y)
                         .setBackgroundTexture(imageLocation)

@@ -3,18 +3,27 @@ package net.nemezanevem.gregtech.api.gui;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
+import net.minecraftforge.network.NetworkDirection;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.gui.impl.ModularUIContainer;
+import net.nemezanevem.gregtech.api.gui.impl.ModularUIGui;
+import net.nemezanevem.gregtech.api.registry.gui.UIFactoryRegistry;
+import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implement and register on the {@link GregTechAPI.RegisterEvent<UIFactory>} event to be able to create and open ModularUI's
+ * Implement and register in the {@link UIFactoryRegistry#UI_FACTORIES} to be able to create and open ModularUI's
  * createUITemplate should return equal gui both on server and client side, or sync will break!
  *
  * @param <E> UI holder type
@@ -39,7 +48,6 @@ public abstract class UIFactory<E extends IUIHolder> {
 
         FriendlyByteBuf serializedHolder = new FriendlyByteBuf(Unpooled.buffer());
         writeHolderToSyncData(serializedHolder, holder);
-        int uiFactoryId = GregTechAPI.UI_FACTORY_REGISTRY.getIDForObject(this);
 
         ModularUIContainer container = new ModularUIContainer(uiTemplate);
         container.windowId = currentWindowId;
@@ -50,8 +58,8 @@ public abstract class UIFactory<E extends IUIHolder> {
         ArrayList<PacketUIWidgetUpdate> updateData = new ArrayList<>(container.accumulatedUpdates);
         container.accumulatedUpdates.clear();
 
-        PacketUIOpen packet = new PacketUIOpen(uiFactoryId, serializedHolder, currentWindowId, updateData);
-        GregTechAPI.networkHandler.sendTo(packet, player);
+        ClientboundOpenScreenPacket packet = new PacketUIOpen(uiFactoryId, serializedHolder, currentWindowId, updateData);
+        GregTech.NETWORK_HANDLER.sendTo(packet, player.connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
 
         container.addListener(player);
         player.openContainer = container;
@@ -63,9 +71,9 @@ public abstract class UIFactory<E extends IUIHolder> {
     public final void initClientUI(FriendlyByteBuf serializedHolder, int windowId, List<PacketUIWidgetUpdate> initialWidgetUpdates) {
         E holder = readHolderFromSyncData(serializedHolder);
         Minecraft minecraft = Minecraft.getMinecraft();
-        PlayerSP Player = minecraft.player;
+        LocalPlayer player = minecraft.player;
 
-        ModularUI uiTemplate = createUITemplate(holder, Player);
+        ModularUI uiTemplate = createUITemplate(holder, player);
         uiTemplate.initWidgets();
         ModularUIGui modularUIGui = new ModularUIGui(uiTemplate);
         modularUIGui.inventorySlots.windowId = windowId;
