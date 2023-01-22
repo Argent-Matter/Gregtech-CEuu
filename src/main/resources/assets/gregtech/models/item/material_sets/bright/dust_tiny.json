@@ -1,0 +1,6 @@
+{
+  "parent": "gregtech:item/material_sets/shiny/dust_tiny",
+  "textures": {
+    "layer1": "gregtech:items/material_sets/bright/dust_tiny_overlay"
+  }
+}

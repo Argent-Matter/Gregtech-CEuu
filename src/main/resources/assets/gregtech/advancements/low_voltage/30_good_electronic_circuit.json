@@ -1,0 +1,29 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.low_voltage.30_good_electronic_circuit.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.low_voltage.30_good_electronic_circuit.name"
+    },
+    "icon": {
+      "item": "gregtech:meta_item_1",
+      "data": 622
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "gregtech:meta_item_1",
+            "data": 622
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:low_voltage/root_lv"
+}

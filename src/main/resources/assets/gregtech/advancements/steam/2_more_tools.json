@@ -1,0 +1,27 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.steam.2_more_tools.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.steam.2_more_tools.name"
+    },
+    "icon": {
+      "item": "gregtech:wrench"
+    }
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "type": "forge:ore_dict",
+            "ore": "craftingToolWrench"
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:steam/1_first_tools"
+}
