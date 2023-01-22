@@ -13,7 +13,8 @@ public class GtFluidTypes {
 
     public static final RegistryObject<FluidType> LIQUID = FLUID_TYPES.register("liquid", () -> new FluidType(
             FluidType.Properties.create()
-                    .pathType(BlockPathTypes.BREACH)
+                    .pathType(BlockPathTypes.WATER)
+                    .adjacentPathType(BlockPathTypes.WATER_BORDER)
                     .canDrown(true)
                     .canSwim(true)
                     .density(1)
@@ -21,10 +22,31 @@ public class GtFluidTypes {
             ));
 
 
-    public static final FluidType ACID = new FluidTypeAcid("acid", null, null, "gregtech.fluid.generic");
+    public static final RegistryObject<FluidType> ACID = FLUID_TYPES.register("acid", () -> new FluidType(
+            FluidType.Properties.create()
+                    .pathType(BlockPathTypes.DANGER_OTHER)
+                    .canDrown(true)
+                    .canSwim(true)
+                    .density(1)
+    ));
 
-    public static final FluidType GAS = new FluidTypeGas("gas", null, null, "gregtech.fluid.generic");
+    public static final RegistryObject<FluidType> GAS = FLUID_TYPES.register("gas", () -> new FluidType(
+            FluidType.Properties.create()
+                    .pathType(BlockPathTypes.OPEN)
+                    .canDrown(true)
+                    .canSwim(false)
+                    .density(-1)
+                    .canPushEntity(false)
+    ));
 
-    public static final FluidType PLASMA = new FluidTypePlasma("plasma", "plasma", null, "gregtech.fluid.plasma");
+    public static final RegistryObject<FluidType> PLASMA = FLUID_TYPES.register("plasma", () -> new FluidType(
+            FluidType.Properties.create()
+                    .pathType(BlockPathTypes.OPEN)
+                    .canDrown(true)
+                    .canSwim(false)
+                    .density(-1)
+                    .canPushEntity(false)
+    ));
+
 }
 

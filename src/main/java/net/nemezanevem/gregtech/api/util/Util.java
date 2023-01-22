@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.util;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
@@ -60,5 +62,8 @@ public class Util {
     }
     public static ResourceLocation getId(PropertyKey<?> key) {
         return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getKey(key);
+    }
+    public static ResourceLocation getId(Item key) {
+        return ForgeRegistries.ITEMS.getKey(key);
     }
 }

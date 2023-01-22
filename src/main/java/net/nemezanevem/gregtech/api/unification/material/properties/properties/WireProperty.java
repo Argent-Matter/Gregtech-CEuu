@@ -5,6 +5,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialPr
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
+import net.nemezanevem.gregtech.api.util.GTValues;
 
 import java.util.Objects;
 

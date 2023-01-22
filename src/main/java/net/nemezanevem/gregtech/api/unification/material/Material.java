@@ -3,10 +3,12 @@ package net.nemezanevem.gregtech.api.unification.material;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidType;
+import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
@@ -14,6 +16,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialPro
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
+import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.*;
@@ -23,6 +26,7 @@ import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class Material implements Comparable<Material> {
 
@@ -96,6 +100,14 @@ public class Material implements Comparable<Material> {
         this.properties = properties;
         this.flags = flags;
         this.properties.setMaterial(this);
+    }
+
+    // thou shall not call
+    protected Material(String name) {
+        materialInfo = new MaterialInfo(name);
+        materialInfo.iconSet = GtMaterialIconSets.DULL.get();
+        properties = new MaterialProperties();
+        flags = new MaterialFlags();
     }
 
     public void addFlags(MaterialFlag... flags) {
@@ -249,16 +261,16 @@ public class Material implements Comparable<Material> {
         return prop == null ? null : prop.getPlasma(amount);
     }
 
-    public String toCamelCaseString() {
-        return Util.lowerUnderscoreToUpperCamel(toString());
+    public String toLowerUnderscoreString() {
+        return Util.toLowerCaseUnderscore(toString());
     }
 
     public String getUnlocalizedName() {
         return "material." + materialInfo.name;
     }
 
-    public String getLocalizedName() {
-        return Component.translatable(getUnlocalizedName()).getString();
+    public MutableComponent getLocalizedName() {
+        return Component.translatable(getUnlocalizedName());
     }
 
     @Override
@@ -668,13 +680,13 @@ public class Material implements Comparable<Material> {
          * @param f2 An Array of {@link MaterialFlag}. If no {@link Collection} is required, use {@link Builder#flags(MaterialFlag...)}.
          */
         public Builder flags(Collection<MaterialFlag> f1, MaterialFlag... f2) {
-            this.flags.addFlags(f1.toArray(new MaterialFlag[0]));
+            this.flags.addFlags(f1.toArray(MaterialFlag[]::new));
             this.flags.addFlags(f2);
             return this;
         }
 
-        public Builder element(Element element) {
-            this.materialInfo.element = element;
+        public Builder element(RegistryObject<Element> element) {
+            this.materialInfo.element = element.get();
             return this;
         }
 
@@ -899,16 +911,16 @@ public class Material implements Comparable<Material> {
             // Verify IconSet
             if (iconSet == null) {
                 if (props.hasProperty(GtMaterialProperties.GEM.get())) {
-                    iconSet = MaterialIconSet.GEM_VERTICAL;
+                    iconSet = GtMaterialIconSets.GEM_VERTICAL.get();
                 } else if (props.hasProperty(GtMaterialProperties.DUST.get()) || props.hasProperty(GtMaterialProperties.INGOT.get()) || props.hasProperty(GtMaterialProperties.POLYMER.get())) {
-                    iconSet = MaterialIconSet.DULL;
+                    iconSet = GtMaterialIconSets.DULL.get();
                 } else if (props.hasProperty(GtMaterialProperties.FLUID.get())) {
                     if (props.<FluidProperty>getProperty(GtMaterialProperties.FLUID.get()).isGas()) {
-                        iconSet = MaterialIconSet.GAS;
-                    } else iconSet = MaterialIconSet.FLUID;
+                        iconSet = GtMaterialIconSets.GAS.get();
+                    } else iconSet = GtMaterialIconSets.FLUID.get();
                 } else if (props.hasProperty(GtMaterialProperties.PLASMA.get()))
-                    iconSet = MaterialIconSet.FLUID;
-                else iconSet = MaterialIconSet.DULL;
+                    iconSet = GtMaterialIconSets.FLUID.get();
+                else iconSet = GtMaterialIconSets.DULL.get();
             }
 
             // Verify MaterialRGB

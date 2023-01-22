@@ -270,4 +270,6 @@ public class GtMaterialFlags {
             .requireProps(GtMaterialProperties.GEM.get(), GtMaterialProperties.ORE.get())
             .build()
     );
+
+    public static void init() {}
 }

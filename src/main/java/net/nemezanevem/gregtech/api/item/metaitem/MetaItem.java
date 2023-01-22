@@ -1,0 +1,896 @@
+package net.nemezanevem.gregtech.api.item.metaitem;
+
+import com.google.common.collect.ImmutableList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.RegistryObject;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
+import net.nemezanevem.gregtech.api.item.stats.IItemComponent;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
+import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.List;
+
+/**
+ * MetaItem is item that can have up to Short.MAX_VALUE items inside one id.
+ * These items even can be edible, have custom behaviours, be electric or act like fluid containers!
+ * They can also have different burn time, plus be handheld, oredicted or invisible!
+ * They also can be reactor components.
+ * <p>
+ * You can also extend this class and occupy some of it's MetaData, and just pass an meta offset in constructor, and everything will work properly.
+ * <p>
+ * Items are added in MetaItem via {@link #addItem(int, String)}. You will get {@link ExtendedProperties} instance, which you can configure in builder-alike pattern:
+ * {@code addItem(0, "test_item").addStats(new ElectricStats(10000, 1,  false)) }
+ * This will add single-use (not rechargeable) LV battery with initial capacity 10000 EU
+ */
+public abstract class MetaItem extends Item implements ItemUIFactory {
+
+    private static final List<MetaItem> META_ITEMS = new ArrayList<>();
+
+    public static List<MetaItem> getMetaItems() {
+        return Collections.unmodifiableList(META_ITEMS);
+    }
+
+    protected final Map<ResourceLocation, MetaItem> metaItems = new HashMap<>();
+    private final Map<String, MetaItem> names = new Object2ObjectOpenHashMap<>();
+    protected final Map<ResourceLocation, ModelResourceLocation> metaItemsModels = new HashMap<>();
+    protected final Map<ResourceLocation, ModelResourceLocation[]> specialItemsModels = new HashMap<>();
+    protected static final ModelResourceLocation MISSING_LOCATION = new ModelResourceLocation("builtin/missing", "inventory");
+
+    public MetaItem() {
+        super(new Properties());
+        META_ITEMS.add(this);
+    }
+
+    @SubscribeEvent
+    public static void registerItemColors(final RegisterColorHandlersEvent.Item event) {
+        for(var item : getMetaItems()) {
+            event.register(item::getColorForItemStack, item);
+        }
+    }
+
+    public void registerModels() {
+        for (var itemMetaKey : metaItems.keySet()) {
+            MetaItem metaValueItem = metaItems.get(itemMetaKey);
+            int numberOfModels = metaValueItem.getModelAmount();
+            if (numberOfModels > 1) {
+                ModelResourceLocation[] resourceLocations = new ModelResourceLocation[numberOfModels];
+                for (int i = 0; i < resourceLocations.length; i++) {
+                    ResourceLocation resourceLocation = createItemModelPath(metaValueItem, "/" + (i + 1));
+                    resourceLocations[i] = new ModelResourceLocation(resourceLocation, "inventory");
+                    Minecraft.getInstance().getItemRenderer().getItemModelShaper().register(this, resourceLocations[i]);
+                }
+                continue;
+            }
+            ResourceLocation resourceLocation = createItemModelPath(metaValueItem, "");
+            if (numberOfModels > 0) {
+                Minecraft.getInstance().getItemRenderer().getItemModelShaper().register(this, new ModelResourceLocation(resourceLocation, "inventory"));
+            }
+            metaItemsModels.put(itemMetaKey, new ModelResourceLocation(resourceLocation, "inventory"));
+        }
+    }
+
+    public ResourceLocation createItemModelPath(MetaItem metaValueItem, String postfix) {
+        return new ResourceLocation(GregTech.MODID, formatModelPath(metaValueItem) + postfix);
+    }
+
+    protected String formatModelPath(MetaItem metaValueItem) {
+        return "metaitems/" + metaValueItem.unlocalizedName;
+    }
+
+    protected int getModelIndex(ItemStack itemStack) {
+        MetaItem metaItem = getItem(Util.getId(itemStack.getItem()).toString());
+
+        // Electric Items
+        IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (electricItem != null) {
+            return (int) Math.min(((electricItem.getCharge() / (electricItem.getMaxCharge() * 1.0)) * 7), 7);
+        }
+
+        // Integrated (Config) Circuit
+        if (metaItem != null) {
+            return IntCircuitIngredient.getCircuitConfiguration(itemStack);
+        }
+        return 0;
+    }
+
+    protected int getColorForItemStack(ItemStack stack, int tintIndex) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null && metaValueItem.getColorProvider() != null)
+            return metaValueItem.getColorProvider().getItemStackColor(stack, tintIndex);
+        return 0xFFFFFF;
+    }
+
+    @Override
+    public boolean showDurabilityBar(@Nonnull ItemStack stack) {
+        // meta items now handle durability bars via custom rendering
+        return false;
+    }
+
+    @Override
+    public double getDurabilityForDisplay(@Nonnull ItemStack stack) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null && metaValueItem.getDurabilityManager() != null) {
+            return metaValueItem.getDurabilityManager().getDurabilityForDisplay(stack);
+        }
+        return -1.0;
+    }
+
+    @Nonnull
+    @Override
+    @SuppressWarnings("deprecation")
+    public Rarity getRarity(@Nonnull ItemStack stack) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null && metaValueItem.getRarity() != null) return metaValueItem.getRarity();
+        else return super.getRarity(stack);
+    }
+
+    protected abstract ExtendedProperties constructMetaValueItem(ResourceLocation id, IForgeRegistry<Item> registry);
+
+    public final ExtendedProperties addItem(ResourceLocation id, IForgeRegistry<Item> registry) {
+        MetaItem metaValueItem = constructMetaValueItem(id, registry);
+        if (metaItems.containsKey(id)) {
+            MetaItem registeredItem = metaItems.get(id);
+            throw new IllegalArgumentException(String.format("MetaId %d is already occupied by item %s (requested by item %s)", id, registeredItem.unlocalizedName, unlocalizedName));
+        }
+        metaItems.put((short) id, metaValueItem);
+        names.put(unlocalizedName, metaValueItem);
+        return metaValueItem;
+    }
+
+    public final Collection<MetaItem> getAllItems() {
+        return Collections.unmodifiableCollection(metaItems.values());
+    }
+
+    public final MetaItem getItem(String valueName) {
+        return names.get(valueName);
+    }
+
+    protected short formatRawItemDamage(short metaValue) {
+        return metaValue;
+    }
+
+    public void registerSubItems() {
+    }
+
+    @Override
+    public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt) {
+        MetaItem metaValueItem = stack.getItem();
+        if (metaValueItem == null) {
+            return null;
+        }
+        ArrayList<ICapabilityProvider> providers = new ArrayList<>();
+        for (IItemComponent itemComponent : metaValueItem.getAllStats()) {
+            if (itemComponent instanceof IItemCapabilityProvider) {
+                IItemCapabilityProvider provider = (IItemCapabilityProvider) itemComponent;
+                providers.add(provider.createProvider(stack));
+            }
+        }
+        return new CombinedCapabilityProvider(providers);
+    }
+
+    //////////////////////////////////////////////////////////////////
+
+    @Override
+    public int getItemBurnTime(@Nonnull ItemStack itemStack) {
+        MetaItem metaValueItem = getItem(itemStack);
+        if (metaValueItem == null) {
+            return super.getItemBurnTime(itemStack);
+        }
+        return metaValueItem.getBurnValue();
+    }
+
+    //////////////////////////////////////////////////////////////////
+    //      Behaviours and Use Manager Implementation               //
+    //////////////////////////////////////////////////////////////////
+
+    private IItemUseManager getUseManager(ItemStack itemStack) {
+        MetaItem metaValueItem = getItem(itemStack);
+        if (metaValueItem == null) {
+            return null;
+        }
+        return metaValueItem.getUseManager();
+    }
+
+    public List<IItemBehaviour> getBehaviours(ItemStack itemStack) {
+        MetaItem metaValueItem = getItem(itemStack);
+        if (metaValueItem == null) {
+            return ImmutableList.<IItemBehaviour>of();
+        }
+        return metaValueItem.getBehaviours();
+    }
+
+    @Override
+    public int getItemStackLimit(@Nonnull ItemStack stack) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem == null) {
+            return 64;
+        }
+        return metaValueItem.getMaxStackSize(stack);
+    }
+
+    @Nonnull
+    @Override
+    public UseAnim getUseAnimation(@Nonnull ItemStack stack) {
+        IItemUseManager useManager = getUseManager(stack);
+        if (useManager != null) {
+            return useManager.getUseAction(stack);
+        }
+        return UseAnim.NONE;
+    }
+
+    @Override
+    public int getMaxItemUseDuration(@Nonnull ItemStack stack) {
+        IItemUseManager useManager = getUseManager(stack);
+        if (useManager != null) {
+            return useManager.getMaxItemUseDuration(stack);
+        }
+        return 0;
+    }
+
+    @Override
+    public void onUsingTick(@Nonnull ItemStack stack, @Nonnull EntityLivingBase player, int count) {
+        if (player instanceof EntityPlayer) {
+            IItemUseManager useManager = getUseManager(stack);
+            if (useManager != null) {
+                useManager.onItemUsingTick(stack, (EntityPlayer) player, count);
+            }
+        }
+    }
+
+    @Override
+    public void onPlayerStoppedUsing(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase player, int timeLeft) {
+        if (player instanceof EntityPlayer) {
+            IItemUseManager useManager = getUseManager(stack);
+            if (useManager != null) {
+                useManager.onPlayerStoppedItemUsing(stack, (EntityPlayer) player, timeLeft);
+            }
+        }
+    }
+
+    @Nullable
+    @Override
+    public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase player) {
+        if (player instanceof EntityPlayer) {
+            IItemUseManager useManager = getUseManager(stack);
+            if (useManager != null) {
+                return useManager.onItemUseFinish(stack, (EntityPlayer) player);
+            }
+        }
+        return stack;
+    }
+
+    @Override
+    public boolean onLeftClickEntity(@Nonnull ItemStack stack, @Nonnull EntityPlayer player, @Nonnull Entity entity) {
+        boolean returnValue = false;
+        for (IItemBehaviour behaviour : getBehaviours(stack)) {
+            if (behaviour.onLeftClickEntity(stack, player, entity)) {
+                returnValue = true;
+            }
+        }
+        return returnValue;
+    }
+
+    @Override
+    public boolean itemInteractionForEntity(@Nonnull ItemStack stack, @Nonnull EntityPlayer playerIn, @Nonnull EntityLivingBase target, @Nonnull EnumHand hand) {
+        boolean returnValue = false;
+        for (IItemBehaviour behaviour : getBehaviours(stack)) {
+            if (behaviour.itemInteractionForEntity(stack, playerIn, target, hand)) {
+                returnValue = true;
+            }
+        }
+        return returnValue;
+    }
+
+    @Nonnull
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, EntityPlayer player, @Nonnull EnumHand hand) {
+        ItemStack itemStack = player.getHeldItem(hand);
+        for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
+            ActionResult<ItemStack> behaviourResult = behaviour.onItemRightClick(world, player, hand);
+            itemStack = behaviourResult.getResult();
+            if (behaviourResult.getType() != EnumActionResult.PASS) {
+                return ActionResult.newResult(behaviourResult.getType(), itemStack);
+            } else if (itemStack.isEmpty()) {
+                return ActionResult.newResult(EnumActionResult.PASS, ItemStack.EMPTY);
+            }
+        }
+        IItemUseManager useManager = getUseManager(itemStack);
+        if (useManager != null && useManager.canStartUsing(itemStack, player)) {
+            useManager.onItemUseStart(itemStack, player);
+            player.setActiveHand(hand);
+            return ActionResult.newResult(EnumActionResult.SUCCESS, itemStack);
+        }
+        return ActionResult.newResult(EnumActionResult.PASS, itemStack);
+    }
+
+    @Nonnull
+    @Override
+    public EnumActionResult onItemUseFirst(EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ, @Nonnull EnumHand hand) {
+        ItemStack itemStack = player.getHeldItem(hand);
+        for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
+            EnumActionResult behaviourResult = behaviour.onItemUseFirst(player, world, pos, side, hitX, hitY, hitZ, hand);
+            if (behaviourResult != EnumActionResult.PASS) {
+                return behaviourResult;
+            } else if (itemStack.isEmpty()) {
+                return EnumActionResult.PASS;
+            }
+        }
+        return EnumActionResult.PASS;
+    }
+
+    @Nonnull
+    @Override
+    public EnumActionResult onItemUse(EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
+        ItemStack stack = player.getHeldItem(hand);
+        ItemStack originalStack = stack.copy();
+        for (IItemBehaviour behaviour : getBehaviours(stack)) {
+            ActionResult<ItemStack> behaviourResult = behaviour.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+            stack = behaviourResult.getResult();
+            if (behaviourResult.getType() != EnumActionResult.PASS) {
+                if (!ItemStack.areItemStacksEqual(originalStack, stack))
+                    player.setHeldItem(hand, stack);
+                return behaviourResult.getType();
+            } else if (stack.isEmpty()) {
+                player.setHeldItem(hand, ItemStack.EMPTY);
+                return EnumActionResult.PASS;
+            }
+        }
+        return EnumActionResult.PASS;
+    }
+
+    @Nonnull
+    @Override
+    public Multimap<String, AttributeModifier> getAttributeModifiers(@Nonnull EntityEquipmentSlot slot, @Nonnull ItemStack stack) {
+        HashMultimap<String, AttributeModifier> modifiers = HashMultimap.create();
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null) {
+            for (IItemBehaviour behaviour : getBehaviours(stack)) {
+                modifiers.putAll(behaviour.getAttributeModifiers(slot, stack));
+            }
+        }
+        return modifiers;
+    }
+
+    @Override
+    public boolean isEnchantable(@Nonnull ItemStack stack) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null) {
+            IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
+            return helper != null && helper.isEnchantable(stack);
+        }
+        return super.isEnchantable(stack);
+    }
+
+    @Override
+    public int getItemEnchantability(@Nonnull ItemStack stack) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null) {
+            IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
+            return helper == null ? 0 : helper.getItemEnchantability(stack);
+        }
+        return super.getItemEnchantability(stack);
+    }
+
+    @Override
+    public boolean canApplyAtEnchantingTable(@Nonnull ItemStack stack, @Nonnull Enchantment enchantment) {
+        MetaItem metaValueItem = getItem(stack);
+        if (metaValueItem != null) {
+            IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
+            return helper != null && helper.canApplyAtEnchantingTable(stack, enchantment);
+        }
+        return super.canApplyAtEnchantingTable(stack, enchantment);
+    }
+
+    @Override
+    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World worldIn, @Nonnull Entity entityIn, int itemSlot, boolean isSelected) {
+        for (IItemBehaviour behaviour : getBehaviours(stack)) {
+            behaviour.onUpdate(stack, entityIn);
+        }
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(@Nonnull ItemStack oldStack, @Nonnull ItemStack newStack, boolean slotChanged) {
+        //if item is equal, and old item has electric item capability, remove charge tags to stop reequip animation when charge is altered
+        if (ItemStack.areItemsEqual(oldStack, newStack) && oldStack.hasCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null) &&
+                oldStack.hasTagCompound() && newStack.hasTagCompound()) {
+            oldStack = oldStack.copy();
+            newStack = newStack.copy();
+            oldStack.getTagCompound().removeTag("Charge");
+            newStack.getTagCompound().removeTag("Charge");
+            if (oldStack.getTagCompound().hasKey("terminal")) {
+                oldStack.getTagCompound().getCompoundTag("terminal").getCompoundTag("_hw").removeTag("battery");
+                newStack.getTagCompound().getCompoundTag("terminal").getCompoundTag("_hw").removeTag("battery");
+            }
+        }
+        return !ItemStack.areItemStacksEqual(oldStack, newStack);
+    }
+
+    @Override
+    public String getTranslationKey(ItemStack stack) {
+        MetaItem metaItem = getItem(stack);
+        return metaItem == null ? getTranslationKey() : getTranslationKey() + "." + metaItem.unlocalizedName;
+    }
+
+    @Nonnull
+    @Override
+    public String displa(ItemStack stack) {
+        if (stack.getItemDamage() >= metaItemOffset) {
+            MetaItem item = getItem(stack);
+            if (item == null) {
+                return "invalid item";
+            }
+            String unlocalizedName = String.format("metaitem.%s.name", item.unlocalizedName);
+            if (item.getNameProvider() != null) {
+                return item.getNameProvider().getItemStackDisplayName(stack, unlocalizedName);
+            }
+            IFluidHandlerItem fluidHandlerItem = ItemHandlerHelper.copyStackWithSize(stack, 1)
+                    .getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
+            if (fluidHandlerItem != null) {
+                FluidStack fluidInside = fluidHandlerItem.drain(Integer.MAX_VALUE, false);
+                return LocalizationUtils.format(unlocalizedName, fluidInside == null ?
+                        LocalizationUtils.format("metaitem.fluid_cell.empty") :
+                        fluidInside.getLocalizedName());
+            }
+            return LocalizationUtils.format(unlocalizedName);
+        }
+        return super.getItemStackDisplayName(stack);
+    }
+
+    @Override
+    public void appendHoverText(@Nonnull ItemStack itemStack, @Nullable Level worldIn, @Nonnull List<Component> lines, @Nonnull TooltipFlag pIsAdvanced) {
+        MetaItem item = getItem(itemStack);
+        if (item == null) return;
+        var unlocalizedTooltip = Component.translatable("metaitem." + item.unlocalizedName + ".tooltip");
+        if (ComponentUtils.isTranslationResolvable(unlocalizedTooltip)) {
+            lines.add(unlocalizedTooltip);
+        }
+
+        IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (electricItem != null) {
+            if (electricItem.canProvideChargeExternally()) {
+                addDischargeItemTooltip(lines, electricItem.getMaxCharge(), electricItem.getCharge(), electricItem.getTier());
+            } else {
+                lines.add(I18n.format("metaitem.generic.electric_item.tooltip",
+                        electricItem.getCharge(),
+                        electricItem.getMaxCharge(),
+                        GTValues.VNF[electricItem.getTier()]));
+            }
+        }
+
+        IFluidHandlerItem fluidHandler = ItemHandlerHelper.copyStackWithSize(itemStack, 1)
+                .getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
+        if (fluidHandler != null) {
+            IFluidTankProperties fluidTankProperties = fluidHandler.getTankProperties()[0];
+            FluidStack fluid = fluidTankProperties.getContents();
+
+            lines.add(I18n.format("metaitem.generic.fluid_container.tooltip",
+                    fluid == null ? 0 : fluid.amount,
+                    fluidTankProperties.getCapacity(),
+                    fluid == null ? "" : fluid.getLocalizedName()));
+
+            if (fluidHandler instanceof IThermalFluidHandlerItemStack) {
+                IThermalFluidHandlerItemStack thermalFluidHandler = (IThermalFluidHandlerItemStack) fluidHandler;
+                if (TooltipHelper.isShiftDown()) {
+                    lines.add(I18n.format("gregtech.fluid_pipe.max_temperature", thermalFluidHandler.getMaxFluidTemperature()));
+                    if (thermalFluidHandler.isGasProof()) lines.add(I18n.format("gregtech.fluid_pipe.gas_proof"));
+                    if (thermalFluidHandler.isAcidProof()) lines.add(I18n.format("gregtech.fluid_pipe.acid_proof"));
+                    if (thermalFluidHandler.isCryoProof()) lines.add(I18n.format("gregtech.fluid_pipe.cryo_proof"));
+                    if (thermalFluidHandler.isPlasmaProof()) lines.add(I18n.format("gregtech.fluid_pipe.plasma_proof"));
+                } else if (thermalFluidHandler.isGasProof() || thermalFluidHandler.isAcidProof() || thermalFluidHandler.isCryoProof() || thermalFluidHandler.isPlasmaProof()) {
+                    lines.add(I18n.format("gregtech.tooltip.fluid_pipe_hold_shift"));
+                }
+            }
+        }
+
+        for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
+            behaviour.addInformation(itemStack, lines);
+        }
+
+        if (ConfigHolder.misc.debug) {
+            lines.add("MetaItem Id: " + item.unlocalizedName);
+        }
+    }
+
+    private static void addDischargeItemTooltip(List<String> tooltip, long maxCharge, long currentCharge, int tier) {
+        if (currentCharge == 0) { // do not display when empty
+            tooltip.add(I18n.format("metaitem.generic.electric_item.tooltip", currentCharge, maxCharge, GTValues.VNF[tier]));
+            return;
+        }
+        Instant start = Instant.now();
+        Instant end = Instant.now().plusSeconds((long) ((currentCharge * 1.0) / GTValues.V[tier] / 20));
+        Duration duration = Duration.between(start, end);
+        double percentRemaining = currentCharge * 1.0 / maxCharge * 100; // used for color
+
+        long timeRemaining;
+        String unit;
+        if (duration.getSeconds() <= 180) {
+            timeRemaining = duration.getSeconds();
+            unit = I18n.format("metaitem.battery.charge_unit.second");
+        } else if (duration.toMinutes() <= 180) {
+            timeRemaining = duration.toMinutes();
+            unit = I18n.format("metaitem.battery.charge_unit.minute");
+        } else {
+            timeRemaining = duration.toHours();
+            unit = I18n.format("metaitem.battery.charge_unit.hour");
+        }
+        tooltip.add(I18n.format("metaitem.battery.charge_detailed", currentCharge, maxCharge, GTValues.VNF[tier],
+                percentRemaining < 30 ? 'c' : percentRemaining < 60 ? 'e' : 'a',
+                timeRemaining, unit));
+    }
+
+    @Override
+    public boolean hasContainerItem(@Nonnull ItemStack itemStack) {
+        MetaItem item = getItem(itemStack);
+        if (item == null) {
+            return false;
+        }
+        return item.getContainerItemProvider() != null;
+    }
+
+    @Nonnull
+    @Override
+    public ItemStack getContainerItem(@Nonnull ItemStack itemStack) {
+        MetaItem item = getItem(itemStack);
+        if (item == null) {
+            return ItemStack.EMPTY;
+        }
+        itemStack = itemStack.copy();
+        itemStack.setCount(1);
+        IItemContainerItemProvider provider = item.getContainerItemProvider();
+        return provider == null ? ItemStack.EMPTY : provider.getContainerItem(itemStack);
+    }
+
+    @Nonnull
+    @Override
+    public Collection<CreativeModeTab> getCreativeTabs() {
+        return new CreativeModeTab[]{GregTech.TAB_GREGTECH, GregTechAPI.TAB_GREGTECH_MATERIALS};
+    }
+
+    @Override
+    public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> subItems) {
+        if (tab != GregTechAPI.TAB_GREGTECH && tab != CreativeTabs.SEARCH) {
+            return;
+        }
+        for (MetaItem enabledItem : metaItems.values()) {
+            if (!enabledItem.isVisible())
+                continue;
+            ItemStack itemStack = enabledItem.getStackForm();
+            enabledItem.getSubItemHandler().getSubItems(itemStack, tab, subItems);
+        }
+    }
+
+    @Override
+    public ModularUI createUI(PlayerInventoryHolder holder, EntityPlayer entityPlayer) {
+        ItemStack itemStack = holder.getCurrentItem();
+        MetaItem metaValueItem = getItem(itemStack);
+        ItemUIFactory uiFactory = metaValueItem == null ? null : metaValueItem.getUIManager();
+        return uiFactory == null ? null : uiFactory.createUI(holder, entityPlayer);
+    }
+
+    // IOverlayRenderAware
+    @Override
+    public void renderItemOverlayIntoGUI(@Nonnull ItemStack stack, int xPosition, int yPosition) {
+        ToolChargeBarRenderer.renderBarsItem(this, stack, xPosition, yPosition);
+    }
+
+    public class ExtendedProperties extends Item.Properties {
+        public final String unlocalizedName;
+        private IItemNameProvider nameProvider;
+        private IItemMaxStackSizeProvider stackSizeProvider;
+        private IItemContainerItemProvider containerItemProvider;
+
+        private final List<IItemComponent> allStats = new ArrayList<>();
+        private final List<IItemBehaviour> behaviours = new ArrayList<>();
+        private IItemUseManager useManager;
+        private ItemUIFactory uiManager;
+        private IItemColorProvider colorProvider;
+        private IItemDurabilityManager durabilityManager;
+        private IEnchantabilityHelper enchantabilityHelper;
+        private Rarity rarity;
+
+        private int burnValue = 0;
+        private boolean visible = true;
+        private int maxStackSize = 64;
+        private int modelAmount = 1;
+
+        private final ResourceLocation id;
+        private final IForgeRegistry<Item> registry;
+
+        protected ExtendedProperties(ResourceLocation id, IForgeRegistry<Item> registry) {
+            this.id = id;
+            this.registry = registry;
+        }
+
+        public MetaItem build() {
+            return new StandardMetaItem();
+        }
+
+        public ExtendedProperties setMaterialInfo(ItemMaterialInfo materialInfo) {
+            if (materialInfo == null) {
+                throw new IllegalArgumentException("Cannot add null ItemMaterialInfo.");
+            }
+            TagUnifier.registerTag(getMetaItem(), materialInfo);
+            return this;
+        }
+
+        public ExtendedProperties setUnificationData(TagPrefix prefix, @Nullable Material material) {
+            if (prefix == null) {
+                throw new IllegalArgumentException("Cannot add null OrePrefix.");
+            }
+            TagUnifier.registerTag(getMetaItem(), prefix, material);
+            return this;
+        }
+
+        public ExtendedProperties addTag(String oreDictName) {
+            if (oreDictName == null) {
+                throw new IllegalArgumentException("Cannot add null OreDictName.");
+            }
+            GtItemRegistry.addTagToItem(this.getMetaItem(), oreDictName);
+            return this;
+        }
+
+        public ExtendedProperties setInvisible(boolean isVisible) {
+            this.visible = isVisible;
+            return this;
+        }
+
+        public ExtendedProperties setInvisible() {
+            this.visible = false;
+            return this;
+        }
+
+        public ExtendedProperties setMaxStackSize(int maxStackSize) {
+            if (maxStackSize <= 0) {
+                throw new IllegalArgumentException("Cannot set Max Stack Size to negative or zero value.");
+            }
+            this.maxStackSize = maxStackSize;
+            return this;
+        }
+
+        public ExtendedProperties setBurnValue(int burnValue) {
+            if (burnValue <= 0) {
+                throw new IllegalArgumentException("Cannot set Burn Value to negative or zero number.");
+            }
+            this.burnValue = burnValue;
+            return this;
+        }
+
+        public ExtendedProperties disableModelLoading() {
+            this.modelAmount = 0;
+            return this;
+        }
+
+        public ExtendedProperties setModelAmount(int modelAmount) {
+            if (modelAmount <= 0) {
+                throw new IllegalArgumentException("Cannot set amount of models to negative or zero number.");
+            }
+            this.modelAmount = modelAmount;
+            return this;
+        }
+
+        public ExtendedProperties setRarity(Rarity rarity) {
+            this.rarity = rarity;
+            return this;
+        }
+
+        public ExtendedProperties addComponents(IItemComponent... stats) {
+            addItemComponentsInternal(stats);
+            return this;
+        }
+
+        protected void addItemComponentsInternal(IItemComponent... stats) {
+            for (IItemComponent itemComponent : stats) {
+                if (itemComponent instanceof IItemNameProvider) {
+                    this.nameProvider = (IItemNameProvider) itemComponent;
+                }
+                if (itemComponent instanceof IItemMaxStackSizeProvider) {
+                    this.stackSizeProvider = (IItemMaxStackSizeProvider) itemComponent;
+                }
+                if (itemComponent instanceof ISubItemHandler) {
+                    this.subItemHandler = (ISubItemHandler) itemComponent;
+                }
+                if (itemComponent instanceof IItemContainerItemProvider) {
+                    this.containerItemProvider = (IItemContainerItemProvider) itemComponent;
+                }
+                if (itemComponent instanceof IItemDurabilityManager) {
+                    this.durabilityManager = (IItemDurabilityManager) itemComponent;
+                }
+                if (itemComponent instanceof IItemUseManager) {
+                    this.useManager = (IItemUseManager) itemComponent;
+                }
+                if (itemComponent instanceof IFoodBehavior) {
+                    this.useManager = new FoodUseManager((IFoodBehavior) itemComponent);
+                }
+                if (itemComponent instanceof ItemUIFactory)
+                    this.uiManager = (ItemUIFactory) itemComponent;
+
+                if (itemComponent instanceof IItemColorProvider) {
+                    this.colorProvider = (IItemColorProvider) itemComponent;
+                }
+                if (itemComponent instanceof IItemBehaviour) {
+                    this.behaviours.add((IItemBehaviour) itemComponent);
+                    ((IItemBehaviour) itemComponent).addPropertyOverride(getMetaItem());
+                }
+                if (itemComponent instanceof IEnchantabilityHelper) {
+                    this.enchantabilityHelper = (IEnchantabilityHelper) itemComponent;
+                }
+                this.allStats.add(itemComponent);
+            }
+        }
+
+        public List<IItemComponent> getAllStats() {
+            return Collections.unmodifiableList(allStats);
+        }
+
+        public List<IItemBehaviour> getBehaviours() {
+            return Collections.unmodifiableList(behaviours);
+        }
+
+        public ISubItemHandler getSubItemHandler() {
+            return subItemHandler;
+        }
+
+        @Nullable
+        public IItemDurabilityManager getDurabilityManager() {
+            return durabilityManager;
+        }
+
+        @Nullable
+        public IItemUseManager getUseManager() {
+            return useManager;
+        }
+
+        @Nullable
+        public ItemUIFactory getUIManager() {
+            return uiManager;
+        }
+
+        @Nullable
+        public IItemColorProvider getColorProvider() {
+            return colorProvider;
+        }
+
+        @Nullable
+        public IItemNameProvider getNameProvider() {
+            return nameProvider;
+        }
+
+        @Nullable
+        public IItemContainerItemProvider getContainerItemProvider() {
+            return containerItemProvider;
+        }
+
+        @Nullable
+        public IEnchantabilityHelper getEnchantabilityHelper() {
+            return enchantabilityHelper;
+        }
+
+        public int getBurnValue() {
+            return burnValue;
+        }
+
+        public int getMaxStackSize(ItemStack stack) {
+            return stackSizeProvider == null ? maxStackSize : stackSizeProvider.getMaxStackSize(stack, maxStackSize);
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public int getModelAmount() {
+            return modelAmount;
+        }
+
+        public Rarity getRarity() {
+            return rarity;
+        }
+
+        public ItemStack getStackForm(int amount) {
+            return new ItemStack(MetaItem.this, amount);
+        }
+
+        public ItemStack getStackForm() {
+            return getStackForm(1);
+        }
+
+        /**
+         * Attempts to get an fully charged variant of this electric item
+         *
+         * @param chargeAmount amount of charge
+         * @return charged electric item stack
+         * @throws java.lang.IllegalStateException if this item is not electric item
+         */
+        public ItemStack getChargedStack(long chargeAmount) {
+            ItemStack itemStack = getStackForm(1);
+            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+            if (electricItem == null) {
+                throw new IllegalStateException("Not an electric item.");
+            }
+            electricItem.charge(chargeAmount, Integer.MAX_VALUE, true, false);
+            return itemStack;
+        }
+
+        public ItemStack getInfiniteChargedStack() {
+            ItemStack itemStack = getStackForm(1);
+            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+            if (!(electricItem instanceof ElectricItem)) {
+                throw new IllegalStateException("Not a supported electric item.");
+            }
+            ((ElectricItem) electricItem).setInfiniteCharge(true);
+            return itemStack;
+        }
+
+        /**
+         * Attempts to get an electric item variant with override of max charge
+         *
+         * @param maxCharge new max charge of this electric item
+         * @return item stack with given max charge
+         * @throws java.lang.IllegalStateException if this item is not electric item or uses custom implementation
+         */
+        public ItemStack getMaxChargeOverrideStack(long maxCharge) {
+            ItemStack itemStack = getStackForm(1);
+            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+            if (electricItem == null) {
+                throw new IllegalStateException("Not an electric item.");
+            }
+            if (!(electricItem instanceof ElectricItem)) {
+                throw new IllegalStateException("Only standard ElectricItem implementation supported, but this item uses " + electricItem.getClass());
+            }
+            ((ElectricItem) electricItem).setMaxChargeOverride(maxCharge);
+            return itemStack;
+        }
+
+        public ItemStack getChargedStackWithOverride(IElectricItem source) {
+            ItemStack itemStack = getStackForm(1);
+            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+            if (electricItem == null) {
+                throw new IllegalStateException("Not an electric item.");
+            }
+            if (!(electricItem instanceof ElectricItem)) {
+                throw new IllegalStateException("Only standard ElectricItem implementation supported, but this item uses " + electricItem.getClass());
+            }
+            ((ElectricItem) electricItem).setMaxChargeOverride(source.getMaxCharge());
+            long charge = source.discharge(Long.MAX_VALUE, Integer.MAX_VALUE, true, false, true);
+            electricItem.charge(charge, Integer.MAX_VALUE, true, false);
+            return itemStack;
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this)
+                    .append("metaValue", metaValue)
+                    .append("unlocalizedName", unlocalizedName)
+                    .toString();
+        }
+    }
+
+}

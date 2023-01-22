@@ -6,13 +6,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MaterialFlags {
     private final Set<MaterialFlag> flags = new HashSet<>();
 
     public MaterialFlags addFlags(MaterialFlag... flags) {
-        this.flags.addAll(Arrays.asList(flags));
+        this.flags.addAll(Arrays.stream(flags).toList());
         return this;
     }
 
