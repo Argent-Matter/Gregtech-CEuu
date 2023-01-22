@@ -13,12 +13,11 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.AbstractCauldronBlock;
-import net.minecraft.world.level.block.CauldronBlock;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.metaitem.StandardMetaItem;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
@@ -26,8 +25,11 @@ import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
-import net.nemezanevem.gregtech.api.unification.stack.UnificationEntry;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.DustProperty;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
+import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
@@ -39,6 +41,7 @@ import java.util.Map;
 public class PrefixItem extends StandardMetaItem {
 
     private final TagPrefix prefix;
+    private final Material material;
 
     public static final Map<TagPrefix, TagPrefix> purifyMap = new HashMap<>() {{
         put(TagPrefix.crushed, TagPrefix.crushedPurified);
@@ -46,27 +49,31 @@ public class PrefixItem extends StandardMetaItem {
         put(TagPrefix.dustPure, TagPrefix.dust);
     }};
 
-    public PrefixItem(TagPrefix TagPrefix) {
-        super();
-        this.prefix = TagPrefix;
+    public PrefixItem(ExtendedProperties properties, TagPrefix prefix, Material material) {
+        super(properties);
+        this.prefix = prefix;
+        this.material = material;
     }
 
-    @Override
-    public void registerSubItems() {
-        for (Material material : MaterialRegistry.MATERIALS_BUILTIN.get().getValues()) {
-            ResourceLocation loc = MaterialRegistry.MATERIALS_BUILTIN.get().getKey(material);
-            if (prefix != null && canGenerate(prefix, material)) {
-                addItem(new ResourceLocation(new UnificationEntry(prefix, material).toString()), ForgeRegistries.ITEMS);
+    public static void registerItems() {
+        for (var entry : MaterialRegistry.MATERIALS_BUILTIN.get().getEntries()) {
+            ResourceLocation loc = entry.getKey().location();
+            var material = entry.getValue();
+            for(var prefix : TagPrefix.values()) {
+                if (prefix != null && canGenerate(prefix, material)) {
+                    builder(prefix.name + "/" + loc.getPath())
+                            .setUnificationData(prefix, material)
+                            .setMaterialInfo(new ItemMaterialInfo(material.getMaterialComponents()))
+                            .build(prefix, material);
+                }
             }
+
         }
     }
 
-    public void registerOreDict() {
-        for (ResourceLocation metaItem : metaItems.keySet()) {
-            Material material = MaterialRegistry.MATERIALS_BUILTIN.get().getValue(metaItem);
-            TagUnifier.registerTag(this, prefix, material);
-            registerSpecialTag(this, material, prefix);
-        }
+    public void registerTag() {
+        TagUnifier.registerTag(this, prefix, material);
+        registerSpecialTag(this, material, prefix);
     }
 
     private void registerSpecialTag(Item item, Material material, TagPrefix prefix) {
@@ -83,14 +90,13 @@ public class PrefixItem extends StandardMetaItem {
         }
     }
 
-    protected boolean canGenerate(TagPrefix TagPrefix, Material material) {
+    protected static boolean canGenerate(TagPrefix TagPrefix, Material material) {
         return TagPrefix.doGenerateItem(material);
     }
 
     @Override
     protected int getColorForItemStack(ItemStack stack, int tintIndex) {
         if (tintIndex == 0) {
-            Material material = MaterialRegistry.MATERIALS_BUILTIN.get().getValue(stack.getItem());
             if (material == null)
                 return 0xFFFFFF;
             return material.getMaterialRGB();
@@ -98,29 +104,26 @@ public class PrefixItem extends StandardMetaItem {
         return super.getColorForItemStack(stack, tintIndex);
     }
 
-    @Override
     @SuppressWarnings("ConstantConditions")
-    public void registerModels() {
-        Map<ResourceLocation, ModelResourceLocation> alreadyRegistered = new Object2ObjectOpenHashMap<>();
-        for (ResourceLocation metaItem : metaItems.keySet()) {
-            MaterialIconSet materialIconSet = MaterialRegistry.MATERIALS_BUILTIN.get().getValue(metaItem).getMaterialIconSet();
+    public static void registerModels() {
+        for(var item : MetaItem.getMetaItems()) {
+            if(item instanceof PrefixItem prefixItem) {
+                Map<ResourceLocation, ModelResourceLocation> alreadyRegistered = new Object2ObjectOpenHashMap<>();
+                MaterialIconSet materialIconSet = prefixItem.material.getMaterialIconSet();
+                TagPrefix prefix = prefixItem.prefix;
 
-            ResourceLocation registrationKey = (short) (prefix.id + materialIconSet.id);
-            if (!alreadyRegistered.containsKey(registrationKey)) {
-                ModelResourceLocation resourceLocation = new ModelResourceLocation(prefix.materialIconType.getItemModelPath(materialIconSet), "inventory");
-                Minecraft.getInstance().getItemRenderer().getItemModelShaper().register(this, resourceLocation);
-                alreadyRegistered.put(registrationKey, resourceLocation);
+                ResourceLocation registrationKey = new ResourceLocation(materialIconSet.id.getNamespace(), materialIconSet.name + "/" + prefix.name);
+                if (!alreadyRegistered.containsKey(registrationKey)) {
+                    ModelResourceLocation resourceLocation = new ModelResourceLocation(prefix.materialIconType.getItemModelPath(materialIconSet), "inventory");
+                    Minecraft.getInstance().getItemRenderer().getItemModelShaper().register(prefixItem, resourceLocation);
+                    alreadyRegistered.put(registrationKey, resourceLocation);
+                }
+                ModelResourceLocation resourceLocation = alreadyRegistered.get(registrationKey);
+                metaItemsModels.put(Util.getId(prefixItem), resourceLocation);
             }
-            ModelResourceLocation resourceLocation = alreadyRegistered.get(registrationKey);
-            metaItemsModels.put(metaItem, resourceLocation);
+
         }
 
-        // Make some default models for meta prefix items without any materials associated
-        if (metaItems.keySet().isEmpty()) {
-            MaterialIconSet defaultIcon = MaterialIconSet.DULL;
-            ResourceLocation defaultLocation = TagPrefix.ingot.materialIconType.getItemModelPath(defaultIcon);
-            ModelBakery.registerItemVariants(this, defaultLocation);
-        }
     }
 
     @Override
@@ -130,9 +133,9 @@ public class PrefixItem extends StandardMetaItem {
     }
 
     @Override
-    public void onUpdate(@Nonnull ItemStack itemStack, @Nonnull Level worldIn, @Nonnull Entity entityIn, int itemSlot, boolean isSelected) {
-        super.onUpdate(itemStack, worldIn, entityIn, itemSlot, isSelected);
-        if (metaItems.containsKey(Util.getId(itemStack.getItem())) && entityIn instanceof LivingEntity living) {
+    public void inventoryTick(@Nonnull ItemStack itemStack, @Nonnull Level worldIn, @Nonnull Entity entityIn, int itemSlot, boolean isSelected) {
+        super.inventoryTick(itemStack, worldIn, entityIn, itemSlot, isSelected);
+        if (itemStack.is(this) && entityIn instanceof LivingEntity living) {
             if (entityIn.tickCount % 20 == 0) {
                 if (prefix.heatDamageFunction == null) return;
 
@@ -146,16 +149,16 @@ public class PrefixItem extends StandardMetaItem {
                 }
 
                 if (heatDamage > 0.0) {
-                    entity.attackEntityFrom(DamageSources.getHeatDamage().setDamageBypassesArmor(), heatDamage);
+                    living.hurt(DamageSources.getHeatDamage().setDamageBypassesArmor(), heatDamage);
                 } else if (heatDamage < 0.0) {
-                    entity.attackEntityFrom(DamageSources.getFrostDamage().setDamageBypassesArmor(), -heatDamage);
+                    living.hurt(DamageSources.getFrostDamage().setDamageBypassesArmor(), -heatDamage);
                 }
             }
         }
     }
 
     @Override
-    public void addTo(@Nonnull ItemStack itemStack, @Nullable Level worldIn, @Nonnull List<Component> lines, @Nonnull TooltipFlag tooltipFlag) {
+    public void addTooltip(@Nonnull ItemStack itemStack, @Nullable Level worldIn, @Nonnull List<Component> lines, @Nonnull TooltipFlag tooltipFlag) {
         super.addInformation(itemStack, worldIn, lines, tooltipFlag);
         int damage = itemStack.getItemDamage();
         Material material = GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
@@ -164,8 +167,7 @@ public class PrefixItem extends StandardMetaItem {
     }
 
     public Material getMaterial(ItemStack itemStack) {
-        int damage = itemStack.getItemDamage();
-        return GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
+        return this.material;
     }
 
     public TagPrefix getTagPrefix() {
@@ -173,22 +175,17 @@ public class PrefixItem extends StandardMetaItem {
     }
 
     @Override
-    public int getItemBurnTime(@Nonnull ItemStack itemStack) {
-        int damage = itemStack.getItemDamage();
-        Material material = GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
-        DustProperty property = material == null ? null : material.getProperty(PropertyKey.DUST);
+    public int getBurnTime(@Nonnull ItemStack itemStack, RecipeType<?> recipeType) {
+        DustProperty property = material == null ? null : material.getProperty(GtMaterialProperties.DUST.get());
         if (property != null) return (int) (property.getBurnTime() * prefix.getMaterialAmount(material) / GTValues.M);
-        return super.getItemBurnTime(itemStack);
+        return super.getBurnTime(itemStack, recipeType);
 
     }
 
     @Override
     public boolean isBeaconPayment(ItemStack stack) {
-        int damage = stack.getMetadata();
-
-        Material material = GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
         if (material != null && this.prefix != TagPrefix.ingot && this.prefix != TagPrefix.gem) {
-            ToolProperty property = material.getProperty(PropertyKey.TOOL);
+            ToolProperty property = material.getProperty(GtMaterialProperties.TOOL.get());
             return property != null && property.getToolHarvestLevel() >= 2;
         }
         return false;
@@ -199,7 +196,6 @@ public class PrefixItem extends StandardMetaItem {
         if (itemEntity.getLevel().isClientSide)
             return false;
 
-        Material material = GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
         if (!purifyMap.containsKey(this.prefix))
             return false;
 
@@ -220,9 +216,9 @@ public class PrefixItem extends StandardMetaItem {
         return false;
     }
 
-    protected void addMaterialTooltip(List<String> lines, ItemStack itemStack) {
+    protected void addMaterialTooltip(List<Component> lines, ItemStack itemStack) {
         if (this.prefix.tooltipFunc != null) {
-            lines.addAll(this.prefix.tooltipFunc.apply(this.getMaterial(itemStack)));
+            lines.addAll(this.prefix.tooltipFunc.apply(material));
         }
     }
 }

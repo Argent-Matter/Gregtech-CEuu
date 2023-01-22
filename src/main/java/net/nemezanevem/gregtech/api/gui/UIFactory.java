@@ -33,9 +33,9 @@ public abstract class UIFactory<E extends IUIHolder> {
         }
         uiTemplate.initWidgets();
 
-        player.getNextWindowId();
+        player.nextContainerCounter();
         player.closeContainer();
-        int currentWindowId = player.currentWindowId;
+        int currentWindowId = player.containerCounter;
 
         FriendlyByteBuf serializedHolder = new FriendlyByteBuf(Unpooled.buffer());
         writeHolderToSyncData(serializedHolder, holder);

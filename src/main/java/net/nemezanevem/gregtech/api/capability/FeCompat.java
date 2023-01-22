@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.capability;
 
-import gregtech.common.ConfigHolder;
 import net.minecraftforge.energy.IEnergyStorage;
 
 public class FeCompat {

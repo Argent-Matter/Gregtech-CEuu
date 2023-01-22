@@ -31,7 +31,6 @@ import static net.nemezanevem.gregtech.api.util.GTValues.M;
 public class TagPrefix {
 
     private final static Map<String, TagPrefix> PREFIXES = new HashMap<>();
-    private final static AtomicInteger idCounter = new AtomicInteger(0);
 
     // Regular Ore Prefix. Ore -> Material is a Oneway Operation! Introduced by Eloraam
     public static final TagPrefix ore = new TagPrefix("ores_in_ground", -1, null, GtMaterialIconTypes.ore.get(), ENABLE_UNIFICATION, hasOreProperty);
@@ -376,7 +375,6 @@ public class TagPrefix {
     }
 
     public final String name;
-    public final int id;
 
     public final boolean isUnificationEnabled;
     public final boolean isSelfReferencing;
@@ -416,7 +414,6 @@ public class TagPrefix {
     public TagPrefix(String name, long materialAmount, @Nullable Material material, @Nullable MaterialIconType materialIconType, long flags, @Nullable Predicate<Material> condition, @Nullable Function<Material, List<MutableComponent>> tooltipFunc) {
         Preconditions.checkArgument(!PREFIXES.containsKey(name), "TagPrefix " + name + " already registered!");
         this.name = name;
-        this.id = idCounter.getAndIncrement();
         this.materialAmount = materialAmount;
         this.isSelfReferencing = (flags & SELF_REFERENCING) != 0;
         this.isUnificationEnabled = (flags & ENABLE_UNIFICATION) != 0;
@@ -591,6 +588,6 @@ public class TagPrefix {
 
     @Override
     public String toString() {
-        return name + "/" + id;
+        return name;
     }
 }

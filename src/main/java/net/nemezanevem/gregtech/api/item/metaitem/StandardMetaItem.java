@@ -8,13 +8,8 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 
 public class StandardMetaItem extends MetaItem {
 
-    public StandardMetaItem() {
-        super();
-    }
-
-    @Override
-    protected ExtendedProperties constructMetaValueItem(ResourceLocation id, IForgeRegistry<Item> registry) {
-        return new ExtendedProperties(id, registry);
+    public StandardMetaItem(ExtendedProperties properties) {
+        super(properties);
     }
 
     @Override
