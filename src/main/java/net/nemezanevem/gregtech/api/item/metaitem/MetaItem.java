@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.item.metaitem;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -9,27 +11,45 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.IElectricItem;
+import net.nemezanevem.gregtech.api.capability.IThermalFluidHandlerItemStack;
+import net.nemezanevem.gregtech.api.capability.impl.ElectricItem;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
-import net.nemezanevem.gregtech.api.item.stats.IItemComponent;
+import net.nemezanevem.gregtech.api.item.metaitem.stats.*;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
+import net.nemezanevem.gregtech.api.unification.stack.MaterialStack;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
-import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nonnull;
@@ -60,13 +80,12 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     protected final Map<ResourceLocation, MetaItem> metaItems = new HashMap<>();
-    private final Map<String, MetaItem> names = new Object2ObjectOpenHashMap<>();
     protected final Map<ResourceLocation, ModelResourceLocation> metaItemsModels = new HashMap<>();
     protected final Map<ResourceLocation, ModelResourceLocation[]> specialItemsModels = new HashMap<>();
     protected static final ModelResourceLocation MISSING_LOCATION = new ModelResourceLocation("builtin/missing", "inventory");
 
-    public MetaItem() {
-        super(new Properties());
+    public MetaItem(ExtendedProperties properties) {
+        super(properties);
         META_ITEMS.add(this);
     }
 
@@ -144,24 +163,15 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         return -1.0;
     }
 
-    @Nonnull
-    @Override
-    @SuppressWarnings("deprecation")
-    public Rarity getRarity(@Nonnull ItemStack stack) {
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem != null && metaValueItem.getRarity() != null) return metaValueItem.getRarity();
-        else return super.getRarity(stack);
-    }
-
     protected abstract ExtendedProperties constructMetaValueItem(ResourceLocation id, IForgeRegistry<Item> registry);
 
     public final ExtendedProperties addItem(ResourceLocation id, IForgeRegistry<Item> registry) {
-        MetaItem metaValueItem = constructMetaValueItem(id, registry);
+        ExtendedProperties metaValueItem = constructMetaValueItem(id, registry);
         if (metaItems.containsKey(id)) {
             MetaItem registeredItem = metaItems.get(id);
             throw new IllegalArgumentException(String.format("MetaId %d is already occupied by item %s (requested by item %s)", id, registeredItem.unlocalizedName, unlocalizedName));
         }
-        metaItems.put((short) id, metaValueItem);
+        metaItems.put(id, metaValueItem);
         names.put(unlocalizedName, metaValueItem);
         return metaValueItem;
     }
@@ -183,12 +193,12 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
     @Override
     public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt) {
-        MetaItem metaValueItem = stack.getItem();
-        if (metaValueItem == null) {
+        Item item = stack.getItem();
+        if (item == null || !(item instanceof MetaItem metaItem)) {
             return null;
         }
         ArrayList<ICapabilityProvider> providers = new ArrayList<>();
-        for (IItemComponent itemComponent : metaValueItem.getAllStats()) {
+        for (IItemComponent itemComponent : metaItem.getAllStats()) {
             if (itemComponent instanceof IItemCapabilityProvider) {
                 IItemCapabilityProvider provider = (IItemCapabilityProvider) itemComponent;
                 providers.add(provider.createProvider(stack));
@@ -257,39 +267,39 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public void onUsingTick(@Nonnull ItemStack stack, @Nonnull EntityLivingBase player, int count) {
-        if (player instanceof EntityPlayer) {
+    public void onUsingTick(@Nonnull ItemStack stack, @Nonnull LivingEntity player, int count) {
+        if (player instanceof Player) {
             IItemUseManager useManager = getUseManager(stack);
             if (useManager != null) {
-                useManager.onItemUsingTick(stack, (EntityPlayer) player, count);
+                useManager.onItemUsingTick(stack, (Player) player, count);
             }
         }
     }
 
     @Override
-    public void onPlayerStoppedUsing(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase player, int timeLeft) {
-        if (player instanceof EntityPlayer) {
+    public void onPlayerStoppedUsing(@Nonnull ItemStack stack, @Nonnull Level world, @Nonnull LivingEntity player, int timeLeft) {
+        if (player instanceof Player) {
             IItemUseManager useManager = getUseManager(stack);
             if (useManager != null) {
-                useManager.onPlayerStoppedItemUsing(stack, (EntityPlayer) player, timeLeft);
+                useManager.onPlayerStoppedItemUsing(stack, (Player) player, timeLeft);
             }
         }
     }
 
     @Nullable
     @Override
-    public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase player) {
-        if (player instanceof EntityPlayer) {
+    public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull Level world, @Nonnull LivingEntity player) {
+        if (player instanceof Player) {
             IItemUseManager useManager = getUseManager(stack);
             if (useManager != null) {
-                return useManager.onItemUseFinish(stack, (EntityPlayer) player);
+                return useManager.onItemUseFinish(stack, (Player) player);
             }
         }
         return stack;
     }
 
     @Override
-    public boolean onLeftClickEntity(@Nonnull ItemStack stack, @Nonnull EntityPlayer player, @Nonnull Entity entity) {
+    public boolean onLeftClickEntity(@Nonnull ItemStack stack, @Nonnull Player player, @Nonnull Entity entity) {
         boolean returnValue = false;
         for (IItemBehaviour behaviour : getBehaviours(stack)) {
             if (behaviour.onLeftClickEntity(stack, player, entity)) {
@@ -300,7 +310,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public boolean itemInteractionForEntity(@Nonnull ItemStack stack, @Nonnull EntityPlayer playerIn, @Nonnull EntityLivingBase target, @Nonnull EnumHand hand) {
+    public boolean itemInteractionForEntity(@Nonnull ItemStack stack, @Nonnull Player playerIn, @Nonnull LivingEntity target, @Nonnull InteractionHand hand) {
         boolean returnValue = false;
         for (IItemBehaviour behaviour : getBehaviours(stack)) {
             if (behaviour.itemInteractionForEntity(stack, playerIn, target, hand)) {
@@ -312,67 +322,69 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
     @Nonnull
     @Override
-    public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, EntityPlayer player, @Nonnull EnumHand hand) {
-        ItemStack itemStack = player.getHeldItem(hand);
+    public InteractionResultHolder<ItemStack> onItemRightClick(@Nonnull Level world, Player player, @Nonnull InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
         for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
-            ActionResult<ItemStack> behaviourResult = behaviour.onItemRightClick(world, player, hand);
-            itemStack = behaviourResult.getResult();
-            if (behaviourResult.getType() != EnumActionResult.PASS) {
-                return ActionResult.newResult(behaviourResult.getType(), itemStack);
+            InteractionResultHolder<ItemStack> behaviourResult = behaviour.onItemRightClick(world, player, hand);
+            itemStack = behaviourResult.getObject();
+            if (behaviourResult.getResult() != InteractionResult.PASS) {
+                return behaviourResult;
             } else if (itemStack.isEmpty()) {
-                return ActionResult.newResult(EnumActionResult.PASS, ItemStack.EMPTY);
+                return InteractionResultHolder.pass(ItemStack.EMPTY);
             }
         }
         IItemUseManager useManager = getUseManager(itemStack);
         if (useManager != null && useManager.canStartUsing(itemStack, player)) {
             useManager.onItemUseStart(itemStack, player);
-            player.setActiveHand(hand);
-            return ActionResult.newResult(EnumActionResult.SUCCESS, itemStack);
+            player.startUsingItem(hand);
+            return InteractionResultHolder.success(itemStack);
         }
-        return ActionResult.newResult(EnumActionResult.PASS, itemStack);
+        return InteractionResultHolder.pass(itemStack);
     }
 
     @Nonnull
     @Override
-    public EnumActionResult onItemUseFirst(EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ, @Nonnull EnumHand hand) {
-        ItemStack itemStack = player.getHeldItem(hand);
+    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        ItemStack itemStack = context.getPlayer().getItemInHand(context.getHand());
         for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
-            EnumActionResult behaviourResult = behaviour.onItemUseFirst(player, world, pos, side, hitX, hitY, hitZ, hand);
-            if (behaviourResult != EnumActionResult.PASS) {
+            var hitLoc = context.getClickLocation();
+            InteractionResult behaviourResult = behaviour.onItemUseFirst(context.getPlayer(), context.getLevel(), context.getClickedPos(), context.getClickedFace(), hitLoc.x, hitLoc.y, hitLoc.z, context.getHand());
+            if (behaviourResult != InteractionResult.PASS) {
                 return behaviourResult;
             } else if (itemStack.isEmpty()) {
-                return EnumActionResult.PASS;
+                return InteractionResult.PASS;
             }
         }
-        return EnumActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Nonnull
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack stack = player.getHeldItem(hand);
+    public InteractionResult useOn(UseOnContext context) {
+        ItemStack stack = context.getPlayer().getItemInHand(context.getHand());
         ItemStack originalStack = stack.copy();
         for (IItemBehaviour behaviour : getBehaviours(stack)) {
-            ActionResult<ItemStack> behaviourResult = behaviour.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
-            stack = behaviourResult.getResult();
-            if (behaviourResult.getType() != EnumActionResult.PASS) {
-                if (!ItemStack.areItemStacksEqual(originalStack, stack))
-                    player.setHeldItem(hand, stack);
-                return behaviourResult.getType();
+            var hitLoc = context.getClickLocation();
+            InteractionResultHolder<ItemStack> behaviourResult = behaviour.onItemUse(context.getPlayer(), context.getLevel(), context.getClickedPos(), context.getHand(), context.getClickedFace(), hitLoc.x, hitLoc.y, hitLoc.z);
+            stack = behaviourResult.getObject();
+            if (behaviourResult.getResult() != InteractionResult.PASS) {
+                if (!ItemStack.matches(originalStack, stack))
+                    context.getPlayer().setItemInHand(context.getHand(), stack);
+                return behaviourResult.getResult();
             } else if (stack.isEmpty()) {
-                player.setHeldItem(hand, ItemStack.EMPTY);
-                return EnumActionResult.PASS;
+                context.getPlayer().setItemInHand(context.getHand(), ItemStack.EMPTY);
+                return InteractionResult.PASS;
             }
         }
-        return EnumActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Nonnull
     @Override
-    public Multimap<String, AttributeModifier> getAttributeModifiers(@Nonnull EntityEquipmentSlot slot, @Nonnull ItemStack stack) {
-        HashMultimap<String, AttributeModifier> modifiers = HashMultimap.create();
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem != null) {
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(@Nonnull EquipmentSlot slot, @Nonnull ItemStack stack) {
+        HashMultimap<Attribute, AttributeModifier> modifiers = HashMultimap.create();
+        Item metaValueItem = stack.getItem();
+        if (metaValueItem instanceof MetaItem) {
             for (IItemBehaviour behaviour : getBehaviours(stack)) {
                 modifiers.putAll(behaviour.getAttributeModifiers(slot, stack));
             }
@@ -382,8 +394,8 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
     @Override
     public boolean isEnchantable(@Nonnull ItemStack stack) {
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem != null) {
+        Item metaValueItem = stack.getItem();
+        if (metaValueItem instanceof MetaItem item) {
             IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
             return helper != null && helper.isEnchantable(stack);
         }
@@ -391,27 +403,24 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public int getItemEnchantability(@Nonnull ItemStack stack) {
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem != null) {
-            IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
-            return helper == null ? 0 : helper.getItemEnchantability(stack);
-        }
-        return super.getItemEnchantability(stack);
+    public int getEnchantmentValue() {
+        IEnchantabilityHelper helper = this.getEnchantabilityHelper();
+        return helper == null ? 0 : helper.getItemEnchantability();
+        return super.getEnchantmentValue();
     }
 
     @Override
     public boolean canApplyAtEnchantingTable(@Nonnull ItemStack stack, @Nonnull Enchantment enchantment) {
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem != null) {
-            IEnchantabilityHelper helper = metaValueItem.getEnchantabilityHelper();
+        Item metaValueItem = stack.getItem();
+        if (metaValueItem instanceof MetaItem item) {
+            IEnchantabilityHelper helper = item.getEnchantabilityHelper();
             return helper != null && helper.canApplyAtEnchantingTable(stack, enchantment);
         }
         return super.canApplyAtEnchantingTable(stack, enchantment);
     }
 
     @Override
-    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World worldIn, @Nonnull Entity entityIn, int itemSlot, boolean isSelected) {
+    public void onUpdate(@Nonnull ItemStack stack, @Nonnull Level worldIn, @Nonnull Entity entityIn, int itemSlot, boolean isSelected) {
         for (IItemBehaviour behaviour : getBehaviours(stack)) {
             behaviour.onUpdate(stack, entityIn);
         }
@@ -420,49 +429,44 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Override
     public boolean shouldCauseReequipAnimation(@Nonnull ItemStack oldStack, @Nonnull ItemStack newStack, boolean slotChanged) {
         //if item is equal, and old item has electric item capability, remove charge tags to stop reequip animation when charge is altered
-        if (ItemStack.areItemsEqual(oldStack, newStack) && oldStack.hasCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null) &&
-                oldStack.hasTagCompound() && newStack.hasTagCompound()) {
+        if (ItemStack.matches(oldStack, newStack) && oldStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null).isPresent() &&
+                oldStack.hasTag() && newStack.hasTag()) {
             oldStack = oldStack.copy();
             newStack = newStack.copy();
-            oldStack.getTagCompound().removeTag("Charge");
-            newStack.getTagCompound().removeTag("Charge");
-            if (oldStack.getTagCompound().hasKey("terminal")) {
-                oldStack.getTagCompound().getCompoundTag("terminal").getCompoundTag("_hw").removeTag("battery");
-                newStack.getTagCompound().getCompoundTag("terminal").getCompoundTag("_hw").removeTag("battery");
+            oldStack.getTag().remove("Charge");
+            newStack.getTag().remove("Charge");
+            if (oldStack.getTag().contains("terminal")) {
+                oldStack.getTag().getCompound("terminal").getCompound("_hw").remove("battery");
+                newStack.getTag().getCompound("terminal").getCompound("_hw").remove("battery");
             }
         }
-        return !ItemStack.areItemStacksEqual(oldStack, newStack);
-    }
-
-    @Override
-    public String getTranslationKey(ItemStack stack) {
-        MetaItem metaItem = getItem(stack);
-        return metaItem == null ? getTranslationKey() : getTranslationKey() + "." + metaItem.unlocalizedName;
+        return !ItemStack.matches(oldStack, newStack);
     }
 
     @Nonnull
     @Override
-    public String displa(ItemStack stack) {
+    public Component getName(ItemStack stack) {
         if (stack.getItemDamage() >= metaItemOffset) {
             MetaItem item = getItem(stack);
             if (item == null) {
-                return "invalid item";
+                return Component.literal("invalid item");
             }
-            String unlocalizedName = String.format("metaitem.%s.name", item.unlocalizedName);
+            String unlocalizedName = String.format("metaitem.%s.name", item.getDescriptionId());
             if (item.getNameProvider() != null) {
                 return item.getNameProvider().getItemStackDisplayName(stack, unlocalizedName);
             }
-            IFluidHandlerItem fluidHandlerItem = ItemHandlerHelper.copyStackWithSize(stack, 1)
-                    .getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
-            if (fluidHandlerItem != null) {
-                FluidStack fluidInside = fluidHandlerItem.drain(Integer.MAX_VALUE, false);
-                return LocalizationUtils.format(unlocalizedName, fluidInside == null ?
-                        LocalizationUtils.format("metaitem.fluid_cell.empty") :
-                        fluidInside.getLocalizedName());
+            LazyOptional<IFluidHandlerItem> fluidHandlerItem = ItemHandlerHelper.copyStackWithSize(stack, 1)
+                    .getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null);
+            if (fluidHandlerItem.isPresent()) {
+                var realFluidHandlerItem = fluidHandlerItem.resolve().get();
+                FluidStack fluidInside = realFluidHandlerItem.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
+                return Component.translatable(unlocalizedName, fluidInside == null ?
+                        Component.translatable("metaitem.fluid_cell.empty") :
+                        fluidInside.getDisplayName());
             }
             return LocalizationUtils.format(unlocalizedName);
         }
-        return super.getItemStackDisplayName(stack);
+        return super.getName(stack);
     }
 
     @Override
@@ -474,25 +478,27 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
             lines.add(unlocalizedTooltip);
         }
 
-        IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-        if (electricItem != null) {
-            if (electricItem.canProvideChargeExternally()) {
-                addDischargeItemTooltip(lines, electricItem.getMaxCharge(), electricItem.getCharge(), electricItem.getTier());
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (electricItem.isPresent()) {
+            var realElectricItem = electricItem.resolve().get();
+            if (realElectricItem.canProvideChargeExternally()) {
+                addDischargeItemTooltip(lines, realElectricItem.getMaxCharge(), realElectricItem.getCharge(), realElectricItem.getTier());
             } else {
-                lines.add(I18n.format("metaitem.generic.electric_item.tooltip",
-                        electricItem.getCharge(),
-                        electricItem.getMaxCharge(),
-                        GTValues.VNF[electricItem.getTier()]));
+                lines.add(Component.translatable("metaitem.generic.electric_item.tooltip",
+                        realElectricItem.getCharge(),
+                        realElectricItem.getMaxCharge(),
+                        GTValues.VNF[realElectricItem.getTier()]));
             }
         }
 
-        IFluidHandlerItem fluidHandler = ItemHandlerHelper.copyStackWithSize(itemStack, 1)
-                .getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
-        if (fluidHandler != null) {
-            IFluidTankProperties fluidTankProperties = fluidHandler.getTankProperties()[0];
+        LazyOptional<IFluidHandlerItem> fluidHandler = ItemHandlerHelper.copyStackWithSize(itemStack, 1)
+                .getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null);
+        if (fluidHandler.isPresent()) {
+            var realFluidHandler = fluidHandler.resolve().get();
+            IFluidTankProperties fluidTankProperties = realFluidHandler.getTankProperties()[0];
             FluidStack fluid = fluidTankProperties.getContents();
 
-            lines.add(I18n.format("metaitem.generic.fluid_container.tooltip",
+            lines.add(Component.translatable("metaitem.generic.fluid_container.tooltip",
                     fluid == null ? 0 : fluid.amount,
                     fluidTankProperties.getCapacity(),
                     fluid == null ? "" : fluid.getLocalizedName()));
@@ -500,13 +506,13 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
             if (fluidHandler instanceof IThermalFluidHandlerItemStack) {
                 IThermalFluidHandlerItemStack thermalFluidHandler = (IThermalFluidHandlerItemStack) fluidHandler;
                 if (TooltipHelper.isShiftDown()) {
-                    lines.add(I18n.format("gregtech.fluid_pipe.max_temperature", thermalFluidHandler.getMaxFluidTemperature()));
-                    if (thermalFluidHandler.isGasProof()) lines.add(I18n.format("gregtech.fluid_pipe.gas_proof"));
-                    if (thermalFluidHandler.isAcidProof()) lines.add(I18n.format("gregtech.fluid_pipe.acid_proof"));
-                    if (thermalFluidHandler.isCryoProof()) lines.add(I18n.format("gregtech.fluid_pipe.cryo_proof"));
-                    if (thermalFluidHandler.isPlasmaProof()) lines.add(I18n.format("gregtech.fluid_pipe.plasma_proof"));
+                    lines.add(Component.translatable("gregtech.fluid_pipe.max_temperature", thermalFluidHandler.getMaxFluidTemperature()));
+                    if (thermalFluidHandler.isGasProof()) lines.add(Component.translatable("gregtech.fluid_pipe.gas_proof"));
+                    if (thermalFluidHandler.isAcidProof()) lines.add(Component.translatable("gregtech.fluid_pipe.acid_proof"));
+                    if (thermalFluidHandler.isCryoProof()) lines.add(Component.translatable("gregtech.fluid_pipe.cryo_proof"));
+                    if (thermalFluidHandler.isPlasmaProof()) lines.add(Component.translatable("gregtech.fluid_pipe.plasma_proof"));
                 } else if (thermalFluidHandler.isGasProof() || thermalFluidHandler.isAcidProof() || thermalFluidHandler.isCryoProof() || thermalFluidHandler.isPlasmaProof()) {
-                    lines.add(I18n.format("gregtech.tooltip.fluid_pipe_hold_shift"));
+                    lines.add(Component.translatable("gregtech.tooltip.fluid_pipe_hold_shift"));
                 }
             }
         }
@@ -520,9 +526,9 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         }
     }
 
-    private static void addDischargeItemTooltip(List<String> tooltip, long maxCharge, long currentCharge, int tier) {
+    private static void addDischargeItemTooltip(List<Component> tooltip, long maxCharge, long currentCharge, int tier) {
         if (currentCharge == 0) { // do not display when empty
-            tooltip.add(I18n.format("metaitem.generic.electric_item.tooltip", currentCharge, maxCharge, GTValues.VNF[tier]));
+            tooltip.add(Component.translatable("metaitem.generic.electric_item.tooltip", currentCharge, maxCharge, GTValues.VNF[tier]));
             return;
         }
         Instant start = Instant.now();
@@ -531,18 +537,18 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         double percentRemaining = currentCharge * 1.0 / maxCharge * 100; // used for color
 
         long timeRemaining;
-        String unit;
+        Component unit;
         if (duration.getSeconds() <= 180) {
             timeRemaining = duration.getSeconds();
-            unit = I18n.format("metaitem.battery.charge_unit.second");
+            unit = Component.translatable("metaitem.battery.charge_unit.second");
         } else if (duration.toMinutes() <= 180) {
             timeRemaining = duration.toMinutes();
-            unit = I18n.format("metaitem.battery.charge_unit.minute");
+            unit = Component.translatable("metaitem.battery.charge_unit.minute");
         } else {
             timeRemaining = duration.toHours();
-            unit = I18n.format("metaitem.battery.charge_unit.hour");
+            unit = Component.translatable("metaitem.battery.charge_unit.hour");
         }
-        tooltip.add(I18n.format("metaitem.battery.charge_detailed", currentCharge, maxCharge, GTValues.VNF[tier],
+        tooltip.add(Component.translatable("metaitem.battery.charge_detailed", currentCharge, maxCharge, GTValues.VNF[tier],
                 percentRemaining < 30 ? 'c' : percentRemaining < 60 ? 'e' : 'a',
                 timeRemaining, unit));
     }
@@ -572,34 +578,94 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Nonnull
     @Override
     public Collection<CreativeModeTab> getCreativeTabs() {
-        return new CreativeModeTab[]{GregTech.TAB_GREGTECH, GregTechAPI.TAB_GREGTECH_MATERIALS};
+        return new CreativeModeTab[]{GregTech.TAB_GREGTECH, GregTech.TAB_GREGTECH_MATERIALS};
     }
 
     @Override
-    public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> subItems) {
-        if (tab != GregTechAPI.TAB_GREGTECH && tab != CreativeTabs.SEARCH) {
-            return;
-        }
-        for (MetaItem enabledItem : metaItems.values()) {
-            if (!enabledItem.isVisible())
-                continue;
-            ItemStack itemStack = enabledItem.getStackForm();
-            enabledItem.getSubItemHandler().getSubItems(itemStack, tab, subItems);
-        }
-    }
-
-    @Override
-    public ModularUI createUI(PlayerInventoryHolder holder, EntityPlayer entityPlayer) {
+    public ModularUI createUI(PlayerInventoryHolder holder, Player Player) {
         ItemStack itemStack = holder.getCurrentItem();
         MetaItem metaValueItem = getItem(itemStack);
         ItemUIFactory uiFactory = metaValueItem == null ? null : metaValueItem.getUIManager();
-        return uiFactory == null ? null : uiFactory.createUI(holder, entityPlayer);
+        return uiFactory == null ? null : uiFactory.createUI(holder, Player);
     }
 
     // IOverlayRenderAware
     @Override
     public void renderItemOverlayIntoGUI(@Nonnull ItemStack stack, int xPosition, int yPosition) {
         ToolChargeBarRenderer.renderBarsItem(this, stack, xPosition, yPosition);
+    }
+
+    public ItemStack getStackForm(int amount) {
+        return new ItemStack(MetaItem.this, amount);
+    }
+
+    public ItemStack getStackForm() {
+        return getStackForm(1);
+    }
+
+    /**
+     * Attempts to get an fully charged variant of this electric item
+     *
+     * @param chargeAmount amount of charge
+     * @return charged electric item stack
+     * @throws java.lang.IllegalStateException if this item is not electric item
+     */
+    public ItemStack getChargedStack(long chargeAmount) {
+        ItemStack itemStack = getStackForm(1);
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (!electricItem.isPresent()) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        electricItem.resolve().get().charge(chargeAmount, Integer.MAX_VALUE, true, false);
+        return itemStack;
+    }
+
+    public ItemStack getInfiniteChargedStack() {
+        ItemStack itemStack = getStackForm(1);
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (!electricItem.isPresent()) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        if(!(electricItem.resolve().get() instanceof ElectricItem item)) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        item.setInfiniteCharge(true);
+        return itemStack;
+    }
+
+    /**
+     * Attempts to get an electric item variant with override of max charge
+     *
+     * @param maxCharge new max charge of this electric item
+     * @return item stack with given max charge
+     * @throws java.lang.IllegalStateException if this item is not electric item or uses custom implementation
+     */
+    public ItemStack getMaxChargeOverrideStack(long maxCharge) {
+        ItemStack itemStack = getStackForm(1);
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (!electricItem.isPresent()) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        if(!(electricItem.resolve().get() instanceof ElectricItem item)) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        item.setMaxChargeOverride(maxCharge);
+        return itemStack;
+    }
+
+    public ItemStack getChargedStackWithOverride(IElectricItem source) {
+        ItemStack itemStack = getStackForm(1);
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (!electricItem.isPresent()) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        if(!(electricItem.resolve().get() instanceof ElectricItem item)) {
+            throw new IllegalStateException("Not a supported electric item.");
+        }
+        item.setMaxChargeOverride(source.getMaxCharge());
+        long charge = source.discharge(Long.MAX_VALUE, Integer.MAX_VALUE, true, false, true);
+        item.charge(charge, Integer.MAX_VALUE, true, false);
+        return itemStack;
     }
 
     public class ExtendedProperties extends Item.Properties {
@@ -625,20 +691,39 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         private final ResourceLocation id;
         private final IForgeRegistry<Item> registry;
 
+        private List<ItemMaterialInfo> infosToAdd;
+        private List<String> tagsToAdd;
+        private Map<TagPrefix, Material> unificationData;
+
         protected ExtendedProperties(ResourceLocation id, IForgeRegistry<Item> registry) {
             this.id = id;
             this.registry = registry;
+            this.unlocalizedName = id.getPath().replace('/', '_');
+            this.infosToAdd = new ArrayList<>();
+            this.tagsToAdd = new ArrayList<>();
+            this.unificationData = new Object2ObjectOpenHashMap<>();
         }
 
         public MetaItem build() {
-            return new StandardMetaItem();
+            var item = new StandardMetaItem();
+            for(var info : infosToAdd) {
+                TagUnifier.registerTag(item, info);
+            }
+            for (var tag : tagsToAdd) {
+                GtItemRegistry.addTagToItem(item, tag);
+            }
+            for (var data : unificationData.entrySet()) {
+                TagUnifier.registerTag(item, data.getKey(), data.getValue());
+            }
+            return item;
         }
 
         public ExtendedProperties setMaterialInfo(ItemMaterialInfo materialInfo) {
             if (materialInfo == null) {
                 throw new IllegalArgumentException("Cannot add null ItemMaterialInfo.");
             }
-            TagUnifier.registerTag(getMetaItem(), materialInfo);
+            infosToAdd.add(materialInfo);
+            //TagUnifier.registerTag(getMetaItem(), materialInfo);
             return this;
         }
 
@@ -646,15 +731,17 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
             if (prefix == null) {
                 throw new IllegalArgumentException("Cannot add null OrePrefix.");
             }
-            TagUnifier.registerTag(getMetaItem(), prefix, material);
+            unificationData.put(prefix, material);
+            //TagUnifier.registerTag(getMetaItem(), prefix, material);
             return this;
         }
 
-        public ExtendedProperties addTag(String oreDictName) {
-            if (oreDictName == null) {
+        public ExtendedProperties addTag(String tagName) {
+            if (tagName == null) {
                 throw new IllegalArgumentException("Cannot add null OreDictName.");
             }
-            GtItemRegistry.addTagToItem(this.getMetaItem(), oreDictName);
+            tagsToAdd.add(tagName);
+            //GtItemRegistry.addTagToItem(this.getMetaItem(), tagName);
             return this;
         }
 
@@ -715,9 +802,6 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
                 if (itemComponent instanceof IItemMaxStackSizeProvider) {
                     this.stackSizeProvider = (IItemMaxStackSizeProvider) itemComponent;
                 }
-                if (itemComponent instanceof ISubItemHandler) {
-                    this.subItemHandler = (ISubItemHandler) itemComponent;
-                }
                 if (itemComponent instanceof IItemContainerItemProvider) {
                     this.containerItemProvider = (IItemContainerItemProvider) itemComponent;
                 }
@@ -753,10 +837,6 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
         public List<IItemBehaviour> getBehaviours() {
             return Collections.unmodifiableList(behaviours);
-        }
-
-        public ISubItemHandler getSubItemHandler() {
-            return subItemHandler;
         }
 
         @Nullable
@@ -812,84 +892,6 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
         public Rarity getRarity() {
             return rarity;
-        }
-
-        public ItemStack getStackForm(int amount) {
-            return new ItemStack(MetaItem.this, amount);
-        }
-
-        public ItemStack getStackForm() {
-            return getStackForm(1);
-        }
-
-        /**
-         * Attempts to get an fully charged variant of this electric item
-         *
-         * @param chargeAmount amount of charge
-         * @return charged electric item stack
-         * @throws java.lang.IllegalStateException if this item is not electric item
-         */
-        public ItemStack getChargedStack(long chargeAmount) {
-            ItemStack itemStack = getStackForm(1);
-            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-            if (electricItem == null) {
-                throw new IllegalStateException("Not an electric item.");
-            }
-            electricItem.charge(chargeAmount, Integer.MAX_VALUE, true, false);
-            return itemStack;
-        }
-
-        public ItemStack getInfiniteChargedStack() {
-            ItemStack itemStack = getStackForm(1);
-            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-            if (!(electricItem instanceof ElectricItem)) {
-                throw new IllegalStateException("Not a supported electric item.");
-            }
-            ((ElectricItem) electricItem).setInfiniteCharge(true);
-            return itemStack;
-        }
-
-        /**
-         * Attempts to get an electric item variant with override of max charge
-         *
-         * @param maxCharge new max charge of this electric item
-         * @return item stack with given max charge
-         * @throws java.lang.IllegalStateException if this item is not electric item or uses custom implementation
-         */
-        public ItemStack getMaxChargeOverrideStack(long maxCharge) {
-            ItemStack itemStack = getStackForm(1);
-            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-            if (electricItem == null) {
-                throw new IllegalStateException("Not an electric item.");
-            }
-            if (!(electricItem instanceof ElectricItem)) {
-                throw new IllegalStateException("Only standard ElectricItem implementation supported, but this item uses " + electricItem.getClass());
-            }
-            ((ElectricItem) electricItem).setMaxChargeOverride(maxCharge);
-            return itemStack;
-        }
-
-        public ItemStack getChargedStackWithOverride(IElectricItem source) {
-            ItemStack itemStack = getStackForm(1);
-            IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-            if (electricItem == null) {
-                throw new IllegalStateException("Not an electric item.");
-            }
-            if (!(electricItem instanceof ElectricItem)) {
-                throw new IllegalStateException("Only standard ElectricItem implementation supported, but this item uses " + electricItem.getClass());
-            }
-            ((ElectricItem) electricItem).setMaxChargeOverride(source.getMaxCharge());
-            long charge = source.discharge(Long.MAX_VALUE, Integer.MAX_VALUE, true, false, true);
-            electricItem.charge(charge, Integer.MAX_VALUE, true, false);
-            return itemStack;
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this)
-                    .append("metaValue", metaValue)
-                    .append("unlocalizedName", unlocalizedName)
-                    .toString();
         }
     }
 

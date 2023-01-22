@@ -63,9 +63,9 @@ public abstract class UIFactory<E extends IUIHolder> {
     public final void initClientUI(FriendlyByteBuf serializedHolder, int windowId, List<PacketUIWidgetUpdate> initialWidgetUpdates) {
         E holder = readHolderFromSyncData(serializedHolder);
         Minecraft minecraft = Minecraft.getMinecraft();
-        EntityPlayerSP entityPlayer = minecraft.player;
+        PlayerSP Player = minecraft.player;
 
-        ModularUI uiTemplate = createUITemplate(holder, entityPlayer);
+        ModularUI uiTemplate = createUITemplate(holder, Player);
         uiTemplate.initWidgets();
         ModularUIGui modularUIGui = new ModularUIGui(uiTemplate);
         modularUIGui.inventorySlots.windowId = windowId;
@@ -78,7 +78,7 @@ public abstract class UIFactory<E extends IUIHolder> {
         });
     }
 
-    protected abstract ModularUI createUITemplate(E holder, Player entityPlayer);
+    protected abstract ModularUI createUITemplate(E holder, Player Player);
 
     protected abstract E readHolderFromSyncData(FriendlyByteBuf syncData);
 

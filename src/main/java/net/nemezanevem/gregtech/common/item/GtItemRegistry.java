@@ -22,7 +22,7 @@ public class GtItemRegistry {
     private static Map<TagKey<Item>, List<Holder<Item>>> itemTagMap = new HashMap<>();
 
     public static void addTagToItem(Item item, String tagPath) {
-        itemTagMap.put(new TagKey<>(ForgeRegistries.ITEMS.getRegistryKey(), new ResourceLocation("forge", "items/" + tagPath)), List.of(ForgeRegistries.ITEMS.getHolder(item).get()));
+        itemTagMap.put(new TagKey<>(ForgeRegistries.ITEMS.getRegistryKey(), new ResourceLocation("forge", tagPath)), List.of(ForgeRegistries.ITEMS.getHolder(item).get()));
     }
 
     public static void register() {

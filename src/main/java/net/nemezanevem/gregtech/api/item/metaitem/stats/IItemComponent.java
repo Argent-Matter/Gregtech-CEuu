@@ -1,4 +1,4 @@
-package net.nemezanevem.gregtech.api.item.stats;
+package net.nemezanevem.gregtech.api.item.metaitem.stats;
 
 /**
  * Describes generic component attachable to metaitem

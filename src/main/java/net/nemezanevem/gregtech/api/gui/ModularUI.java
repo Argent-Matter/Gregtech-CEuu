@@ -35,9 +35,9 @@ public final class ModularUI implements ISizeProvider {
      * UIHolder of this modular UI
      */
     public final IUIHolder holder;
-    public final EntityPlayer entityPlayer;
+    public final Player Player;
 
-    public ModularUI(ImmutableBiMap<Integer, Widget> guiWidgets, ImmutableList<Runnable> openListeners, ImmutableList<Runnable> closeListeners, IGuiTexture backgroundPath, int width, int height, IUIHolder holder, EntityPlayer entityPlayer) {
+    public ModularUI(ImmutableBiMap<Integer, Widget> guiWidgets, ImmutableList<Runnable> openListeners, ImmutableList<Runnable> closeListeners, IGuiTexture backgroundPath, int width, int height, IUIHolder holder, Player Player) {
         this.guiWidgets = guiWidgets;
         this.uiOpenCallback = openListeners;
         this.uiCloseCallback = closeListeners;
@@ -45,7 +45,7 @@ public final class ModularUI implements ISizeProvider {
         this.width = width;
         this.height = height;
         this.holder = holder;
-        this.entityPlayer = entityPlayer;
+        this.Player = Player;
     }
 
     public ModularUIGui getModularUIGui() {
@@ -262,7 +262,7 @@ public final class ModularUI implements ISizeProvider {
             return this;
         }
 
-        public ModularUI build(IUIHolder holder, EntityPlayer player) {
+        public ModularUI build(IUIHolder holder, Player player) {
             ModularUI ui = new ModularUI(widgets.build(), openListeners.build(), closeListeners.build(), background, width, height, holder, player);
             ui.shouldColor = this.shouldColor;
             return ui;

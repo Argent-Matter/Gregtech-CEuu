@@ -144,6 +144,9 @@ repositories {
     // flatDir {
     //     dir 'libs'
     // }
+    maven {
+        url "https://maven.covers1624.net"
+    }
 }
 
 dependencies {
@@ -159,6 +162,8 @@ dependencies {
 
     // Examples using mod jars from ./libs
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
+
+    implementation fg.deobf("codechicken:CodeChickenLib:1.19.2-4.3.0.470:universal")
 
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

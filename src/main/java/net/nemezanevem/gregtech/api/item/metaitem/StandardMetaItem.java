@@ -18,7 +18,7 @@ public class StandardMetaItem extends MetaItem {
     }
 
     @Override
-    public ModularUI createUI(PlayerInventoryHolder holder, Player entityPlayer) {
+    public ModularUI createUI(PlayerInventoryHolder holder, Player Player) {
         return null;
     }
 }

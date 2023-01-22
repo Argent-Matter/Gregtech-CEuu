@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.unification.material.properties.info;
 
 import com.google.common.base.Preconditions;
+import net.minecraft.resources.ResourceLocation;
+import net.nemezanevem.gregtech.GregTech;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -18,7 +20,7 @@ public class MaterialIconSet {
     private static int idCounter = 0;
 
     public final String name;
-    public final int id;
+    public final ResourceLocation id;
     public final boolean isRootIconset;
 
     /**
@@ -55,7 +57,7 @@ public class MaterialIconSet {
     public MaterialIconSet(@Nonnull String name, @Nullable MaterialIconSet parentIconset, boolean isRootIconset) {
         this.name = name.toLowerCase(Locale.ENGLISH);
         Preconditions.checkArgument(!ICON_SETS.containsKey(this.name), "MaterialIconSet " + this.name + " already registered!");
-        this.id = idCounter++;
+        this.id = name.contains(":") ? new ResourceLocation(name) : new ResourceLocation(GregTech.MODID, name);
         this.isRootIconset = isRootIconset;
         this.parentIconset = parentIconset;
         ICON_SETS.put(this.name, this);
