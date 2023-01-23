@@ -2,11 +2,8 @@ package net.nemezanevem.gregtech.api.gui;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Widget;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
@@ -17,6 +14,7 @@ import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.gui.impl.ModularUIContainer;
 import net.nemezanevem.gregtech.api.gui.impl.ModularUIGui;
 import net.nemezanevem.gregtech.api.registry.gui.UIFactoryRegistry;
+import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
 import java.util.ArrayList;
@@ -49,8 +47,7 @@ public abstract class UIFactory<E extends IUIHolder> {
         FriendlyByteBuf serializedHolder = new FriendlyByteBuf(Unpooled.buffer());
         writeHolderToSyncData(serializedHolder, holder);
 
-        ModularUIContainer container = new ModularUIContainer(uiTemplate);
-        container.windowId = currentWindowId;
+        ModularUIContainer container = new ModularUIContainer(currentWindowId, uiTemplate);
         //accumulate all initial updates of widgets in open packet
         container.accumulateWidgetUpdateData = true;
         uiTemplate.guiWidgets.values().forEach(Widget::detectAndSendChanges);
@@ -58,31 +55,29 @@ public abstract class UIFactory<E extends IUIHolder> {
         ArrayList<PacketUIWidgetUpdate> updateData = new ArrayList<>(container.accumulatedUpdates);
         container.accumulatedUpdates.clear();
 
-        ClientboundOpenScreenPacket packet = new PacketUIOpen(uiFactoryId, serializedHolder, currentWindowId, updateData);
+        PacketUIOpen packet = new PacketUIOpen(this, serializedHolder, currentWindowId, updateData);
         GregTech.NETWORK_HANDLER.sendTo(packet, player.connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
 
-        container.addListener(player);
-        player.openContainer = container;
+        player.initMenu(container);
 
         //and fire forge event only in the end
         MinecraftForge.EVENT_BUS.post(new PlayerContainerEvent.Open(player, container));
     }
 
-    public final void initClientUI(FriendlyByteBuf serializedHolder, int windowId, List<PacketUIWidgetUpdate> initialWidgetUpdates) {
+    public final void initClientUI(FriendlyByteBuf serializedHolder, int containerId, List<PacketUIWidgetUpdate> initialWidgetUpdates) {
         E holder = readHolderFromSyncData(serializedHolder);
-        Minecraft minecraft = Minecraft.getMinecraft();
+        Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
 
         ModularUI uiTemplate = createUITemplate(holder, player);
         uiTemplate.initWidgets();
-        ModularUIGui modularUIGui = new ModularUIGui(uiTemplate);
-        modularUIGui.inventorySlots.windowId = windowId;
+        ModularUIGui modularUIGui = new ModularUIGui(containerId, uiTemplate, player.getInventory());
         for (PacketUIWidgetUpdate packet : initialWidgetUpdates) {
             modularUIGui.handleWidgetUpdate(packet);
         }
-        minecraft.addScheduledTask(() -> {
-            minecraft.displayGuiScreen(modularUIGui);
-            minecraft.player.openContainer.windowId = windowId;
+        minecraft.execute(() -> {
+            minecraft.setScreen(modularUIGui);
+            minecraft.player.containerMenu = modularUIGui.getMenu();
         });
     }
 

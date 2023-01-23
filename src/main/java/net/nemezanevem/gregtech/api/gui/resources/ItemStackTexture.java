@@ -35,9 +35,9 @@ public class ItemStackTexture implements IGuiTexture{
 
     @Override
     public void draw(double x, double y, int width, int height) {
-        RenderHelper.disableStandardItemLighting();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         RenderSystem.disableDepth();
-        RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
         RenderSystem.pushMatrix();
         RenderSystem.scale(width / 16f, height / 16f, 0.0001);
         RenderSystem.translate(x * 16 / width, y * 16 / height, 0);
@@ -45,6 +45,6 @@ public class ItemStackTexture implements IGuiTexture{
         itemRender.renderItemAndEffectIntoGUI(itemStack[index], 0, 0);
         RenderSystem.enableAlpha();
         RenderSystem.popMatrix();
-        RenderHelper.disableStandardItemLighting();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
     }
 }

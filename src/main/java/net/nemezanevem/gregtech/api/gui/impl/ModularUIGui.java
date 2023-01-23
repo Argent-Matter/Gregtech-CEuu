@@ -1,19 +1,27 @@
 package net.nemezanevem.gregtech.api.gui.impl;
 
 
+import codechicken.lib.math.MathHelper;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.event.ContainerScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
 import java.util.Set;
+
+import static net.nemezanevem.gregtech.api.gui.Widget.drawGradientRect;
 
 public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> implements IRenderContext {
 
@@ -30,8 +38,8 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         return modularUI;
     }
 
-    public ModularUIGui(ModularUI modularUI, ModularUIContainer container, Inventory playerInv) {
-        super(container, playerInv, Component.translatable("gui"));
+    public ModularUIGui(int windowId, ModularUI modularUI, Inventory playerInv) {
+        super(new ModularUIContainer(windowId, modularUI), playerInv, Component.translatable("gui"));
         this.modularUI = modularUI;
         modularUI.setModularUIGui(this);
     }
@@ -52,13 +60,13 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    public void updateScreen() {
-        super.updateScreen();
-        modularUI.guiWidgets.values().forEach(Widget::updateScreen);
+    public void containerTick() {
+        super.containerTick();
+        modularUI.guiWidgets.values().forEach(Widget::containerTick);
     }
 
     public void handleWidgetUpdate(PacketUIWidgetUpdate packet) {
-        if (packet.windowId == inventorySlots.windowId) {
+        if (packet.windowId == menu.containerId) {
             Widget widget = modularUI.guiWidgets.get(packet.widgetId);
             int updateId = packet.updateData.readVarInt();
             if (widget != null) {
@@ -68,63 +76,60 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    public void renderBg(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+    public void renderBg(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
         lastUpdate += partialTicks;
         while (lastUpdate >= 0) {
             lastUpdate -= FRAMES_PER_TICK;
             modularUI.guiWidgets.values().forEach(Widget::updateScreenOnFrame);
         }
         this.hoveredSlot = null;
-        drawDefaultBackground();
+        renderBackground(poseStack);
 
-        RenderSystem.disableRescaleNormal();
-        RenderHelper.disableStandardItemLighting();
-        RenderSystem.disableLighting();
-        RenderSystem.disableDepth();
+        RenderSystem.disablePolygonOffset();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+        RenderSystem.disableDepthTest();
 
         drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
 
-        RenderHelper.enableGUIStandardItemLighting();
-        RenderSystem.pushMatrix();
-        RenderSystem.translate(guiLeft, guiTop, 0.0F);
-        RenderSystem.color(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableRescaleNormal();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+        poseStack.pushPose();
+        poseStack.translate(leftPos, topPos, 0.0F);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enablePolygonOffset();
 
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-        RenderSystem.color(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        for (int i = 0; i < this.inventorySlots.inventorySlots.size(); ++i) {
-            Slot slot = this.inventorySlots.inventorySlots.get(i);
+        for (int i = 0; i < this.menu.slots.size(); ++i) {
+            Slot slot = this.menu.slots.get(i);
             if (slot instanceof SlotWidget.ISlotWidget) {
                 if (((SlotWidget.ISlotWidget) slot).isHover()) {
                     setHoveredSlot(slot);
                 }
-            } else if (isPointInRegion(slot.xPos, slot.yPos, 16, 16, mouseX, mouseY) && slot.isEnabled()) {
+            } else if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY) && slot.isActive()) {
                 renderSlotOverlay(slot);
                 setHoveredSlot(slot);
             }
         }
 
-        RenderHelper.disableStandardItemLighting();
-        RenderSystem.popMatrix();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+        poseStack.popPose();
 
-        drawGuiContainerForegroundLayer(mouseX, mouseY);
+        drawGuiContainerForegroundLayer(poseStack, mouseX, mouseY);
 
-        RenderSystem.pushMatrix();
-        RenderSystem.translate(guiLeft, guiTop, 0.0F);
-        RenderHelper.enableGUIStandardItemLighting();
+        poseStack.pushPose();
+        poseStack.translate(leftPos, topPos, 0.0F);
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
 
-        MinecraftForge.EVENT_BUS.post(new GuiContainerEvent.DrawForeground(this, mouseX, mouseY));
+        MinecraftForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Foreground(this, poseStack, mouseX, mouseY));
 
-        RenderSystem.enableDepth();
+        RenderSystem.enableDepthTest();
         renderItemStackOnMouse(mouseX, mouseY);
         renderReturningItemStack();
 
-        RenderSystem.popMatrix();
-        RenderSystem.enableLighting();
-        RenderHelper.enableStandardItemLighting();
+        poseStack.popPose();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
 
-        renderHoveredToolTip(mouseX, mouseY);
+        renderTooltip(poseStack, mouseX, mouseY);
     }
 
 
@@ -134,79 +139,79 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
 
     @Deprecated
     public void renderSlotOverlay(Slot slot) {
-        RenderSystem.disableDepth();
-        int slotX = slot.xPos;
-        int slotY = slot.yPos;
+        RenderSystem.disableDepthTest();
+        int slotX = slot.x;
+        int slotY = slot.y;
         RenderSystem.colorMask(true, true, true, false);
         drawGradientRect(slotX, slotY, slotX + 16, slotY + 16, -2130706433, -2130706433);
         RenderSystem.colorMask(true, true, true, true);
-        RenderSystem.enableDepth();
+        RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
     }
 
     public ItemStack getDraggedStack() {
-        return this.draggedStack;
+        return this.draggingItem;
     }
 
     private void renderItemStackOnMouse(int mouseX, int mouseY) {
-        InventoryPlayer inventory = this.mc.player.inventory;
-        ItemStack itemStack = this.draggedStack.isEmpty() ? inventory.getItemStack() : this.draggedStack;
+        InventoryMenu inventory = this.minecraft.player.inventoryMenu;
+        ItemStack itemStack = this.draggingItem.isEmpty() ? inventory.getCarried() : this.draggingItem;
 
         if (!itemStack.isEmpty()) {
-            int dragOffset = this.draggedStack.isEmpty() ? 8 : 16;
-            if (!this.draggedStack.isEmpty() && this.isRightMouseClick) {
+            int dragOffset = this.draggingItem.isEmpty() ? 8 : 16;
+            if (!this.draggingItem.isEmpty() && this.isQuickCrafting) {
                 itemStack = itemStack.copy();
                 itemStack.setCount(MathHelper.ceil((float) itemStack.getCount() / 2.0F));
 
-            } else if (this.dragSplitting && this.dragSplittingSlots.size() > 1) {
+            } else if (this.isQuickCrafting && this.quickCraftSlots.size() > 1) {
                 itemStack = itemStack.copy();
-                itemStack.setCount(this.dragSplittingRemnant);
+                itemStack.setCount(this.quickCraftingRemainder);
             }
-            this.drawItemStack(itemStack, mouseX - guiLeft - 8, mouseY - guiTop - dragOffset, null);
+            this.itemRenderer.renderGuiItem(itemStack, mouseX - leftPos - 8, mouseY - topPos - dragOffset);
         }
     }
 
     private void renderReturningItemStack() {
-        if (!this.returningStack.isEmpty()) {
-            float partialTicks = (float) (Minecraft.getSystemTime() - this.returningStackTime) / 100.0F;
+        if (!this.draggingItem.isEmpty()) {
+            float partialTicks = (Minecraft.getInstance().getFrameTime() - this.snapbackTime) / 100.0F;
             if (partialTicks >= 1.0F) {
                 partialTicks = 1.0F;
-                this.returningStack = ItemStack.EMPTY;
+                this.snapbackItem = ItemStack.EMPTY;
             }
-            int deltaX = this.returningStackDestSlot.xPos - this.touchUpX;
-            int deltaY = this.returningStackDestSlot.yPos - this.touchUpY;
-            int currentX = this.touchUpX + (int) ((float) deltaX * partialTicks);
-            int currentY = this.touchUpY + (int) ((float) deltaY * partialTicks);
+            int deltaX = this.snapbackEnd.x - this.snapbackStartX;
+            int deltaY = this.snapbackEnd.x - this.snapbackStartY;
+            int currentX = this.snapbackStartX + (int) ((float) deltaX * partialTicks);
+            int currentY = this.snapbackStartY + (int) ((float) deltaY * partialTicks);
             //noinspection ConstantConditions
-            this.drawItemStack(this.returningStack, currentX, currentY, null);
+            this.itemRenderer.renderGuiItem(this.snapbackItem, currentX, currentY);
         }
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+    protected void drawGuiContainerForegroundLayer(PoseStack poseStack, int mouseX, int mouseY) {
         modularUI.guiWidgets.values().forEach(widget -> {
             if (!widget.isVisible()) return;
-            RenderSystem.pushMatrix();
-            RenderSystem.color(1.0f, 1.0f, 1.0f);
-            widget.drawInForeground(mouseX, mouseY);
-            RenderSystem.popMatrix();
+            poseStack.pushPose();
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            widget.drawInForeground(poseStack, mouseX, mouseY);
+            poseStack.popPose();
         });
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.pushMatrix();
-        RenderSystem.color(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
+    protected void drawGuiContainerBackgroundLayer(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+        poseStack.pushPose();
+        RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
         RenderSystem.enableBlend();
-        RenderSystem.popMatrix();
-        modularUI.backgroundPath.draw(guiLeft, guiTop, xSize, ySize);
+        poseStack.popPose();
+        modularUI.backgroundPath.draw(leftPos, topPos, imageWidth, imageHeight);
         modularUI.guiWidgets.values().forEach(widget -> {
             if (!widget.isVisible()) return;
-            RenderSystem.pushMatrix();
+            poseStack.pushPose();
             RenderSystem.enableBlend();
-            widget.drawInBackground(mouseX, mouseY, partialTicks,this);
-            RenderSystem.color(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
-            RenderSystem.popMatrix();
+            widget.drawInBackground(poseStack, mouseX, mouseY, partialTicks,this);
+            RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
+            poseStack.popPose();
         });
     }
 
@@ -230,12 +235,12 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         }
     }
 
-    public Set<Slot> getDragSplittingSlots() {
-        return dragSplittingSlots;
+    public Set<Slot> getQuickCraftSlots() {
+        return this.quickCraftSlots;
     }
 
-    public boolean getDragSplitting() {
-        return dragSplitting;
+    public boolean getIsQuickCrafting() {
+        return this.isQuickCrafting;
     }
 
     @Override

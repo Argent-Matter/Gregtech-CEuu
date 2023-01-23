@@ -25,6 +25,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMater
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 import org.slf4j.Logger;
 
@@ -77,6 +78,8 @@ public class GregTech {
     private void commonSetup(final FMLCommonSetupEvent event) {
         int packetIndex = 0;
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
+        NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
+        NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIOpen.class, PacketUIOpen::encode, PacketUIOpen::decode, PacketUIOpen::handle);
     }
 
     private void register(RegisterEvent event) {

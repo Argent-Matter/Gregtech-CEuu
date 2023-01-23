@@ -24,9 +24,9 @@ public class ItemTabInfo implements ITabInfo {
     public void renderTab(IGuiTexture tabTexture, int posX, int posY, int xSize, int ySize, boolean isSelected) {
         tabTexture.draw(posX, posY, xSize, ySize);
         RenderSystem.enableRescaleNormal();
-        RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
         Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(iconStack, posX + xSize / 2 - 8, posY + ySize / 2 - 8);
-        RenderHelper.disableStandardItemLighting();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         RenderSystem.disableRescaleNormal();
     }
 

@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.gui;
 
-import codechicken.lib.util.FontUtils;
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -8,8 +7,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,15 +17,12 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.phys.Vec2;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
 import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
-import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -169,7 +165,7 @@ public abstract class Widget {
     /**
      * Called clientside every tick with this modular UI open
      */
-    public void updateScreen() {
+    public void containerTick() {
     }
 
     /**
@@ -181,7 +177,7 @@ public abstract class Widget {
     /**
      * Called each draw tick to draw this widget in GUI
      */
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
     }
 
     /**
@@ -559,11 +555,11 @@ public abstract class Widget {
     }
 
     protected boolean isShiftDown() {
-        return TooltipHelper.isShiftDown();
+        return Screen.hasShiftDown();
     }
 
     protected boolean isCtrlDown() {
-        return TooltipHelper.isCtrlDown();
+        return Screen.hasControlDown();
     }
 
     public boolean isRemote() {

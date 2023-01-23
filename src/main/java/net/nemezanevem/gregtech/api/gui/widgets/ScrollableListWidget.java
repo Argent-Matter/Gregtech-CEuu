@@ -1,13 +1,15 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.client.utils.RenderUtil;
-import gregtech.api.util.Size;
-import mezz.jei.api.gui.IGhostIngredientHandler.Target;
-import net.minecraft.util.math.MathHelper;
+import codechicken.lib.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
+import net.minecraft.client.renderer.Rect2i;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
+import net.nemezanevem.gregtech.client.util.RenderUtil;
 
 import java.awt.*;
 import java.util.List;
@@ -39,7 +41,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     private void addScrollOffset(int offset) {
-        this.scrollOffset = MathHelper.clamp(scrollOffset + offset, 0, totalListHeight - getSize().height);
+        this.scrollOffset = MathHelper.clip(scrollOffset + offset, 0, totalListHeight - getSize().height);
         updateElementPositions();
     }
 
@@ -69,7 +71,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         //make sure mouse is not hovered on any element when outside of bounds,
         //since foreground rendering is not scissored,
         //because cut tooltips don't really look nice
@@ -77,11 +79,11 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
             mouseX = Integer.MAX_VALUE;
             mouseY = Integer.MAX_VALUE;
         }
-        super.drawInForeground(mouseX, mouseY);
+        super.drawInForeground(poseStack, mouseX, mouseY);
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         //make sure mouse is not hovered on any element when outside of bounds
         if (!isPositionInsideScissor(mouseX, mouseY)) {
             mouseX = Integer.MAX_VALUE;
@@ -102,7 +104,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
         GuiTextures.SLIDER_ICON.draw(scrollX + 1, scrollSliderY + 2, paneSize - 2, scrollSliderHeight);
 
         RenderUtil.useScissor(position.x, position.y, size.width - paneSize, size.height, () ->
-            super.drawInBackground(finalMouseX, finalMouseY, partialTicks, context));
+            super.drawInBackground(poseStack, finalMouseX, finalMouseY, partialTicks, context));
     }
 
     @Override
@@ -130,15 +132,15 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
                 isPositionInsideScissor(x1, y1);
     }
 
-    private boolean isBoxInsideScissor(Rectangle rectangle) {
-        return isPositionInsideScissor(rectangle.x, rectangle.y) &&
-                isPositionInsideScissor(rectangle.x + rectangle.width - 1, rectangle.y + rectangle.height - 1);
+    private boolean isBoxInsideScissor(Rect2i rectangle) {
+        return isPositionInsideScissor(rectangle.getX(), rectangle.getY()) &&
+                isPositionInsideScissor(rectangle.getX() + rectangle.getWidth() - 1, rectangle.getY() + rectangle.getHeight() - 1);
     }
 
     @Override
     public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
         if (isMouseOverElement(mouseX, mouseY)) {
-            int direction = -MathHelper.clamp(wheelDelta, -1, 1);
+            int direction = -MathHelper.clip(wheelDelta, -1, 1);
             int moveDelta = direction * (slotHeight / 2);
             addScrollOffset(moveDelta);
             return true;
@@ -160,7 +162,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         int mouseDelta = (mouseY - lastMouseY);
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
@@ -169,7 +171,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
             return true;
         }
         if (isPositionInsideScissor(mouseX, mouseY)) {
-            return super.mouseDragged(mouseX, mouseY, button, timeDragged);
+            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
         }
         return false;
     }
@@ -192,7 +194,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public List<Target<?>> getPhantomTargets(Object ingredient) {
+    public List<IGhostIngredientHandler.Target<?>> getPhantomTargets(Object ingredient) {
         //for phantom targets, show only ones who are fully inside scissor box to avoid visual glitches
         return super.getPhantomTargets(ingredient).stream()
                 .filter(it -> isBoxInsideScissor(it.getArea()))

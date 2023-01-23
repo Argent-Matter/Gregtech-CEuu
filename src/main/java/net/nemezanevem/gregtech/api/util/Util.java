@@ -1,7 +1,9 @@
 package net.nemezanevem.gregtech.api.util;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
@@ -11,6 +13,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
 
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -83,6 +86,66 @@ public class Util {
     public static byte getFloorTierByVoltage(long voltage) {
         if (voltage < V[GTValues.ULV]) return GTValues.ULV;
         return tierByVoltage.floorEntry(voltage).getValue();
+    }
+
+    /**
+     * Attempts to merge given ItemStack with ItemStacks in slot list supplied
+     * If it's not possible to merge it fully, it will attempt to insert it into first empty slots
+     *
+     * @param itemStack item stack to merge. It WILL be modified.
+     * @param simulate  if true, stack won't actually modify items in other slots
+     * @return if merging of at least one item succeed, false otherwise
+     */
+    public static boolean mergeItemStack(ItemStack itemStack, List<Slot> slots, boolean simulate) {
+        if (itemStack.isEmpty())
+            return false; //if we are merging empty stack, return
+
+        boolean merged = false;
+        //iterate non-empty slots first
+        //to try to insert stack into them
+        for (Slot slot : slots) {
+            if (!slot.mayPlace(itemStack))
+                continue; //if itemstack cannot be placed into that slot, continue
+            ItemStack stackInSlot = slot.getItem();
+            if (!ItemStack.matches(itemStack, stackInSlot) ||
+                    !ItemStack.tagMatches(itemStack, stackInSlot))
+                continue; //if itemstacks don't match, continue
+            int slotMaxStackSize = Math.min(stackInSlot.getMaxStackSize(), slot.getMaxStackSize(stackInSlot));
+            int amountToInsert = Math.min(itemStack.getCount(), slotMaxStackSize - stackInSlot.getCount());
+            // Need to check <= 0 for the PA, which could have this value negative due to slot limits in the Machine Access Interface
+            if (amountToInsert <= 0)
+                continue; //if we can't insert anything, continue
+            //shrink our stack, grow slot's stack and mark slot as changed
+            if (!simulate) {
+                stackInSlot.grow(amountToInsert);
+            }
+            itemStack.shrink(amountToInsert);
+            slot.setChanged();
+            merged = true;
+            if (itemStack.isEmpty())
+                return true; //if we inserted all items, return
+        }
+
+        //then try to insert itemstack into empty slots
+        //breaking it into pieces if needed
+        for (Slot slot : slots) {
+            if (!slot.mayPlace(itemStack))
+                continue; //if itemstack cannot be placed into that slot, continue
+            if (slot.hasItem())
+                continue; //if slot contains something, continue
+            int amountToInsert = Math.min(itemStack.getCount(), slot.getMaxStackSize(itemStack));
+            if (amountToInsert == 0)
+                continue; //if we can't insert anything, continue
+            //split our stack and put result in slot
+            ItemStack stackInSlot = itemStack.split(amountToInsert);
+            if (!simulate) {
+                slot.set(stackInSlot);
+            }
+            merged = true;
+            if (itemStack.isEmpty())
+                return true; //if we inserted all items, return
+        }
+        return merged;
     }
 
 

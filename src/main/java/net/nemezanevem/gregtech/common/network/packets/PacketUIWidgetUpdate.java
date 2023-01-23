@@ -42,7 +42,7 @@ public class PacketUIWidgetUpdate {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                 Screen currentScreen = Minecraft.getInstance().screen;
                 if (currentScreen instanceof ModularUIGui ui) {
-                    ui.handleWidgetUpdate(this);
+                    ui.handleWidgetUpdate(packet);
                 }
             });
         });

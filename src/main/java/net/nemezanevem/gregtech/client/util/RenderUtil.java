@@ -1,25 +1,36 @@
 package net.nemezanevem.gregtech.client.util;
 
+import codechicken.lib.texture.TextureUtils;
 import codechicken.lib.vec.Matrix4;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Quaternion;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLX;
-import org.lwjgl.opengl.GLX11;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.function.Function;
 
 public class RenderUtil {
 
@@ -134,21 +145,6 @@ public class RenderUtil {
         GL11.glDisable(GL11.GL_STENCIL_TEST);
     }
 
-    public static void useLightMap(float x, float y, Runnable codeBlock){
-        /* hack the lightmap */
-        GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
-        float lastBrightnessX = OpenGlHelper.lastBrightnessX;
-        float lastBrightnessY = OpenGlHelper.lastBrightnessY;
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, x, y);
-        if (codeBlock != null) {
-            codeBlock.run();
-        }
-        /* restore the lightmap  */
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, lastBrightnessX, lastBrightnessY);
-        net.minecraft.client.renderer.RenderHelper.enableStandardItemLighting();
-        GL11.glPopAttrib();
-    }
-
     public static void moveToFace(PoseStack poseStack, double x, double y, double z, Direction face) {
         poseStack.translate(x + 0.5 + face.getStepX() * 0.5, y + 0.5 + face.getStepY() * 0.5, z + 0.5 + face.getStepZ() * 0.5);
     }
@@ -212,13 +208,17 @@ public class RenderUtil {
 
         BufferedImage bufferedImage = new BufferedImage(iconWidth, iconHeight * frameCount, BufferedImage.TYPE_4BYTE_ABGR);
         for (int i = 0; i < frameCount; i++) {
-            int[][] frameTextureData = ((TextureAtlasSprite.AnimatedTexture)textureAtlasSprite.getAnimationTicker())
-            int[] largestMipMapTextureData = frameTextureData[0];
-            bufferedImage.setRGB(0, i * iconHeight, iconWidth, iconHeight, largestMipMapTextureData, 0, iconWidth);
+            int[] imagePixelData = new int[iconHeight * iconWidth];
+            for(int x = 0; x < iconWidth; ++x) {
+                for(int y = 0; y < iconHeight; ++y) {
+                    imagePixelData[y + x * iconWidth + iconWidth] = textureAtlasSprite.getPixelRGBA(i, x, y);
+                }
+            }
+            bufferedImage.setRGB(0, i * iconHeight, iconWidth, iconHeight, imagePixelData, 0, iconWidth);
         }
         glTextureId = TextureUtil.generateTextureId();
         if (glTextureId != -1) {
-            TextureUtil.prepareImage(glTextureId, bufferedImage.getData()., false, false);
+            TextureUtil.prepareImage(glTextureId, bufferedImage.getWidth(), bufferedImage.getHeight());
             textureMap.put(textureAtlasSprite, glTextureId);
             RenderSystem.bindTexture(textureMap.get(textureAtlasSprite));
         }
@@ -281,21 +281,22 @@ public class RenderUtil {
         float f = (float)(color >> 16 & 255) / 255.0F;
         float f1 = (float)(color >> 8 & 255) / 255.0F;
         float f2 = (float)(color & 255) / 255.0F;
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture2D();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.color(f, f1, f2, f3);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        buffer.pos(x + width, y, z).endVertex();
-        buffer.pos(x, y, z).endVertex();
-        buffer.pos(x, y + height, z).endVertex();
-        buffer.pos(x + width, y + height, z).endVertex();
-        tessellator.draw();
-        GlStateManager.disableBlend();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1,1,1,1);
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShaderColor(f, f1, f2, f3);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder buffer = tesselator.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        buffer.vertex(x + width, y, z).endVertex();
+        buffer.vertex(x, y, z).endVertex();
+        buffer.vertex(x, y + height, z).endVertex();
+        buffer.vertex(x + width, y + height, z).endVertex();
+        tesselator.end();
+        RenderSystem.disableBlend();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1,1,1,1);
     }
 
     public static void renderGradientRect(float x, float y, float width, float height, float z, int startColor, int endColor, boolean horizontal) {
@@ -307,114 +308,112 @@ public class RenderUtil {
         float endRed = (float) (endColor >> 16 & 255) / 255.0F;
         float endGreen = (float) (endColor >> 8 & 255) / 255.0F;
         float endBlue = (float) (endColor & 255) / 255.0F;
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.defaultBlendFunc();
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder buffer = tesselator.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         if (horizontal) {
-            buffer.pos(x + width, y, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            buffer.pos(x, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y + height, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x + width, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            tessellator.draw();
+            buffer.vertex(x + width, y, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            buffer.vertex(x, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y + height, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x + width, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            tesselator.end();
         } else {
-            buffer.pos(x + width, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-            buffer.pos(x, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            buffer.pos(x + width, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-            tessellator.draw();
+            buffer.vertex(x + width, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y, z).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+            buffer.vertex(x, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            buffer.vertex(x + width, y + height, z).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+            tesselator.end();
         }
-        GlStateManager.shadeModel(GL11.GL_FLAT);
-        GlStateManager.disableBlend();
-        GlStateManager.enableAlpha();
-        GlStateManager.enableTexture2D();
+        GL11.glShadeModel(GL11.GL_FLAT);
+        RenderSystem.disableBlend();
+        RenderSystem.enableTexture();
     }
 
-    public static void renderText(float x, float y, float z, float scale, int color, final String renderedText, boolean centered) {
-        GlStateManager.pushMatrix();
-        final FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
-        final int width = fr.getStringWidth( renderedText );
-        GlStateManager.translate(x, y - scale * 4, z);
-        GlStateManager.scale(scale, scale, scale);
-        GlStateManager.translate(-0.5f * (centered? 1:0)*width, 0.0f, 0.5f );
+    public static void renderText(PoseStack poseStack, float x, float y, float z, float scale, int color, final String renderedText, boolean centered) {
+        poseStack.pushPose();
+        final Font fr = Minecraft.getInstance().font;
+        final int width = fr.width(renderedText);
+        poseStack.translate(x, y - scale * 4, z);
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(-0.5f * (centered? 1:0)*width, 0.0f, 0.5f );
 
-        fr.drawString(renderedText, 0, 0, color);
-        GlStateManager.popMatrix();
+        fr.draw(poseStack, renderedText, 0, 0, color);
+        poseStack.popPose();
     }
 
-    public static void renderItemOverLay(float x, float y, float z, float scale, ItemStack itemStack) {
-        net.minecraft.client.renderer.RenderHelper.enableStandardItemLighting();
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, 0.0001f);
-        GlStateManager.translate(x * 16, y * 16, z * 16);
-        RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
-        renderItem.renderItemAndEffectIntoGUI(itemStack, 0, 0 );
-        GlStateManager.popMatrix();
-        net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+    public static void renderItemOverLay(PoseStack poseStack, float x, float y, float z, float scale, ItemStack itemStack) {
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, 0.0001f);
+        poseStack.translate(x * 16, y * 16, z * 16);
+        ItemRenderer renderItem = Minecraft.getInstance().getItemRenderer();
+        renderItem.renderAndDecorateFakeItem(itemStack, 0, 0);
+        poseStack.popPose();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
     }
 
     public static void renderFluidOverLay(float x, float y, float width, float height, float z, FluidStack fluidStack, float alpha) {
         if (fluidStack != null) {
-            int color = fluidStack.getFluid().getColor(fluidStack);
+            var extensions = IClientFluidTypeExtensions.of(fluidStack.getFluid());
+            int color = extensions.getTintColor(fluidStack);
             float r = (color >> 16 & 255) / 255.0f;
             float g = (color >> 8 & 255) / 255.0f;
             float b = (color & 255) / 255.0f;
-            TextureAtlasSprite sprite = TextureUtils.getTexture(fluidStack.getFluid().getStill(fluidStack));
-            GlStateManager.enableBlend();
-            GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            GlStateManager.disableAlpha();
-            //GlStateManager.disableLighting();
-            Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-            Tessellator tess = Tessellator.getInstance();
-            BufferBuilder buf = tess.getBuffer();
+            TextureAtlasSprite sprite = TextureUtils.getTexture(extensions.getStillTexture());
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+            Minecraft.getInstance().getTextureManager().getTexture(InventoryMenu.BLOCK_ATLAS);
+            Tesselator tess = Tesselator.getInstance();
+            BufferBuilder buf = tess.getBuilder();
 
-            buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            double uMin = sprite.getInterpolatedU(16D - width * 16D), uMax = sprite.getInterpolatedU(width * 16D);
-            double vMin = sprite.getMinV(), vMax = sprite.getInterpolatedV(height * 16D);
-            buf.pos(x, y, z).tex(uMin, vMin).color(r, g, b, alpha).endVertex();
-            buf.pos(x, y + height, z).tex(uMin, vMax).color(r, g, b, alpha).endVertex();
-            buf.pos(x + width, y + height, z).tex(uMax, vMax).color(r, g, b, alpha).endVertex();
-            buf.pos(x + width, y, z).tex(uMax, vMin).color(r, g, b, alpha).endVertex();
-            tess.draw();
+            buf.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            float uMin = sprite.getU(16D - width * 16D), uMax = sprite.getU(width * 16D);
+            float vMin = sprite.getV1(), vMax = sprite.getV(height * 16D);
+            buf.vertex(x, y, z).uv(uMin, vMin).color(r, g, b, alpha).endVertex();
+            buf.vertex(x, y + height, z).uv(uMin, vMax).color(r, g, b, alpha).endVertex();
+            buf.vertex(x + width, y + height, z).uv(uMax, vMax).color(r, g, b, alpha).endVertex();
+            buf.vertex(x + width, y, z).uv(uMax, vMin).color(r, g, b, alpha).endVertex();
+            tess.end();
 
-            //GlStateManager.enableLighting();
-            GlStateManager.enableAlpha();
-            GlStateManager.disableBlend();
-            GlStateManager.color(1F, 1F, 1F, 1F);
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+            RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         }
     }
 
     public static void renderTextureArea(TextureArea textureArea, float x, float y, float width, float height, float z) {
-        double imageU = textureArea.offsetX;
-        double imageV = textureArea.offsetY;
-        double imageWidth = textureArea.imageWidth;
-        double imageHeight = textureArea.imageHeight;
-        Minecraft.getMinecraft().renderEngine.bindTexture(textureArea.imageLocation);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(x, y + height, z).tex(imageU, imageV + imageHeight).endVertex();
-        bufferbuilder.pos(x + width, y + height, z).tex(imageU + imageWidth, imageV + imageHeight).endVertex();
-        bufferbuilder.pos(x + width, y, z).tex(imageU + imageWidth, imageV).endVertex();
-        bufferbuilder.pos(x, y, z).tex(imageU, imageV).endVertex();
-        tessellator.draw();
+        float imageU = textureArea.offsetX;
+        float imageV = textureArea.offsetY;
+        float imageWidth = textureArea.imageWidth;
+        float imageHeight = textureArea.imageHeight;
+        Minecraft.getInstance().textureManager.bindForSetup(textureArea.imageLocation);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.vertex(x, y + height, z).uv(imageU, imageV + imageHeight).endVertex();
+        bufferbuilder.vertex(x + width, y + height, z).uv(imageU + imageWidth, imageV + imageHeight).endVertex();
+        bufferbuilder.vertex(x + width, y, z).uv(imageU + imageWidth, imageV).endVertex();
+        bufferbuilder.vertex(x, y, z).uv(imageU, imageV).endVertex();
+        tesselator.end();
     }
 
     public static void renderLineChart(List<Long> data, long max, float x, float y, float width, float height, float lineWidth, int color) {
         float durX = data.size() > 1 ? width / (data.size() - 1) : 0;
         float hY = max > 0 ? height / max : 0;
 
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_DST_ALPHA);
-        GlStateManager.color(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, ((color >> 24) & 0xFF) / 255f);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_DST_ALPHA);
+        RenderSystem.setShaderColor(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, ((color >> 24) & 0xFF) / 255f);
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         float last_x = x + 0 * durX;
         float last_y = y - data.get(0) * hY;
         for (int i = 0; i < data.size(); i++) {
@@ -422,23 +421,23 @@ public class RenderUtil {
             float _y = y - data.get(i) * hY;
             // draw lines
             if (i != 0) {
-                bufferbuilder.pos(last_x, last_y - lineWidth, 0.01D).endVertex();
-                bufferbuilder.pos(last_x, last_y + lineWidth, 0.01D).endVertex();
-                bufferbuilder.pos(_x, _y + lineWidth, 0.01D).endVertex();
-                bufferbuilder.pos(_x, _y - lineWidth, 0.01D).endVertex();
+                bufferbuilder.vertex(last_x, last_y - lineWidth, 0.01D).endVertex();
+                bufferbuilder.vertex(last_x, last_y + lineWidth, 0.01D).endVertex();
+                bufferbuilder.vertex(_x, _y + lineWidth, 0.01D).endVertex();
+                bufferbuilder.vertex(_x, _y - lineWidth, 0.01D).endVertex();
                 last_x = _x;
                 last_y = _y;
             }
             // draw points
-            bufferbuilder.pos(_x - 3 * lineWidth, _y, 0.01D).endVertex();
-            bufferbuilder.pos(_x, _y + 3 * lineWidth, 0.01D).endVertex();
-            bufferbuilder.pos(_x + 3 * lineWidth, _y, 0.01D).endVertex();
-            bufferbuilder.pos(_x, _y - 3 * lineWidth, 0.01D).endVertex();
+            bufferbuilder.vertex(_x - 3 * lineWidth, _y, 0.01D).endVertex();
+            bufferbuilder.vertex(_x, _y + 3 * lineWidth, 0.01D).endVertex();
+            bufferbuilder.vertex(_x + 3 * lineWidth, _y, 0.01D).endVertex();
+            bufferbuilder.vertex(_x, _y - 3 * lineWidth, 0.01D).endVertex();
         }
-        tessellator.draw();
+        tessellator.end();
 
-        GlStateManager.disableBlend();
-        GlStateManager.enableTexture2D();
+        RenderSystem.disableBlend();
+        RenderSystem.enableTexture();
     }
 
     public static void renderLine(float x1, float y1, float x2, float y2, float lineWidth, int color) {
@@ -446,70 +445,71 @@ public class RenderUtil {
         float w = (x2 - x1) / hypo * lineWidth;
         float h = (y1 - y2) / hypo * lineWidth;
 
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_DST_ALPHA);
-        GlStateManager.color(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, ((color >> 24) & 0xFF) / 255f);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        RenderSystem.setShaderColor(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, ((color >> 24) & 0xFF) / 255f);
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         if (w * h > 0) {
-            bufferbuilder.pos(x1 - w, y1 - h, 0.01D).endVertex();
-            bufferbuilder.pos(x1 + w, y1 + h, 0.01D).endVertex();
-            bufferbuilder.pos(x2 + w, y2 + h, 0.01D).endVertex();
-            bufferbuilder.pos(x2 - w, y2 - h, 0.01D).endVertex();
+            bufferbuilder.vertex(x1 - w, y1 - h, 0.01D).endVertex();
+            bufferbuilder.vertex(x1 + w, y1 + h, 0.01D).endVertex();
+            bufferbuilder.vertex(x2 + w, y2 + h, 0.01D).endVertex();
+            bufferbuilder.vertex(x2 - w, y2 - h, 0.01D).endVertex();
         } else {
             h = (y2 - y1) / hypo * lineWidth;
-            bufferbuilder.pos(x1 + w, y1 - h, 0.01D).endVertex();
-            bufferbuilder.pos(x1 - w, y1 + h, 0.01D).endVertex();
-            bufferbuilder.pos(x2 - w, y2 + h, 0.01D).endVertex();
-            bufferbuilder.pos(x2 + w, y2 - h, 0.01D).endVertex();
+            bufferbuilder.vertex(x1 + w, y1 - h, 0.01D).endVertex();
+            bufferbuilder.vertex(x1 - w, y1 + h, 0.01D).endVertex();
+            bufferbuilder.vertex(x2 - w, y2 + h, 0.01D).endVertex();
+            bufferbuilder.vertex(x2 + w, y2 - h, 0.01D).endVertex();
         }
-        tessellator.draw();
-        GlStateManager.disableBlend();
-        GlStateManager.enableTexture2D();
-        GlStateManager.color(1,1,1,1);
+        tessellator.end();
+        RenderSystem.disableBlend();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1,1,1,1);
     }
 
     public static void drawFluidTexture(double xCoord, double yCoord, TextureAtlasSprite textureSprite, int maskTop, int maskRight, double zLevel) {
-        double uMin = textureSprite.getMinU();
-        double uMax = textureSprite.getMaxU();
-        double vMin = textureSprite.getMinV();
-        double vMax = textureSprite.getMaxV();
-        uMax = uMax - maskRight / 16.0 * (uMax - uMin);
-        vMax = vMax - maskTop / 16.0 * (vMax - vMin);
+        float uMin = textureSprite.getU0();
+        float uMax = textureSprite.getU1();
+        float vMin = textureSprite.getV0();
+        float vMax = textureSprite.getV1();
+        uMax = uMax - maskRight / 16.0f * (uMax - uMin);
+        vMax = vMax - maskTop / 16.0f * (vMax - vMin);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(xCoord, yCoord + 16, zLevel).tex(uMin, vMax).endVertex();
-        buffer.pos(xCoord + 16 - maskRight, yCoord + 16, zLevel).tex(uMax, vMax).endVertex();
-        buffer.pos(xCoord + 16 - maskRight, yCoord + maskTop, zLevel).tex(uMax, vMin).endVertex();
-        buffer.pos(xCoord, yCoord + maskTop, zLevel).tex(uMin, vMin).endVertex();
-        tessellator.draw();
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder buffer = tessellator.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.vertex(xCoord, yCoord + 16, zLevel).uv(uMin, vMax).endVertex();
+        buffer.vertex(xCoord + 16 - maskRight, yCoord + 16, zLevel).uv(uMax, vMax).endVertex();
+        buffer.vertex(xCoord + 16 - maskRight, yCoord + maskTop, zLevel).uv(uMax, vMin).endVertex();
+        buffer.vertex(xCoord, yCoord + maskTop, zLevel).uv(uMin, vMin).endVertex();
+        tessellator.end();
     }
 
     public static void drawFluidForGui(FluidStack contents, int tankCapacity, int startX, int startY, int widthT, int heightT) {
         widthT--;
         heightT--;
         Fluid fluid = contents.getFluid();
-        ResourceLocation fluidStill = fluid.getStill(contents);
-        TextureAtlasSprite fluidStillSprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(fluidStill.toString());
-        int fluidColor = fluid.getColor(contents);
+        var extensions = IClientFluidTypeExtensions.of(fluid);
+        ResourceLocation fluidStill = extensions.getStillTexture();
+        TextureAtlasSprite fluidStillSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(fluidStill);
+        int fluidColor = extensions.getTintColor(contents);
         int scaledAmount;
-        if (contents.amount == tankCapacity) {
+        if (contents.getAmount() == tankCapacity) {
             scaledAmount = heightT;
         } else {
-            scaledAmount = contents.amount * heightT / tankCapacity;
+            scaledAmount = contents.getAmount() * heightT / tankCapacity;
         }
-        if (contents.amount > 0 && scaledAmount < 1) {
+        if (contents.getAmount() > 0 && scaledAmount < 1) {
             scaledAmount = 1;
         }
         if (scaledAmount > heightT) {
             scaledAmount = heightT;
         }
-        GlStateManager.enableBlend();
-        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        RenderSystem.enableBlend();
+        Minecraft.getInstance().textureManager.bindForSetup(InventoryMenu.BLOCK_ATLAS);
         // fluid is RGBA for GT guis, despite MC's fluids being ARGB
         setGlColorFromInt(fluidColor, 0xFF);
 
@@ -534,7 +534,7 @@ public class RenderUtil {
                 }
             }
         }
-        GlStateManager.disableBlend();
+        RenderSystem.disableBlend();
     }
 
     public static int packColor(int red, int green, int blue, int alpha) {
@@ -545,51 +545,21 @@ public class RenderUtil {
         int i = (colorValue & 0xFF0000) >> 16;
         int j = (colorValue & 0xFF00) >> 8;
         int k = (colorValue & 0xFF);
-        GlStateManager.color(i / 255.0f, j / 255.0f, k / 255.0f, opacity / 255.0f);
+        RenderSystem.setShaderColor(i / 255.0f, j / 255.0f, k / 255.0f, opacity / 255.0f);
     }
 
     public static void setGlClearColorFromInt(int colorValue, int opacity) {
         int i = (colorValue & 0xFF0000) >> 16;
         int j = (colorValue & 0xFF00) >> 8;
         int k = (colorValue & 0xFF);
-        GlStateManager.clearColor(i / 255.0f, j / 255.0f, k / 255.0f, opacity / 255.0f);
+        RenderSystem.clearColor(i / 255.0f, j / 255.0f, k / 255.0f, opacity / 255.0f);
     }
 
     public static int getFluidColor(FluidStack fluidStack) {
-        if (fluidStack.getFluid() == FluidRegistry.WATER)
+        if (fluidStack.getFluid() == Fluids.WATER)
             return 0x3094CF;
-        else if (fluidStack.getFluid() == FluidRegistry.LAVA)
+        else if (fluidStack.getFluid() == Fluids.LAVA)
             return 0xFFD700;
-        return fluidStack.getFluid().getColor(fluidStack);
-    }
-
-    public static boolean updateFBOSize(Framebuffer fbo, int width, int height) {
-        if (fbo.framebufferWidth != width || fbo.framebufferHeight != height) {
-            fbo.createBindFramebuffer(width, height);
-            return true;
-        }
-        return false;
-    }
-
-    public static void hookDepthBuffer(Framebuffer fbo, int depthBuffer) {
-        //Hook DepthBuffer
-        OpenGlHelper.glBindFramebuffer(OpenGlHelper.GL_FRAMEBUFFER, fbo.framebufferObject);
-        if (fbo.isStencilEnabled()) {
-            OpenGlHelper.glFramebufferRenderbuffer(OpenGlHelper.GL_FRAMEBUFFER, org.lwjgl.opengl.EXTFramebufferObject.GL_DEPTH_ATTACHMENT_EXT, OpenGlHelper.GL_RENDERBUFFER, depthBuffer);
-            OpenGlHelper.glFramebufferRenderbuffer(OpenGlHelper.GL_FRAMEBUFFER, org.lwjgl.opengl.EXTFramebufferObject.GL_STENCIL_ATTACHMENT_EXT, OpenGlHelper.GL_RENDERBUFFER, depthBuffer);
-        }
-        else {
-            OpenGlHelper.glFramebufferRenderbuffer(OpenGlHelper.GL_FRAMEBUFFER, OpenGlHelper.GL_DEPTH_ATTACHMENT, OpenGlHelper.GL_RENDERBUFFER, depthBuffer);
-        }
-    }
-
-    public static void hookDepthTexture(Framebuffer fbo, int depthTexture) {
-        //Hook DepthTexture
-        OpenGlHelper.glBindFramebuffer(OpenGlHelper.GL_FRAMEBUFFER, fbo.framebufferObject);
-        if (fbo.isStencilEnabled()) {
-            OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, GL30.GL_DEPTH_STENCIL_ATTACHMENT, GL11.GL_TEXTURE_2D, depthTexture, 0);
-        } else {
-            OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, OpenGlHelper.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, depthTexture, 0);
-        }
+        return IClientFluidTypeExtensions.of(fluidStack.getFluid()).getTintColor(fluidStack);
     }
 }

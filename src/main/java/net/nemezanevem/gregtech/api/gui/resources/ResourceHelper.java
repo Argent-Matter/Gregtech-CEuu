@@ -1,10 +1,8 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
-import gregtech.api.GTValues;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.nemezanevem.gregtech.GregTech;
 import org.apache.commons.io.IOUtils;
 
 import java.io.Closeable;
@@ -19,10 +17,10 @@ import java.util.Map;
 public class ResourceHelper {
 
     private static final Map<String, ResourceLocation> cachedResources = new HashMap<>();
-    public static final String RESOURCE_PREFIX = GTValues.MODID + ":";
+    public static final String RESOURCE_PREFIX = GregTech.MODID + ":";
 
     public static void bindTexture(ResourceLocation texture) {
-        Minecraft.getMinecraft().renderEngine.bindTexture(texture);
+        Minecraft.getInstance().textureManager.bindForSetup(texture);
     }
 
     public static ResourceLocation getResource(String rs) {
@@ -45,12 +43,12 @@ public class ResourceHelper {
 
     public static boolean isResourceExist(String rs) {
         if (!cachedResources.containsKey(rs)) {
-            InputStream inputstream = ResourceHelper.class.getResourceAsStream(String.format("/assets/%s/%s", GTValues.MODID, rs));
+            InputStream inputstream = ResourceHelper.class.getResourceAsStream(String.format("/assets/%s/%s", GregTech.MODID, rs));
             if(inputstream == null) {
                 return false;
             }
             IOUtils.closeQuietly(inputstream);
-            cachedResources.put(rs, new ResourceLocation(GTValues.MODID, rs));
+            cachedResources.put(rs, new ResourceLocation(GregTech.MODID, rs));
         }
         return true;
     }

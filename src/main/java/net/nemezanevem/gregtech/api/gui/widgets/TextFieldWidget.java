@@ -164,7 +164,7 @@ public class TextFieldWidget extends Widget {
     }
 
     @Override
-    public void updateScreen() {
+    public void containerTick() {
         if (textSupplier != null && isClient) {
             this.currentString = textSupplier.get();
             this.textField.setValue(currentString);

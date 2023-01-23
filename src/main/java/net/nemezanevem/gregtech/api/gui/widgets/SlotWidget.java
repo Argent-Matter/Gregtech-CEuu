@@ -1,14 +1,17 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
 import net.nemezanevem.gregtech.api.gui.INativeWidget;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
@@ -71,16 +74,16 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         ((ISlotWidget) slotReference).setHover(isMouseOverElement(mouseX, mouseY) && isActive());
         if (tooltipText != null && isMouseOverElement(mouseX, mouseY) && !slotReference.hasItem()) {
             List<Component> hoverList = List.of(Component.translatable(tooltipText, tooltipArgs));
-            drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundTexture != null) {
@@ -90,13 +93,13 @@ public class SlotWidget extends Widget implements INativeWidget {
         }
         ItemStack itemStack = slotReference.getItem();
         ModularUIGui modularUIGui = gui == null ? null : gui.getModularUIGui();
-        if (itemStack.isEmpty() && modularUIGui!= null && modularUIGui.getDragSplitting() && modularUIGui.getDragSplittingSlots().contains(slotReference)) { // draw split
-            int splitSize = modularUIGui.getDragSplittingSlots().size();
-            itemStack = gui.player.inventory.getItemStack();
-            if (!itemStack.isEmpty() && splitSize > 1 && Container.canAddItemToSlot(slotReference, itemStack, true)) {
+        if (itemStack.isEmpty() && modularUIGui!= null && modularUIGui.getIsQuickCrafting() && modularUIGui.getQuickCraftSlots().contains(slotReference)) { // draw split
+            int splitSize = modularUIGui.getQuickCraftSlots().size();
+            itemStack = gui.player.inventoryMenu.getCarried();
+            if (!itemStack.isEmpty() && splitSize > 1 && slotReference.container.canPlaceItem(slotReference.index, itemStack)) {
                 itemStack = itemStack.copy();
-                Container.computeStackSize(modularUIGui.getDragSplittingSlots(), modularUIGui.dragSplittingLimit, itemStack, slotReference.getStack().isEmpty() ? 0 : slotReference.getStack().getCount());
-                int k = Math.min(itemStack.getMaxStackSize(), slotReference.getItemStackLimit(itemStack));
+                gui.player.containerMenu.getQuickCraftSlotCount(modularUIGui.getQuickCraftSlots(), modularUIGui.dragSplittingLimit, itemStack, slotReference.getItem().isEmpty() ? 0 : slotReference.getItem().getCount());
+                int k = Math.min(itemStack.getMaxStackSize(), slotReference.getMaxStackSize(itemStack));
                 if (itemStack.getCount() > k) {
                     itemStack.setCount(k);
                 }
@@ -104,28 +107,25 @@ public class SlotWidget extends Widget implements INativeWidget {
         }
         if (!itemStack.isEmpty()) {
             RenderSystem.enableBlend();
-            RenderSystem.enableDepth();
-            RenderSystem.disableRescaleNormal();
-            RenderSystem.disableLighting();
-            RenderHelper.disableStandardItemLighting();
-            RenderHelper.enableStandardItemLighting();
-            RenderHelper.enableGUIStandardItemLighting();
-            RenderSystem.pushMatrix();
-            RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
-            itemRender.renderItemAndEffectIntoGUI(itemStack, pos.x + 1, pos.y + 1);
-            itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRenderer, itemStack, pos.x + 1, pos.y + 1, null);
-            RenderSystem.enableAlpha();
-            RenderSystem.popMatrix();
-            RenderHelper.disableStandardItemLighting();
+            RenderSystem.enableDepthTest();
+            RenderSystem.disablePolygonOffset();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+            poseStack.pushPose();
+            ItemRenderer itemRender = Minecraft.getInstance().getItemRenderer();
+            itemRender.renderAndDecorateItem(itemStack, pos.x + 1, pos.y + 1);
+            itemRender.renderGuiItemDecorations(Minecraft.getInstance().font, itemStack, pos.x + 1, pos.y + 1, null);
+            poseStack.popPose();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         }
         if (isActive()) {
             if (slotReference instanceof ISlotWidget) {
                 if (isMouseOverElement(mouseX, mouseY)) {
-                    RenderSystem.disableDepth();
+                    RenderSystem.disableDepthTest();
                     RenderSystem.colorMask(true, true, true, false);
-                    drawSolidRect(getPosition().x + 1, getPosition().y + 1, 16, 16, -2130706433);
+                    drawSolidRect(poseStack, getPosition().x + 1, getPosition().y + 1, 16, 16, -2130706433);
                     RenderSystem.colorMask(true, true, true, true);
-                    RenderSystem.enableDepth();
+                    RenderSystem.enableDepthTest();
                     RenderSystem.enableBlend();
                 }
             }
@@ -143,9 +143,9 @@ public class SlotWidget extends Widget implements INativeWidget {
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
             ModularUIGui modularUIGui = gui.getModularUIGui();
-            boolean last = modularUIGui.getDragSplitting();
+            boolean last = modularUIGui.getIsQuickCrafting();
             gui.getModularUIGui().superMouseClicked(mouseX, mouseY, button);
-            if (last != modularUIGui.getDragSplitting()) {
+            if (last != modularUIGui.getIsQuickCrafting()) {
                 modularUIGui.dragSplittingButton = button;
                 if (button == 0) {
                     modularUIGui.dragSplittingLimit = 0;
@@ -194,14 +194,6 @@ public class SlotWidget extends Widget implements INativeWidget {
         return this;
     }
 
-    public SlotWidget(IItemHandlerModifiable itemHandler, int slotIndex, int xPosition, int yPosition) {
-        this(itemHandler, slotIndex, xPosition, yPosition, true, true);
-    }
-
-    public SlotWidget(IInventory inventory, int slotIndex, int xPosition, int yPosition) {
-        this(inventory, slotIndex, xPosition, yPosition, true, true);
-    }
-
     /**
      * Sets array of background textures used by slot
      * they are drawn on top of each other
@@ -241,17 +233,17 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack) {
+    public boolean canTakeItemForPickAll(ItemStack stack) {
         return isEnabled();
-    }
-
-    public void onSlotChanged() {
-        gui.holder.markAsDirty();
     }
 
     @Override
     public ItemStack slotClick(int dragType, ClickType clickTypeIn, Player player) {
         return null;
+    }
+
+    public void onSlotChanged() {
+        gui.holder.markAsDirty();
     }
 
     @Override

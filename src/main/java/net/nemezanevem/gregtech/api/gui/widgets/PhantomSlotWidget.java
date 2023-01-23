@@ -2,14 +2,22 @@ package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.collect.Lists;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHandler;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.gui.ingredient.IGhostIngredientTarget;
 import net.nemezanevem.gregtech.api.util.SlotUtil;
+import net.nemezanevem.gregtech.client.util.MouseButtonHelper;
+import net.nemezanevem.gregtech.client.util.TooltipHelper;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -31,8 +39,8 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
     @Override
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
-            if (button == 1 && clearSlotOnRightClick && !slotReference.getStack().isEmpty()) {
-                slotReference.putStack(ItemStack.EMPTY);
+            if (button == 1 && clearSlotOnRightClick && !slotReference.getItem().isEmpty()) {
+                slotReference.set(ItemStack.EMPTY);
                 writeClientAction(2, buf -> {
                 });
             } else {
@@ -51,8 +59,8 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
             slotReference.set(is);
             writeClientAction(1, buffer -> {
                 buffer.writeItem(slotReference.getItem());
-                int mouseButton = Mouse.getEventButton();
-                boolean shiftDown = TooltipHelper.isShiftDown();
+                int mouseButton = MouseButtonHelper.button;
+                boolean shiftDown = Screen.hasShiftDown();
                 buffer.writeVarInt(mouseButton);
                 buffer.writeBoolean(shiftDown);
             });
@@ -68,8 +76,13 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack) {
+    public boolean canTakeItemForPickAll(ItemStack stack) {
         return false;
+    }
+
+    @Override
+    public ItemStack onItemTake(Player player, ItemStack stack, boolean simulate) {
+        return super.onItemTake(player, stack, simulate);
     }
 
     @Override
@@ -78,7 +91,7 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
             return Collections.emptyList();
         }
         Rect2i rectangle = toRectangleBox();
-        return Lists.newArrayList(new Target<Object>() {
+        return Lists.newArrayList(new Target<>() {
             @Nonnull
             @Override
             public Rect2i getArea() {
@@ -88,12 +101,12 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
             @Override
             public void accept(@Nonnull Object ingredient) {
                 if (ingredient instanceof ItemStack) {
-                    int mouseButton = MOUSEINPUT.
-                    boolean shiftDown = TooltipHelper.isShiftDown();
+                    int mouseButton = MouseButtonHelper.button;
+                    boolean shiftDown = Screen.hasShiftDown();
                     ClickType clickType = shiftDown ? ClickType.QUICK_MOVE : ClickType.PICKUP;
                     SlotUtil.slotClickPhantom(slotReference, mouseButton, clickType, (ItemStack) ingredient);
                     writeClientAction(1, buffer -> {
-                        buffer.writeItemStack((ItemStack) ingredient);
+                        buffer.writeItem((ItemStack) ingredient);
                         buffer.writeVarInt(mouseButton);
                         buffer.writeBoolean(shiftDown);
                     });

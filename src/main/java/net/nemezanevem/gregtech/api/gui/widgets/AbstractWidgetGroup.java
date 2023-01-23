@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
@@ -246,10 +247,10 @@ public class AbstractWidgetGroup extends Widget implements IGhostIngredientTarge
     }
 
     @Override
-    public void updateScreen() {
+    public void containerTick() {
         for (Widget widget : widgets) {
             if (widget.isActive()) {
-                widget.updateScreen();
+                widget.containerTick();
             }
         }
         if (waitToRemoved != null) {
@@ -268,22 +269,22 @@ public class AbstractWidgetGroup extends Widget implements IGhostIngredientTarge
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         for (Widget widget : widgets) {
             if (widget.isVisible()) {
-                widget.drawInForeground(mouseX, mouseY);
+                widget.drawInForeground(poseStack, mouseX, mouseY);
                 RenderSystem.setShaderColor(1, 1, 1, 1);
             }
         }
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         RenderSystem.setShaderColor(gui.getRColorForOverlay(), gui.getGColorForOverlay(), gui.getBColorForOverlay(), 1.0F);
         for (Widget widget : widgets) {
             if (widget.isVisible()) {
-                widget.drawInBackground(mouseX, mouseY, partialTicks, context);
+                widget.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
                 RenderSystem.setShaderColor(gui.getRColorForOverlay(), gui.getGColorForOverlay(), gui.getBColorForOverlay(), 1.0F);
             }
         }

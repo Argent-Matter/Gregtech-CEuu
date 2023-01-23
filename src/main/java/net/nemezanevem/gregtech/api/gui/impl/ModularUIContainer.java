@@ -7,13 +7,13 @@ import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.NetworkDirection;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.gui.GtVanillaMenuTypes;
 import net.nemezanevem.gregtech.api.gui.INativeWidget;
@@ -22,6 +22,8 @@ import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
 import net.nemezanevem.gregtech.api.util.PerTickIntCounter;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.network.packets.PacketUIClientAction;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
 import javax.annotation.Nonnull;
@@ -37,11 +39,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
     public boolean accumulateWidgetUpdateData = false;
     public final List<PacketUIWidgetUpdate> accumulatedUpdates = new ArrayList<>();
 
-    public ModularUIContainer(int pContainerId, Inventory pPlayerInventory) {
-        this(pContainerId, pPlayerInventory, null);
-    }
-
-    public ModularUIContainer(int containerId, Inventory playerInv, ModularUI modularUI) {
+    public ModularUIContainer(int containerId, ModularUI modularUI) {
         super(GtVanillaMenuTypes.GT_MENU.get(), containerId);
         this.modularUI = modularUI;
         modularUI.guiWidgets.values().forEach(widget -> widget.setUiAccess(this));
@@ -156,19 +154,18 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
                 super.doClick(slotId, dragType, clickTypeIn, player);
                 return;
             }
-            return result;
+            return;
         }
         if (slotId == -999) {
             super.doClick(slotId, dragType, clickTypeIn, player);
         }
-        return ItemStack.EMPTY;
     }
 
     private final PerTickIntCounter transferredPerTick = new PerTickIntCounter(0);
 
     private List<INativeWidget> getShiftClickSlots(ItemStack itemStack, boolean fromContainer) {
         return slotMap.values().stream()
-                .filter(it -> it.canMergeSlot(itemStack))
+                .filter(it -> it.canTakeItemForPickAll(itemStack))
                 .filter(it -> it.getSlotLocationInfo().isPlayerInventory == fromContainer)
                 .filter(it -> {
                     if (it.getHandle() instanceof SlotWidget.WidgetSlotItemHandler) {
@@ -185,13 +182,13 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
         List<Slot> inventorySlots = getShiftClickSlots(itemStack, fromContainer).stream()
                 .map(INativeWidget::getHandle)
                 .collect(Collectors.toList());
-        return GTUtility.mergeItemStack(itemStack, inventorySlots, simulate);
+        return Util.mergeItemStack(itemStack, inventorySlots, simulate);
     }
 
     @Nonnull
     @Override
-    public ItemStack transferStackInSlot(@Nonnull Player player, int index) {
-        Slot slot = inventorySlots.get(index);
+    public ItemStack quickMoveStack(@Nonnull Player player, int index) {
+        Slot slot = slots.get(index);
         if (!slot.mayPickup(player)) {
             return ItemStack.EMPTY;
         }
@@ -206,7 +203,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
             return ItemStack.EMPTY;
         }
         int itemsMerged;
-        if (stackToMerge.isEmpty() || slotMap.get(slot).canMergeSlot(stackToMerge)) {
+        if (stackToMerge.isEmpty() || slotMap.get(slot).canTakeItemForPickAll(stackToMerge)) {
             itemsMerged = stackInSlot.getCount() - stackToMerge.getCount();
         } else {
             //if we can't have partial stack merge, we have to use all the stack
@@ -239,12 +236,12 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
     }
 
     @Override
-    public boolean canMergeSlot(@Nonnull ItemStack stack, @Nonnull Slot slotIn) {
-        return slotMap.get(slotIn).canMergeSlot(stack);
+    public boolean canTakeItemForPickAll(@Nonnull ItemStack stack, @Nonnull Slot slotIn) {
+        return slotMap.get(slotIn).canTakeItemForPickAll(stack);
     }
 
     @Override
-    public boolean canInteractWith(@Nonnull Player playerIn) {
+    public boolean stillValid(@Nonnull Player playerIn) {
         return playerIn == this.modularUI.player && this.modularUI.holder.isValid();
     }
 
@@ -255,7 +252,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
         packetBuffer.writeVarInt(updateId);
         payloadWriter.accept(packetBuffer);
         if (modularUI.player instanceof AbstractClientPlayer) {
-            GregTech.NETWORK_HANDLER.sendToServer(new PacketUIClientAction(win, widgetId, packetBuffer));
+            GregTech.NETWORK_HANDLER.sendToServer(new PacketUIClientAction(containerId, widgetId, packetBuffer));
         }
     }
 
@@ -266,23 +263,13 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
         packetBuffer.writeVarInt(updateId);
         payloadWriter.accept(packetBuffer);
         if (modularUI.player instanceof ServerPlayer) {
-            PacketUIWidgetUpdate widgetUpdate = new PacketUIWidgetUpdate(windowId, widgetId, packetBuffer);
+            PacketUIWidgetUpdate widgetUpdate = new PacketUIWidgetUpdate(containerId, widgetId, packetBuffer);
             if (!accumulateWidgetUpdateData) {
-                GregTechAPI.networkHandler.sendTo(widgetUpdate, (PlayerMP) modularUI.Player);
+                GregTech.NETWORK_HANDLER.sendTo(widgetUpdate, ((ServerPlayer) modularUI.player).connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
             } else {
                 accumulatedUpdates.add(widgetUpdate);
             }
         }
-    }
-
-    @Override
-    public ItemStack quickMoveStack(Player pPlayer, int pIndex) {
-        return null;
-    }
-
-    @Override
-    public boolean stillValid(Player pPlayer) {
-        return true;
     }
 
     private static class EmptySlotPlaceholder extends Slot {
@@ -295,14 +282,12 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
 
         @Nonnull
         @Override
-        public ItemStack getStack() {
+        public ItemStack getItem() {
             return ItemStack.EMPTY;
         }
 
         @Override
-        public void set(@Nonnull ItemStack stack) {
-
-        }
+        public void set(@Nonnull ItemStack stack) { }
 
         @Override
         public boolean mayPlace(@Nonnull ItemStack stack) {

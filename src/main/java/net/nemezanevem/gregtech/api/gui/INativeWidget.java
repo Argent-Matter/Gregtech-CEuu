@@ -2,7 +2,6 @@ package net.nemezanevem.gregtech.api.gui;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -27,7 +26,7 @@ public interface INativeWidget {
     /**
      * @return true when this slot is valid for double click merging
      */
-    boolean canMergeSlot(ItemStack stack);
+    boolean canTakeItemForPickAll(ItemStack stack);
 
     /**
      * Called when item is taken from the slot

@@ -62,7 +62,7 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public void updateScreen() {
+    public void containerTick() {
         clickTime++;
         if (++cursorTime == 10) {
             cursorTime = 0;

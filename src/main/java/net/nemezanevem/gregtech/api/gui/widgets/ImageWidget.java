@@ -75,7 +75,7 @@ public class ImageWidget extends Widget {
     }
 
     @Override
-    public void updateScreen() {
+    public void containerTick() {
         if (area != null) {
             area.updateTick();
         }

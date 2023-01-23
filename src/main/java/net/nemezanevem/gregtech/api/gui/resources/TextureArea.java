@@ -4,18 +4,13 @@ import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Transformation;
 import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
-import gregtech.api.GTValues;
-import gregtech.api.util.Position;
-import gregtech.api.util.PositionedRect;
-import gregtech.api.util.Size;
+import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.resources.ResourceLocation;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.PositionedRect;
+import net.nemezanevem.gregtech.api.util.Size;
 
 /**
  * Represents a texture area of image
@@ -26,13 +21,13 @@ public class TextureArea implements IGuiTexture {
 
     public final ResourceLocation imageLocation;
 
-    public final double offsetX;
-    public final double offsetY;
+    public final float offsetX;
+    public final float offsetY;
 
-    public final double imageWidth;
-    public final double imageHeight;
+    public final float imageWidth;
+    public final float imageHeight;
 
-    public TextureArea(ResourceLocation imageLocation, double offsetX, double offsetY, double width, double height) {
+    public TextureArea(ResourceLocation imageLocation, float offsetX, float offsetY, float width, float height) {
         this.imageLocation = imageLocation;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
@@ -41,18 +36,18 @@ public class TextureArea implements IGuiTexture {
     }
 
     public static TextureArea fullImage(String imageLocation) {
-        return new TextureArea(new ResourceLocation(GTValues.MODID, imageLocation), 0.0, 0.0, 1.0, 1.0);
+        return new TextureArea(new ResourceLocation(GregTech.MODID, imageLocation), 0.0f, 0.0f, 1.0f, 1.0f);
     }
 
     public static TextureArea areaOfImage(String imageLocation, int imageSizeX, int imageSizeY, int u, int v, int width, int height) {
         return new TextureArea(new ResourceLocation(imageLocation),
-                u / (imageSizeX * 1.0),
-                v / (imageSizeY * 1.0),
-                (u + width) / (imageSizeX * 1.0),
-                (v + height) / (imageSizeY * 1.0));
+                (float) (u / (imageSizeX * 1.0)),
+                (float) (v / (imageSizeY * 1.0)),
+                (float) ((u + width) / (imageSizeX * 1.0)),
+                (float) ((v + height) / (imageSizeY * 1.0)));
     }
 
-    public TextureArea getSubArea(double offsetX, double offsetY, double width, double height) {
+    public TextureArea getSubArea(float offsetX, float offsetY, float width, float height) {
         return new TextureArea(imageLocation,
                 this.offsetX + (imageWidth * offsetX),
                 this.offsetY + (imageHeight * offsetY),
@@ -60,14 +55,13 @@ public class TextureArea implements IGuiTexture {
                 this.imageHeight * height);
     }
 
-    @SideOnly(Side.CLIENT)
-    public void drawRotated(int x, int y, Size areaSize, PositionedRect positionedRect, int orientation) {
+    public void drawRotated(PoseStack poseStack, int x, int y, Size areaSize, PositionedRect positionedRect, int orientation) {
         Transformation transformation = createOrientation(areaSize, orientation);
-        RenderSystem.pushMatrix();
-        RenderSystem.translate(x, y, 0.0f);
-        transformation.glApply();
+        poseStack.pushPose();
+        poseStack.translate(x, y, 0.0f);
+        transformation.apply(new Vector3(1, 1, 1));
         draw(positionedRect.position.x, positionedRect.position.y, positionedRect.size.width, positionedRect.size.height);
-        RenderSystem.popMatrix();
+        poseStack.popPose();
     }
 
     public static Transformation createOrientation(Size areaSize, int orientation) {
@@ -100,26 +94,24 @@ public class TextureArea implements IGuiTexture {
         return new Position((int) vector.x, (int) vector.y);
     }
 
-    @SideOnly(Side.CLIENT)
     public void draw(double x, double y, int width, int height) {
-        drawSubArea(x, y, width, height, 0.0, 0.0, 1.0, 1.0);
+        drawSubArea(x, y, width, height, 0.0f, 0.0f, 1.0f, 1.0f);
     }
 
-    @SideOnly(Side.CLIENT)
-    public void drawSubArea(double x, double y, int width, int height, double drawnU, double drawnV, double drawnWidth, double drawnHeight) {
+    public void drawSubArea(double x, double y, int width, int height, float drawnU, float drawnV, float drawnWidth, float drawnHeight) {
         //sub area is just different width and height
-        double imageU = this.offsetX + (this.imageWidth * drawnU);
-        double imageV = this.offsetY + (this.imageHeight * drawnV);
-        double imageWidth = this.imageWidth * drawnWidth;
-        double imageHeight = this.imageHeight * drawnHeight;
-        Minecraft.getMinecraft().renderEngine.bindTexture(imageLocation);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(x, y + height, 0.0D).tex(imageU, imageV + imageHeight).endVertex();
-        bufferbuilder.pos(x + width, y + height, 0.0D).tex(imageU + imageWidth, imageV + imageHeight).endVertex();
-        bufferbuilder.pos(x + width, y, 0.0D).tex(imageU + imageWidth, imageV).endVertex();
-        bufferbuilder.pos(x, y, 0.0D).tex(imageU, imageV).endVertex();
-        tessellator.draw();
+        float imageU = this.offsetX + (this.imageWidth * drawnU);
+        float imageV = this.offsetY + (this.imageHeight * drawnV);
+        float imageWidth = this.imageWidth * drawnWidth;
+        float imageHeight = this.imageHeight * drawnHeight;
+        Minecraft.getInstance().textureManager.bindForSetup(imageLocation);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.vertex(x, y + height, 0.0D).uv(imageU, imageV + imageHeight).endVertex();
+        bufferbuilder.vertex(x + width, y + height, 0.0D).uv(imageU + imageWidth, imageV + imageHeight).endVertex();
+        bufferbuilder.vertex(x + width, y, 0.0D).uv(imageU + imageWidth, imageV).endVertex();
+        bufferbuilder.vertex(x, y, 0.0D).uv(imageU, imageV).endVertex();
+        tesselator.end();
     }
 }

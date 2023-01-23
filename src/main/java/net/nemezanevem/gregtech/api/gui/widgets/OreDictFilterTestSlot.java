@@ -74,15 +74,15 @@ public class OreDictFilterTestSlot extends Widget implements IGhostIngredientTar
         if (!testStack.isEmpty()) {
             RenderSystem.enableBlend();
             RenderSystem.enableDepthTest();
-            RenderHelper.disableStandardItemLighting();
-            RenderHelper.enableStandardItemLighting();
-            RenderHelper.enableGUIStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+                Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
             poseStack.pushPose();
             ItemRenderer itemRender = Minecraft.getInstance().getItemRenderer();
             itemRender.renderItemAndEffectIntoGUI(testStack, pos.x + 1, pos.y + 1);
             itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRenderer, testStack, pos.x + 1, pos.y + 1, null);
             poseStack.popPose();
-            RenderHelper.disableStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         }
         if (isActive() && isMouseOverElement(mouseX, mouseY)) {
             RenderSystem.disableDepthTest();

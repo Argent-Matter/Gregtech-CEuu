@@ -36,7 +36,7 @@ public class FakeModularGui implements IRenderContext {
     }
 
     public void updateScreen() {
-        modularUI.guiWidgets.values().forEach(Widget::updateScreen);
+        modularUI.guiWidgets.values().forEach(Widget::containerTick);
     }
 
     public void handleWidgetUpdate(int windowId, int widgetId, FriendlyByteBuf updateData) {
@@ -86,7 +86,7 @@ public class FakeModularGui implements IRenderContext {
         ItemStack stack = slot.getItem();
         if (!stack.isEmpty() && slot.isActive()) {
             RenderSystem.disablePolygonOffset();
-            RenderHelper.enableStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
             poseStack.pushPose();
             poseStack.scale(1, 1, 0.00001f);
             poseStack.translate(slot.x, slot.y, 0);
@@ -137,7 +137,7 @@ public class FakeModularGui implements IRenderContext {
             }
 
             poseStack.popPose();
-            RenderHelper.disableStandardItemLighting();
+            Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         }
     }
 
