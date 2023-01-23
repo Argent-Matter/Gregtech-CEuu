@@ -1,0 +1,28 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.ludicrous_voltage.61_europium.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.ludicrous_voltage.61_europium.name"
+    },
+    "icon": {
+      "item": "gregtech:meta_ingot",
+      "data": 33
+    }
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "type": "forge:ore_dict",
+            "ore": "ingotEuropium"
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:ludicrous_voltage/60_fusion"
+}

@@ -1,0 +1,28 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.steam.14_magnetic_iron.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.steam.14_magnetic_iron.name"
+    },
+    "icon": {
+      "item": "gregtech:meta_stick",
+      "data": 395
+    }
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "type": "forge:ore_dict",
+            "ore": "stickIronMagnetic"
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:steam/13_steel"
+}

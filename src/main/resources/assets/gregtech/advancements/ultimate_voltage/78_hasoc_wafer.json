@@ -1,0 +1,29 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.ultimate_voltage.78_hasoc_wafer.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.ultimate_voltage.78_hasoc_wafer.name"
+    },
+    "icon": {
+      "item": "gregtech:meta_item_1",
+      "data": 574
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "gregtech:meta_item_1",
+            "data": 574
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:ultimate_voltage/76_neutronium"
+}

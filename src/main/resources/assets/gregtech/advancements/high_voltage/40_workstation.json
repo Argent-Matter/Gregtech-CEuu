@@ -1,0 +1,29 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.high_voltage.40_workstation.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.high_voltage.40_workstation.name"
+    },
+    "icon": {
+      "item": "gregtech:meta_item_1",
+      "data": 630
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "gregtech:meta_item_1",
+            "data": 630
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:high_voltage/root_hv"
+}

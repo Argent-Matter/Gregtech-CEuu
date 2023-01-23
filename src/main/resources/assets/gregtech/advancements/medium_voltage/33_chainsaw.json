@@ -1,0 +1,26 @@
+{
+  "display": {
+    "description": {
+      "translate": "gregtech.advancement.medium_voltage.33_chainsaw.desc"
+    },
+    "title": {
+      "translate": "gregtech.advancement.medium_voltage.33_chainsaw.name"
+    },
+    "icon": {
+      "item": "gregtech:chainsaw_lv"
+    }
+  },
+  "criteria": {
+    "location": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "gregtech:chainsaw_lv"
+          }
+        ]
+      }
+    }
+  },
+  "parent": "gregtech:medium_voltage/root_mv"
+}

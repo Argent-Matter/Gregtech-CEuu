@@ -1,0 +1,55 @@
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "minecraft:cube_all"
+  },
+  "variants": {
+    "variant": {
+      "bronze_gearbox": {
+        "textures": {
+          "all": "gregtech:blocks/casings/gearbox/machine_casing_gearbox_bronze"
+        }
+      },
+      "steel_gearbox": {
+        "textures": {
+          "all": "gregtech:blocks/casings/gearbox/machine_casing_gearbox_steel"
+        }
+      },
+      "stainless_steel_gearbox": {
+        "textures": {
+          "all": "gregtech:blocks/casings/gearbox/machine_casing_gearbox_stainless_steel"
+        }
+      },
+      "titanium_gearbox": {
+        "textures": {
+          "all": "gregtech:blocks/casings/gearbox/machine_casing_gearbox_titanium"
+        }
+      },
+      "tungstensteel_gearbox": {
+        "textures": {
+          "all": "gregtech:blocks/casings/gearbox/machine_casing_gearbox_tungstensteel"
+        }
+      },
+      "steel_turbine_casing": {
+        "textures": {
+          "all": "gregtech:blocks/casings/mechanic/machine_casing_turbine_steel"
+        }
+      },
+      "titanium_turbine_casing": {
+        "textures": {
+          "all": "gregtech:blocks/casings/mechanic/machine_casing_turbine_titanium"
+        }
+      },
+      "stainless_turbine_casing": {
+        "textures": {
+          "all": "gregtech:blocks/casings/mechanic/machine_casing_turbine_stainless_steel"
+        }
+      },
+      "tungstensteel_turbine_casing": {
+        "textures": {
+          "all": "gregtech:blocks/casings/mechanic/machine_casing_turbine_tungstensteel"
+        }
+      }
+    }
+  }
+}
