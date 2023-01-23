@@ -33,7 +33,7 @@ public class PacketUIOpen {
         buf.writeVarInt(windowId);
         buf.writeVarInt(initialWidgetUpdates.size());
         for (PacketUIWidgetUpdate packet : initialWidgetUpdates) {
-            packet.encode(buf);
+            PacketUIWidgetUpdate.encode(packet, buf);
         }
     }
 
@@ -45,8 +45,7 @@ public class PacketUIOpen {
 
         int packetsToRead = buf.readVarInt();
         for (int i = 0; i < packetsToRead; i++) {
-            PacketUIWidgetUpdate packet = new PacketUIWidgetUpdate();
-            packet.decode(buf);
+            PacketUIWidgetUpdate packet = PacketUIWidgetUpdate.decode(buf);
             this.initialWidgetUpdates.add(packet);
         }
     }

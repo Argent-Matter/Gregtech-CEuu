@@ -1,13 +1,19 @@
 package net.nemezanevem.gregtech.client.util;
 
+import codechicken.lib.vec.Matrix4;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Quaternion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GLX;
+import org.lwjgl.opengl.GLX11;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
@@ -84,9 +90,9 @@ public class RenderUtil {
     //applies scissor with gui-space coordinates and sizes
     private static void applyScissor(int x, int y, int w, int h) {
         //translate upper-left to bottom-left
-        ScaledResolution r = ((Gui) Minecraft.getInstance().gui).getRe();
-        int s = r == null ? 1 : r.getScaleFactor();
-        int translatedY = r == null ? 0 : (r.getScaledHeight() - y - h);
+        var window = Minecraft.getInstance().getWindow();
+        int s = Minecraft.getInstance().options.guiScale().get();
+        int translatedY = window.getGuiScaledHeight() - y - h;
         RenderSystem.enableScissor(x * s, translatedY * s, w * s, h * s);
     }
 
@@ -131,7 +137,6 @@ public class RenderUtil {
     public static void useLightMap(float x, float y, Runnable codeBlock){
         /* hack the lightmap */
         GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
-        net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
         float lastBrightnessX = OpenGlHelper.lastBrightnessX;
         float lastBrightnessY = OpenGlHelper.lastBrightnessY;
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, x, y);
@@ -153,32 +158,32 @@ public class RenderUtil {
         switch (face) {
             case UP:
                 poseStack.scale(1.0f, -1.0f, 1.0f);
-                poseStack.rotate(90.0f, 1.0f, 0.0f, 0.0f);
-                poseStack.rotate(angle, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(90.0f, 1.0f, 0.0f, 0.0f));
+                poseStack.mulPose(new Quaternion(angle, 0, 0, 1));
                 break;
             case DOWN:
                 poseStack.scale(1.0f, -1.0f, 1.0f);
-                poseStack.rotate(-90.0f, 1.0f, 0.0f, 0.0f);
-                poseStack.rotate(spin == Direction.EAST ? 90 : spin == Direction.NORTH ? 180 : spin == Direction.WEST ? -90 : 0, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(-90.0f, 1.0f, 0.0f, 0.0f));
+                poseStack.mulPose(new Quaternion(spin == Direction.EAST ? 90 : spin == Direction.NORTH ? 180 : spin == Direction.WEST ? -90 : 0, 0, 0, 1));
                 break;
             case EAST:
                 poseStack.scale(-1.0f, -1.0f, -1.0f);
-                poseStack.rotate(-90.0f, 0.0f, 1.0f, 0.0f);
-                poseStack.rotate(angle, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(-90.0f, 0.0f, 1.0f, 0.0f));
+                poseStack.mulPose(new Quaternion(angle, 0, 0, 1));
                 break;
             case WEST:
                 poseStack.scale(-1.0f, -1.0f, -1.0f);
-                poseStack.rotate(90.0f, 0.0f, 1.0f, 0.0f);
-                poseStack.rotate(angle, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(90.0f, 0.0f, 1.0f, 0.0f));
+                poseStack.mulPose(new Quaternion(angle, 0, 0, 1));
                 break;
             case NORTH:
                 poseStack.scale(-1.0f, -1.0f, -1.0f);
-                poseStack.rotate(angle, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(angle, 0, 0, 1));
                 break;
             case SOUTH:
                 poseStack.scale(-1.0f, -1.0f, -1.0f);
-                poseStack.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-                poseStack.rotate(angle, 0, 0, 1);
+                poseStack.mulPose(new Quaternion(180.0f, 0.0f, 1.0f, 0.0f));
+                poseStack.mulPose(new Quaternion(angle, 0, 0, 1));
                 break;
             default:
                 break;
@@ -211,11 +216,11 @@ public class RenderUtil {
             int[] largestMipMapTextureData = frameTextureData[0];
             bufferedImage.setRGB(0, i * iconHeight, iconWidth, iconHeight, largestMipMapTextureData, 0, iconWidth);
         }
-        glTextureId = TextureUtil.glGenTextures();
+        glTextureId = TextureUtil.generateTextureId();
         if (glTextureId != -1) {
-            TextureUtil.uploadTextureImageAllocate(glTextureId, bufferedImage, false, false);
+            TextureUtil.prepareImage(glTextureId, bufferedImage.getData()., false, false);
             textureMap.put(textureAtlasSprite, glTextureId);
-            GlStateManager.bindTexture(textureMap.get(textureAtlasSprite));
+            RenderSystem.bindTexture(textureMap.get(textureAtlasSprite));
         }
     }
 

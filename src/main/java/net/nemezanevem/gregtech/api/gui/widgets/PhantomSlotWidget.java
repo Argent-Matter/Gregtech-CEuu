@@ -1,20 +1,17 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.collect.Lists;
-import gregtech.api.gui.ingredient.IGhostIngredientTarget;
-import gregtech.api.util.SlotUtil;
-import gregtech.client.utils.TooltipHelper;
-import mezz.jei.api.gui.IGhostIngredientHandler.Target;
-import net.minecraft.entity.player.Player;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import org.lwjgl.input.Mouse;
+import net.nemezanevem.gregtech.api.gui.ingredient.IGhostIngredientTarget;
+import net.nemezanevem.gregtech.api.util.SlotUtil;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,13 +44,13 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
-            ItemStack is = gui.Player.inventory.getItemStack().copy();
+            ItemStack is = gui.player.containerMenu.getCarried().copy();
             is.setCount(1);
-            slotReference.putStack(is);
+            slotReference.set(is);
             writeClientAction(1, buffer -> {
-                buffer.writeItemStack(slotReference.getStack());
+                buffer.writeItem(slotReference.getItem());
                 int mouseButton = Mouse.getEventButton();
                 boolean shiftDown = TooltipHelper.isShiftDown();
                 buffer.writeVarInt(mouseButton);
@@ -66,7 +63,7 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
 
     @Override
     public ItemStack slotClick(int dragType, ClickType clickTypeIn, Player player) {
-        ItemStack stackHeld = player.inventory.getItemStack();
+        ItemStack stackHeld = player.containerMenu.getCarried();
         return SlotUtil.slotClickPhantom(slotReference, dragType, clickTypeIn, stackHeld);
     }
 
@@ -80,18 +77,18 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
         if (!(ingredient instanceof ItemStack)) {
             return Collections.emptyList();
         }
-        Rectangle rectangle = toRectangleBox();
+        Rect2i rectangle = toRectangleBox();
         return Lists.newArrayList(new Target<Object>() {
             @Nonnull
             @Override
-            public Rectangle getArea() {
+            public Rect2i getArea() {
                 return rectangle;
             }
 
             @Override
             public void accept(@Nonnull Object ingredient) {
                 if (ingredient instanceof ItemStack) {
-                    int mouseButton = Mouse.getEventButton();
+                    int mouseButton = MOUSEINPUT.
                     boolean shiftDown = TooltipHelper.isShiftDown();
                     ClickType clickType = shiftDown ? ClickType.QUICK_MOVE : ClickType.PICKUP;
                     SlotUtil.slotClickPhantom(slotReference, mouseButton, clickType, (ItemStack) ingredient);
@@ -106,20 +103,16 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             ItemStack stackHeld;
-            try {
-                stackHeld = buffer.readItemStack();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            stackHeld = buffer.readItem();
             int mouseButton = buffer.readVarInt();
             boolean shiftKeyDown = buffer.readBoolean();
             ClickType clickType = shiftKeyDown ? ClickType.QUICK_MOVE : ClickType.PICKUP;
             SlotUtil.slotClickPhantom(slotReference, mouseButton, clickType, stackHeld);
         } else if (id == 2) {
-            slotReference.putStack(ItemStack.EMPTY);
+            slotReference.set(ItemStack.EMPTY);
         }
     }
 }

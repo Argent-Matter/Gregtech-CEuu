@@ -105,7 +105,7 @@ public class SliderWidget extends Widget {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         if (this.isMouseDown) {
             Position pos = getPosition();
             Size size = getSize();

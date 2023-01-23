@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.gui.impl;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.nemezanevem.gregtech.GregTech;
@@ -19,13 +21,11 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
+import net.nemezanevem.gregtech.api.util.PerTickIntCounter;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,7 +38,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
     public final List<PacketUIWidgetUpdate> accumulatedUpdates = new ArrayList<>();
 
     public ModularUIContainer(int pContainerId, Inventory pPlayerInventory) {
-        this(pContainerId, pPlayerInventory);
+        this(pContainerId, pPlayerInventory, null);
     }
 
     public ModularUIContainer(int containerId, Inventory playerInv, ModularUI modularUI) {
@@ -50,7 +50,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
                 .forEach(nativeWidget -> {
                     Slot slot = nativeWidget.getHandle();
                     slotMap.put(slot, nativeWidget);
-                    addSlotToContainer(slot);
+                    addSlot(slot);
                 });
         modularUI.triggerOpenListeners();
     }
@@ -64,8 +64,7 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
     @Override
     public void notifyWidgetChange() {
         List<INativeWidget> nativeWidgets = modularUI.guiWidgets.values().stream()
-                .flatMap(widget -> widget.getNativeWidgets().stream())
-                .collect(Collectors.toList());
+                .flatMap(widget -> widget.getNativeWidgets().stream()).toList();
 
         Set<INativeWidget> removedWidgets = new HashSet<>(slotMap.values());
         removedWidgets.removeAll(nativeWidgets);
@@ -75,18 +74,18 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
                 this.slotMap.remove(slotHandle);
                 //replace removed slot with empty placeholder to avoid list index shift
                 EmptySlotPlaceholder emptySlotPlaceholder = new EmptySlotPlaceholder();
-                emptySlotPlaceholder.slotNumber = slotHandle.slotNumber;
-                this.inventorySlots.set(slotHandle.slotNumber, emptySlotPlaceholder);
-                this.inventoryItemStacks.set(slotHandle.slotNumber, ItemStack.EMPTY);
+                emptySlotPlaceholder.index = slotHandle.index;
+                this.slots.set(slotHandle.index, emptySlotPlaceholder);
+                this.lastSlots.set(slotHandle.index, ItemStack.EMPTY);
             }
         }
 
         Set<INativeWidget> addedWidgets = new HashSet<>(nativeWidgets);
         addedWidgets.removeAll(slotMap.values());
         if (!addedWidgets.isEmpty()) {
-            int[] emptySlotIndexes = inventorySlots.stream()
+            int[] emptySlotIndexes = slots.stream()
                     .filter(it -> it instanceof EmptySlotPlaceholder)
-                    .mapToInt(slot -> slot.slotNumber).toArray();
+                    .mapToInt(slot -> slot.index).toArray();
             int currentIndex = 0;
             for (INativeWidget addedWidget : addedWidgets) {
                 Slot slotHandle = addedWidget.getHandle();
@@ -94,13 +93,13 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
                 this.slotMap.put(slotHandle, addedWidget);
                 if (currentIndex < emptySlotIndexes.length) {
                     int slotIndex = emptySlotIndexes[currentIndex++];
-                    slotHandle.slotNumber = slotIndex;
-                    this.inventorySlots.set(slotIndex, slotHandle);
-                    this.inventoryItemStacks.set(slotIndex, ItemStack.EMPTY);
+                    slotHandle.index = slotIndex;
+                    this.slots.set(slotIndex, slotHandle);
+                    this.lastSlots.set(slotIndex, ItemStack.EMPTY);
                 } else {
-                    slotHandle.slotNumber = this.inventorySlots.size();
-                    this.inventorySlots.add(slotHandle);
-                    this.inventoryItemStacks.add(ItemStack.EMPTY);
+                    slotHandle.index = this.slots.size();
+                    this.slots.add(slotHandle);
+                    this.lastSlots.add(ItemStack.EMPTY);
                 }
             }
         }
@@ -111,56 +110,56 @@ public class ModularUIContainer extends AbstractContainerMenu implements WidgetU
     }
 
     @Override
-    public void onContainerClosed(@Nonnull Player playerIn) {
-        super.onContainerClosed(playerIn);
+    public void removed(@Nonnull Player playerIn) {
+        super.removed(playerIn);
         modularUI.triggerCloseListeners();
     }
 
     @Override
-    public void addListener(@Nonnull IContainerListener listener) {
-        super.addListener(listener);
+    public void addSlotListener(@Nonnull ContainerListener listener) {
+        super.addSlotListener(listener);
         modularUI.guiWidgets.values().forEach(Widget::detectAndSendChanges);
     }
 
     @Override
     public void sendSlotUpdate(INativeWidget slot) {
         Slot slotHandle = slot.getHandle();
-        for (IContainerListener listener : listeners) {
-            listener.sendSlotContents(this, slotHandle.slotNumber, slotHandle.getStack());
+        for (ContainerListener listener : containerListeners) {
+            listener.slotChanged(this, slotHandle.index, slotHandle.getItem());
         }
     }
 
     @Override
     public void sendHeldItemUpdate() {
-        for (IContainerListener listener : listeners) {
-            if (listener instanceof ServerPlayer) {
-                ServerPlayer player = (ServerPlayer) listener;
-                player.connection.send(new SPacketSetSlot(-1, -1, player.inventory.getItemStack()));
+        for (ContainerListener listener : containerListeners) {
+            if (listener instanceof ServerPlayer player) {
+                player.connection.send(new ClientboundContainerSetSlotPacket(this.containerId, -1, -1, player.getInventory().getSelected()));
             }
         }
     }
 
     @Override
-    public void detectAndSendChanges() {
-        super.detectAndSendChanges();
-        if (listeners.size() > 0) {
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (containerListeners.size() > 0) {
             modularUI.guiWidgets.values().forEach(Widget::detectAndSendChanges);
         }
     }
 
     @Nonnull
     @Override
-    public ItemStack onClick(int slotId, int dragType, @Nonnull ClickType clickTypeIn, @Nonnull Player player) {
-        if (slotId >= 0 && slotId < inventorySlots.size()) {
+    public void doClick(int slotId, int dragType, @Nonnull ClickType clickTypeIn, @Nonnull Player player) {
+        if (slotId >= 0 && slotId < slots.size()) {
             Slot slot = getSlot(slotId);
             ItemStack result = slotMap.get(slot).slotClick(dragType, clickTypeIn, player);
             if (result == null) {
-                return super.slotClick(slotId, dragType, clickTypeIn, player);
+                super.doClick(slotId, dragType, clickTypeIn, player);
+                return;
             }
             return result;
         }
         if (slotId == -999) {
-            super.slotClick(slotId, dragType, clickTypeIn, player);
+            super.doClick(slotId, dragType, clickTypeIn, player);
         }
         return ItemStack.EMPTY;
     }

@@ -3,10 +3,9 @@ package net.nemezanevem.gregtech.api.gui.impl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
@@ -38,18 +37,18 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    public void initGui() {
-        Keyboard.enableRepeatEvents(true);
-        this.xSize = modularUI.getWidth();
-        this.ySize = modularUI.getHeight();
-        super.initGui();
+    public void init() {
+        Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(true);
+        this.imageWidth = modularUI.getWidth();
+        this.imageHeight = modularUI.getHeight();
+        super.init();
         this.modularUI.updateScreenSize(width, height);
     }
 
     @Override
-    public void onGuiClosed() {
-        super.onGuiClosed();
-        Keyboard.enableRepeatEvents(false);
+    public void onClose() {
+        super.onClose();
+        Minecraft.getInstance().keyboardHandler.setSendRepeatsToGui(false);
     }
 
     @Override
@@ -126,11 +125,6 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         RenderHelper.enableStandardItemLighting();
 
         renderHoveredToolTip(mouseX, mouseY);
-    }
-
-    @Override
-    protected void renderBg(PoseStack pPoseStack, float pPartialTick, int pMouseX, int pMouseY) {
-        
     }
 
 
@@ -261,17 +255,18 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+    public boolean mouseDragged(int mouseX, int mouseY, int pButton, double dragX, double dragY) {
         for (int i = modularUI.guiWidgets.size() - 1; i >= 0; i--) {
             Widget widget = modularUI.guiWidgets.get(i);
-            if(widget.isVisible() && widget.isActive() && widget.mouseDragged(mouseX, mouseY, clickedMouseButton, timeSinceLastClick)) {
-                return;
+            if(widget.isVisible() && widget.isActive()) {
+                return widget.mouseDragged(mouseX, mouseY, pButton, dragX, dragY);
             }
         }
+        return false;
     }
 
-    public void superMouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+    public void superMouseDragged(int mouseX, int mouseY, int clickedMouseButton, double pDragX, double pDragY) {
+        super.mouseDragged(mouseX, mouseY, clickedMouseButton, pDragX, pDragY);
     }
 
     @Override

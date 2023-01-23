@@ -1,20 +1,19 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
+import io.netty.util.CharsetUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Keyboard;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import org.lwjgl.glfw.GLFW;
 
+import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,7 +32,7 @@ public class TextFieldWidget2 extends Widget {
     public static final Pattern LETTERS = Pattern.compile("[a-zA-Z]*");
 
     private String text;
-    private String localisedPostFix;
+    private Component localisedPostFix;
     private final Supplier<String> supplier;
     private final Consumer<String> setter;
     private Consumer<TextFieldWidget2> onFocus;
@@ -63,13 +62,6 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public void initWidget() {
-        if (isRemote()) {
-            this.localisedPostFix = I18n.hasKey(localisedPostFix) ? I18n.format(localisedPostFix) : localisedPostFix;
-        }
-    }
-
-    @Override
     public void updateScreen() {
         clickTime++;
         if (++cursorTime == 10) {
@@ -83,58 +75,58 @@ public class TextFieldWidget2 extends Widget {
         String t = supplier.get();
         if (!initialised || (!focused && !text.equals(t))) {
             text = t;
-            writeUpdateInfo(-2, buf -> buf.writeString(text));
+            writeUpdateInfo(-2, buf -> buf.writeCharSequence(text, CharsetUtil.US_ASCII));
             initialised = true;
         }
     }
 
     private int getTextX() {
         if (centered) {
-            FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+            Font fontRenderer = Minecraft.getInstance().font;
             int w = getSize().width;
-            float textW = fontRenderer.getStringWidth(text) * scale;
-            if (localisedPostFix != null && !localisedPostFix.isEmpty())
-                textW += 3 + fontRenderer.getStringWidth(localisedPostFix) * scale;
+            float textW = fontRenderer.width(text) * scale;
+            if (localisedPostFix != null)
+                textW += 3 + fontRenderer.width(localisedPostFix) * scale;
             return (int) (w / 2f - textW / 2f + getPosition().x);
         }
         return getPosition().x + 1;
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+        Font fontRenderer = Minecraft.getInstance().font;
         int y = getPosition().y;
         int textX = getTextX();
         RenderSystem.disableBlend();
-        RenderSystem.pushMatrix();
-        RenderSystem.scale(scale, scale, 0);
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, 0);
         float scaleFactor = 1 / scale;
         y *= scaleFactor;
         if (cursorPos != cursorPos2) {
             // render marked text background
-            float startX = fontRenderer.getStringWidth(text.substring(0, Math.min(cursorPos, cursorPos2))) * scale + textX;
+            float startX = fontRenderer.width(text.substring(0, Math.min(cursorPos, cursorPos2))) * scale + textX;
             String marked = getSelectedText();
-            float width = fontRenderer.getStringWidth(marked);
+            float width = fontRenderer.width(marked);
             drawSelectionBox(startX * scaleFactor, y, width);
         }
-        fontRenderer.drawString(text, (int) (textX * scaleFactor), y, textColor);
-        if (localisedPostFix != null && !localisedPostFix.isEmpty()) {
+        fontRenderer.draw(poseStack, text, (int) (textX * scaleFactor), y, textColor);
+        if (localisedPostFix != null) {
             // render postfix
             int x = postFixRight && !centered ?
-                    getPosition().x + getSize().width - (fontRenderer.getStringWidth(localisedPostFix) + 1) :
-                    textX + fontRenderer.getStringWidth(text) + 3;
+                    getPosition().x + getSize().width - (fontRenderer.width(localisedPostFix) + 1) :
+                    textX + fontRenderer.width(text) + 3;
             x *= scaleFactor;
-            fontRenderer.drawString(localisedPostFix, x, y, textColor);
+            fontRenderer.draw(poseStack, localisedPostFix, x, y, textColor);
         }
         if (focused && drawCursor) {
             // render cursor
             String sub = text.substring(0, cursorPos);
-            float x = fontRenderer.getStringWidth(sub) * scale + textX;
+            float x = fontRenderer.width(sub) * scale + textX;
             x *= scaleFactor;
             drawCursor(x, y);
         }
-        RenderSystem.popMatrix();
+        poseStack.popPose();
         RenderSystem.enableBlend();
     }
 
@@ -149,43 +141,43 @@ public class TextFieldWidget2 extends Widget {
         float alpha = (float) (textColor >> 24 & 255) / 255.0F;
         if (alpha == 0)
             alpha = 1f;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        RenderSystem.color(red, green, blue, alpha);
-        RenderSystem.disableTexture2D();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(x, endY, 0.0D).endVertex();
-        bufferbuilder.pos(endX, endY, 0.0D).endVertex();
-        bufferbuilder.pos(endX, y, 0.0D).endVertex();
-        bufferbuilder.pos(x, y, 0.0D).endVertex();
-        tessellator.draw();
-        RenderSystem.disableColorLogic();
-        RenderSystem.enableTexture2D();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.setShaderColor(red, green, blue, alpha);
+        RenderSystem.disableTexture();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.vertex(x, endY, 0.0D).endVertex();
+        bufferbuilder.vertex(endX, endY, 0.0D).endVertex();
+        bufferbuilder.vertex(endX, y, 0.0D).endVertex();
+        bufferbuilder.vertex(x, y, 0.0D).endVertex();
+        tesselator.end();
+        RenderSystem.disableColorLogicOp();
+        RenderSystem.enableTexture();
     }
 
     private void drawSelectionBox(float x, float y, float width) {
         float endX = x + width;
         y -= 1;
-        float endY = y + Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT;
+        float endY = y + Minecraft.getInstance().font.lineHeight;
         float red = (float) (markedColor >> 16 & 255) / 255.0F;
         float green = (float) (markedColor >> 8 & 255) / 255.0F;
         float blue = (float) (markedColor & 255) / 255.0F;
         float alpha = (float) (markedColor >> 24 & 255) / 255.0F;
         if (alpha == 0)
             alpha = 1f;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        RenderSystem.color(red, green, blue, alpha);
-        RenderSystem.disableTexture2D();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(x, endY, 0.0D).endVertex();
-        bufferbuilder.pos(endX, endY, 0.0D).endVertex();
-        bufferbuilder.pos(endX, y, 0.0D).endVertex();
-        bufferbuilder.pos(x, y, 0.0D).endVertex();
-        tessellator.draw();
-        RenderSystem.disableColorLogic();
-        RenderSystem.enableTexture2D();
-        RenderSystem.color(1, 1, 1, 1);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        RenderSystem.setShaderColor(red, green, blue, alpha);
+        RenderSystem.disableTexture();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.vertex(x, endY, 0.0D).endVertex();
+        bufferbuilder.vertex(endX, endY, 0.0D).endVertex();
+        bufferbuilder.vertex(endX, y, 0.0D).endVertex();
+        bufferbuilder.vertex(x, y, 0.0D).endVertex();
+        tesselator.end();
+        RenderSystem.disableColorLogicOp();
+        RenderSystem.enableTexture();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     @Override
@@ -210,7 +202,7 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         if (focused && button == 0) {
             if (mouseX < getPosition().x) {
                 cursorPos = 0;
@@ -228,7 +220,7 @@ public class TextFieldWidget2 extends Widget {
         while (x < base) {
             if (i == text.length())
                 break;
-            x += (Minecraft.getMinecraft().fontRenderer.getCharWidth(text.charAt(i))) * scale;
+            x += (Minecraft.getInstance().font.width(String.valueOf(text.charAt(i)))) * scale;
             i++;
         }
         return i;
@@ -241,34 +233,34 @@ public class TextFieldWidget2 extends Widget {
     @Override
     public boolean keyTyped(char charTyped, int keyCode) {
         if (focused) {
-            if (keyCode == Keyboard.KEY_ESCAPE) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 unFocus();
                 return false;
             }
-            if (keyCode == Keyboard.KEY_RETURN) {
+            if (keyCode == GLFW.GLFW_KEY_ENTER) {
                 unFocus();
                 return true;
             }
-            if (GuiScreen.isKeyComboCtrlA(keyCode)) {
+            if (Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_A) {
                 cursorPos = text.length();
                 cursorPos2 = 0;
                 return true;
             }
-            if (GuiScreen.isKeyComboCtrlC(keyCode)) {
-                GuiScreen.setClipboardString(this.getSelectedText());
+            if (Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_C) {
+                Minecraft.getInstance().keyboardHandler.setClipboard(this.getSelectedText());
                 return true;
-            } else if (GuiScreen.isKeyComboCtrlV(keyCode)) {
-                String clip = GuiScreen.getClipboardString();
+            } else if (Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_V) {
+                String clip = Minecraft.getInstance().keyboardHandler.getClipboard();
                 if (text.length() + clip.length() > maxLength || !isAllowed(clip))
                     return true;
                 replaceMarkedText(clip);
                 return true;
-            } else if (GuiScreen.isKeyComboCtrlX(keyCode)) {
-                GuiScreen.setClipboardString(this.getSelectedText());
+            } else if (Screen.hasControlDown() && keyCode == GLFW.GLFW_KEY_X) {
+                Minecraft.getInstance().keyboardHandler.setClipboard(this.getSelectedText());
                 replaceMarkedText(null);
                 return true;
             }
-            if (keyCode == Keyboard.KEY_LEFT && cursorPos > 0) {
+            if (keyCode == GLFW.GLFW_KEY_LEFT && cursorPos > 0) {
                 int amount = 1;
                 int pos = cursorPos;
                 if (isCtrlDown()) {
@@ -287,7 +279,7 @@ public class TextFieldWidget2 extends Widget {
                 }
                 return true;
             }
-            if (keyCode == Keyboard.KEY_RIGHT && cursorPos < text.length()) {
+            if (keyCode == GLFW.GLFW_KEY_RIGHT && cursorPos < text.length()) {
                 int amount = 1;
                 int pos = cursorPos;
                 if (isCtrlDown()) {
@@ -306,7 +298,7 @@ public class TextFieldWidget2 extends Widget {
                 }
                 return true;
             }
-            if (keyCode == Keyboard.KEY_BACK && text.length() > 0) {
+            if (keyCode == GLFW.GLFW_KEY_BACKSPACE && text.length() > 0) {
                 if (cursorPos != cursorPos2) {
                     replaceMarkedText(null);
                 } else if (cursorPos > 0) {
@@ -318,7 +310,7 @@ public class TextFieldWidget2 extends Widget {
                 }
                 return true;
             }
-            if (keyCode == Keyboard.KEY_DELETE && text.length() > 0) {
+            if (keyCode == GLFW.GLFW_KEY_DELETE && text.length() > 0) {
                 if (cursorPos != cursorPos2) {
                     replaceMarkedText(null);
                 } else if (cursorPos < text.length()) {
@@ -379,22 +371,22 @@ public class TextFieldWidget2 extends Widget {
         setter.accept(text);
         focused = false;
         writeClientAction(-1, buf -> {
-            buf.writeString(text);
+            buf.writeUtf(text);
         });
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         if (id == -1) {
-            text = buffer.readString(maxLength);
+            text = buffer.readUtf(maxLength);
             setter.accept(text);
         }
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == -2) {
-            text = buffer.readString(maxLength);
+            text = buffer.readUtf(maxLength);
             setter.accept(text);
             initialised = true;
             if (cursorPos > text.length()) {
@@ -487,11 +479,8 @@ public class TextFieldWidget2 extends Widget {
     /**
      * @param postFix a string that will be rendered after the editable text
      */
-    public TextFieldWidget2 setPostFix(String postFix) {
+    public TextFieldWidget2 setPostFix(Component postFix) {
         this.localisedPostFix = postFix;
-        if (gui != null && gui.holder != null && isRemote()) {
-            this.localisedPostFix = I18n.hasKey(localisedPostFix) ? I18n.format(localisedPostFix) : localisedPostFix;
-        }
         return this;
     }
 

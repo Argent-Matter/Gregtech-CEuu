@@ -24,19 +24,20 @@ public class PacketUIWidgetUpdate {
         this.updateData = updateData;
     }
 
-    public void encode(FriendlyByteBuf buf) {
-        NetworkUtils.writePacketBuffer(buf, updateData);
-        buf.writeVarInt(windowId);
-        buf.writeVarInt(widgetId);
+    public static void encode(PacketUIWidgetUpdate packet, FriendlyByteBuf buf) {
+        NetworkUtils.writePacketBuffer(buf, packet.updateData);
+        buf.writeVarInt(packet.windowId);
+        buf.writeVarInt(packet.widgetId);
     }
 
-    public void decode(FriendlyByteBuf buf) {
-        this.updateData = NetworkUtils.readPacketBuffer(buf);
-        this.windowId = buf.readVarInt();
-        this.widgetId = buf.readVarInt();
+    public static PacketUIWidgetUpdate decode(FriendlyByteBuf buf) {
+        var updateData = NetworkUtils.readPacketBuffer(buf);
+        var windowId = buf.readVarInt();
+        var widgetId = buf.readVarInt();
+        return new PacketUIWidgetUpdate(windowId, widgetId, updateData);
     }
 
-    public void handle(PacketUIWidgetUpdate packet, Supplier<NetworkEvent.Context> handler) {
+    public static void handle(PacketUIWidgetUpdate packet, Supplier<NetworkEvent.Context> handler) {
         handler.get().enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                 Screen currentScreen = Minecraft.getInstance().screen;

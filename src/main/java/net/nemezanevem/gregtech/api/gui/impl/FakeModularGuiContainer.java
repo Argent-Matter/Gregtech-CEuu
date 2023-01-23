@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class FakeModularGuiContainer implements WidgetUIAccess {
-    protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
+    protected final NonNullList<ItemStack> lastSlots = NonNullList.create();
     public final List<Slot> inventorySlots = Lists.newArrayList();
     public final ModularUI modularUI;
     protected int windowId;
@@ -30,7 +30,7 @@ public abstract class FakeModularGuiContainer implements WidgetUIAccess {
     protected void addSlotToContainer(Slot slotIn) {
         slotIn.index = this.inventorySlots.size();
         this.inventorySlots.add(slotIn);
-        this.inventoryItemStacks.add(ItemStack.EMPTY);
+        this.lastSlots.add(ItemStack.EMPTY);
     }
 
     public void handleSlotUpdate(FriendlyByteBuf updateData) {

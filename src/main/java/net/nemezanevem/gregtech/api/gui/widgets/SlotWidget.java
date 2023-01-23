@@ -20,7 +20,6 @@ import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 import java.util.List;
 
 public class SlotWidget extends Widget implements INativeWidget {
@@ -173,9 +172,9 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
-            gui.getModularUIGui().superMouseClickMove(mouseX, mouseY, button, timeDragged);
+            gui.getModularUIGui().superMouseDragged(mouseX, mouseY, button, dragX, dragY);
             return true;
         }
         return false;

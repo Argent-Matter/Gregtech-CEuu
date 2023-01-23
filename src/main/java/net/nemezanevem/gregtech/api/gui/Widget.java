@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.gui;
 
+import codechicken.lib.util.FontUtils;
 import com.google.common.base.Preconditions;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -7,6 +8,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -123,10 +127,10 @@ public abstract class Widget {
         isActive = active;
     }
 
-    public Rectangle toRectangleBox() {
+    public Rect2i toRectangleBox() {
         Position pos = getPosition();
         Size size = getSize();
-        return new Rectangle(pos.x, pos.y, size.width, size.height);
+        return new Rect2i(pos.x, pos.y, size.width, size.height);
     }
 
     protected void recomputePosition() {
@@ -204,7 +208,7 @@ public abstract class Widget {
     /**
      * Called when mouse is pressed and hold down in GUI
      */
-    public boolean mouseDragged(int mouseX, int mouseY, int button, long timeDragged) {
+    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
         return false;
     }
 
@@ -260,11 +264,9 @@ public abstract class Widget {
         drawSolidRect(poseStack, x + width, y, border, height, color);
     }
 
-    public void drawHoveringText(ItemStack itemStack, List<Component> tooltip, int maxTextWidth, int mouseX, int mouseY) {
+    public void drawHoveringText(PoseStack poseStack, ItemStack itemStack, List<Component> tooltip, int maxTextWidth, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
-        GuiUtils.drawHoveringText(itemStack, tooltip, mouseX, mouseY,
-                sizes.getScreenWidth(),
-                sizes.getScreenHeight(), maxTextWidth, mc.font);
+        mc.screen.renderTooltip(poseStack, tooltip, itemStack.getTooltipImage(), mouseX, mouseY, itemStack);
         RenderSystem.disableBlend();
     }
 
@@ -305,16 +307,13 @@ public abstract class Widget {
     public static void drawItemStack(PoseStack poseStack, ItemStack itemStack, int x, int y, @Nullable String altTxt) {
         poseStack.pushPose();
         poseStack.translate(0.0F, 0.0F, 32.0F);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         RenderSystem.enableDepthTest();
-        RenderSystem.enablePolygonOffset();
-        RenderHelper.enableGUIStandardItemLighting();
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0f, 240.0f);
         Minecraft mc = Minecraft.getInstance();
         ItemRenderer itemRender = mc.getItemRenderer();
-        itemRender.renderGuiItem(itemStack, x, y);
+        itemRender.renderAndDecorateItem(itemStack, x, y);
         itemRender.renderGuiItemDecorations(mc.font, itemStack, x, y, altTxt);
-        RenderSystem.disablePolygonOffset();
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         poseStack.popPose();
         RenderSystem.enableBlend();
@@ -418,6 +417,7 @@ public abstract class Widget {
 
     public static void drawCircle(float x, float y, float r, int color, int segments) {
         if (color == 0) return;
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferbuilder = tesselator.getBuilder();
         RenderSystem.enableBlend();
@@ -431,6 +431,7 @@ public abstract class Widget {
         tesselator.end();
         RenderSystem.enableTexture();
         RenderSystem.setShaderColor(1, 1, 1, 1);
+        RenderSystem.disableBlend();
     }
 
     public static void drawSector(float x, float y, float r, int color, int segments, int from, int to) {
@@ -441,6 +442,7 @@ public abstract class Widget {
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         setColor(color);
         bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION);
         for (int i = from; i < to; i++) {
@@ -459,6 +461,7 @@ public abstract class Widget {
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         setColor(color);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int i = from; i <= to; i++) {
