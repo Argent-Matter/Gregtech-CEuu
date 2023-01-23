@@ -53,9 +53,9 @@ public class DustProperty implements IMaterialProperty<DustProperty> {
 
     @Override
     public void verifyProperty(MaterialProperties properties) {
-        FluidProperty prop = properties.getProperty(GtMaterialProperties.FLUID.getId());
-        if (prop != null && prop.getFluidTemperature() == FluidProperty.BASE_TEMP) {
+        FluidProperty prop = properties.getProperty(GtMaterialProperties.FLUID.get());
+        /*if (prop != null && prop.getFluidTemperature() == FluidProperty.BASE_TEMP) {
             prop.setFluidTemperature(1200);
-        }
+        }*/
     }
 }

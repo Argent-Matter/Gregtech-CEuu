@@ -1,15 +1,30 @@
 package net.nemezanevem.gregtech.api.util;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.properties.MaterialPropertyRegistry;
+import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
-import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
+
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
+import static net.nemezanevem.gregtech.api.util.GTValues.V;
 
 public class Util {
+
+    private static final NavigableMap<Long, Byte> tierByVoltage = new TreeMap<>();
+
+    static {
+        for (int i = 0; i < V.length; i++) {
+            tierByVoltage.put(V[i], (byte) i);
+        }
+    }
 
     public static ResourceLocation gtResource(String path) {
         return new ResourceLocation(GregTech.MODID, path);
@@ -52,14 +67,35 @@ public class Util {
         return result.toString();
     }
 
+    /**
+     * @return lowest tier that can handle passed voltage
+     */
+    public static byte getTierByVoltage(long voltage) {
+        if (voltage > V[GTValues.MAX]) return GTValues.MAX;
+        return tierByVoltage.ceilingEntry(voltage).getValue();
+    }
+
+    /**
+     * Ex: This method turns both 1024 and 512 into HV.
+     *
+     * @return the highest tier below or equal to the voltage value given
+     */
+    public static byte getFloorTierByVoltage(long voltage) {
+        if (voltage < V[GTValues.ULV]) return GTValues.ULV;
+        return tierByVoltage.floorEntry(voltage).getValue();
+    }
+
+
     public static ResourceLocation getId(MaterialFlag flag) {
         return MaterialFlagRegistry.MATERIAL_FLAGS_BUILTIN.get().getKey(flag);
-        return MaterialFlagRegistry.MATERIAL_FLAGS_BUILTIN.get().getKeys().toArray(ResourceLocation[]::new)[0].getPath()
     }
     public static ResourceLocation getId(MaterialIconSet set) {
-        return MaterialIconSetRegistry.MATERIAL_ICONS_BUILTIN.get().getKey(set);
+        return MaterialIconSetRegistry.MATERIAL_ICON_SETS_BUILTIN.get().getKey(set);
     }
-    public static ResourceLocation getId(IMaterialProperty<?> set) {
-        return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getKey(set);
+    public static ResourceLocation getId(PropertyKey<?> key) {
+        return MaterialPropertyRegistry.MATERIAL_PROPERTIES_BUILTIN.get().getKey(key);
+    }
+    public static ResourceLocation getId(Item key) {
+        return ForgeRegistries.ITEMS.getKey(key);
     }
 }
