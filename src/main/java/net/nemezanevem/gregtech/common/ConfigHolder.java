@@ -18,23 +18,105 @@ public class ConfigHolder {
         }
         public static class ArmorHud {
             public static ForgeConfigSpec.IntValue hudLocation;
-
-            builder.comment({"Horizontal offset of HUD.", "Default: 0"})
-            @Config.RangeInt(min = 0, max = 100)
-            @Config.SlidingOption
-            public int hudOffsetX = 0;
-
-            builder.comment({"Vertical offset of HUD.", "Default: 0"})
-            @Config.RangeInt(min = 0, max = 100)
-            @Config.SlidingOption
-            public int hudOffsetY = 0;
+            public static ForgeConfigSpec.IntValue hudOffsetX;
+            public static ForgeConfigSpec.IntValue hudOffsetY;
         }
 
+        public static class ShaderOptions {
+
+            builder.comment("Bloom config options for the fusion reactor.")
+                    builder.push("Fusion Reactor")
+            public FusionBloom fusionBloom = new FusionBloom();
+
+            builder.comment("Bloom config options for the heat effect (cable burning).")
+                    builder.push("Heat Effect")
+            public HeatEffectBloom heatEffectBloom = new HeatEffectBloom();
+
+            builder.comment({"Whether to use shader programs.", "Default: true"})
+            public boolean useShader = true;
+
+            builder.comment({"Whether or not to enable Emissive Textures with bloom effect.", "Default: true"})
+            public boolean emissiveTexturesBloom = true;
+
+            builder.comment({"Bloom Algorithm", "0 - Simple Gaussian Blur Bloom (Fast)", "1 - Unity Bloom", "2 - Unreal Bloom", "Default: 2"})
+            @Config.RangeInt(min = 0, max = 2)
+            @Config.SlidingOption
+            public int bloomStyle = 2;
+
+            builder.comment({"The brightness after bloom should not exceed this value. It can be used to limit the brightness of highlights " +
+                    "(e.g., daytime).", "OUTPUT = BACKGROUND + BLOOM * strength * (base + LT + (1 - BACKGROUND_BRIGHTNESS)*({HT}-LT)))", "This value should be greater than lowBrightnessThreshold.", "Default: 0.5"})
+            @Config.RangeDouble(min = 0)
+            public double highBrightnessThreshold = 0.5;
+
+            builder.comment({"The brightness after bloom should not smaller than this value. It can be used to limit the brightness of dusky parts " +
+                    "(e.g., night/caves).", "OUTPUT = BACKGROUND + BLOOM * strength * (base + {LT} + (1 - BACKGROUND_BRIGHTNESS)*(HT-{LT})))", "This value should be smaller than highBrightnessThreshold.", "Default: 0.2"})
+            @Config.RangeDouble(min = 0)
+            public double lowBrightnessThreshold = 0.2;
+
+            builder.comment({"The base brightness of the bloom.", "It is similar to strength", "This value should be smaller than highBrightnessThreshold.", "OUTPUT = BACKGROUND + BLOOM * strength * ({base} + LT + (1 - BACKGROUND_BRIGHTNESS)*(HT-LT)))", "Default: 0.1"})
+            @Config.RangeDouble(min = 0)
+            public double baseBrightness = 0.1;
+
+            builder.comment({"Mipmap Size.", "Higher values increase quality, but are slower to render.", "Default: 5"})
+            @Config.RangeInt(min = 2, max = 5)
+            @Config.SlidingOption
+            public int nMips = 5;
+
+            builder.comment({"Bloom Strength", "OUTPUT = BACKGROUND + BLOOM * {strength} * (base + LT + (1 - BACKGROUND_BRIGHTNESS)*(HT-LT)))", "Default: 2"})
+            @Config.RangeDouble(min = 0)
+            public double strength = 1.5;
+
+            builder.comment({"Blur Step (bloom range)", "Default: 1"})
+            @Config.RangeDouble(min = 0)
+            public double step = 1;
+        }
+
+        public static ForgeConfigSpec.ConfigValue<String> terminalRootPath;
+
+        builder.comment({"Whether to hook depth texture. Has no effect on performance, but if there is a problem with rendering, try disabling it.", "Default: true"})
+        public boolean hookDepthTexture = true;
+
+        builder.comment({"Resolution level for fragment shaders.",
+                "Higher values increase quality (limited by the resolution of your screen) but are more GPU intensive.", "Default: 2"})
+        @Config.RangeDouble(min = 0, max = 5)
+        @Config.SlidingOption
+        public double resolution = 2;
+
+        builder.comment({"Whether or not to enable Emissive Textures for GregTech Machines.", "Default: true"})
+        public boolean machinesEmissiveTextures = true;
+
+        builder.comment({"Whether or not to enable Emissive Textures for GregTech Casings " +
+                "when the multiblock is working (EBF coils, Fusion Casings, etc.).", "Default: false"})
+        public boolean casingsActiveEmissiveTextures = false;
+
+        builder.comment({"Whether or not sounds should be played when using tools outside of crafting.", "Default: true"})
+        public boolean toolUseSounds = true;
+
+        builder.comment({"Whether or not sounds should be played when crafting with tools.", "Default: true"})
+        public boolean toolCraftingSounds = true;
+
+        builder.comment({"Overrides the MC total playable sounds limit. MC's default is 28, which causes problems with many machine sounds at once",
+                "If sounds are causing large amounts of lag, try lowering this.",
+                "If sounds are not working at all, try setting this to the lowest value (28).", "Default: 512"})
+        @Config.RangeInt(min = 28, max = 2048)
+        @Config.RequiresMcRestart
+        public int maxNumSounds = 512;
+
+        builder.comment({"The default color to overlay onto machines.", "16777215 (0xFFFFFF in decimal) is no coloring (like GTCE).",
+                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
+        public int defaultPaintingColor = 0xD2DCFF;
+
+        builder.comment({"The default color to overlay onto Machine (and other) UIs.", "16777215 (0xFFFFFF) is no coloring (like GTCE).",
+                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
+        public int defaultUIColor = 0xD2DCFF;
     }
 
     private static void setupConfig(ForgeConfigSpec.Builder builder) {
-        builder.comment("Config options for client-only features")
-                .push("Client Options");
+        builder.comment("Config options for client-only features").push("Client Options");
+
+        ClientConfig.terminalRootPath = builder.comment("Default: {.../config}/gregtech/terminal")
+                .worldRestart()
+                .define("Terminal Root path", "gregtech/terminal");
 
         builder.push("Gui Config");
         ClientConfig.GuiConfig.scrollSpeed = builder.comment("The scrolling speed of widgets", "Default: 13")
@@ -46,105 +128,13 @@ public class ConfigHolder {
         ClientConfig.ArmorHud.hudLocation = builder.comment("Sets HUD location", "1 - left-upper corner", "2 - right-upper corner", "3 - left-bottom corner", "4 - right-bottom corner")
                 .worldRestart()
                 .defineInRange("Armor HUD Location", 1, 1, 4);
+        ClientConfig.ArmorHud.hudOffsetX = builder.worldRestart()
+                .defineInRange("Horizontal offset of HUD", 0, 0, 100);
+        ClientConfig.ArmorHud.hudOffsetY = builder.worldRestart()
+                .defineInRange("Vertical offset of HUD", 0, 0, 100);
+        builder.pop();
 
-        builder.comment("Config options for Shaders and Post-processing Effects")
-                builder.push("Shader Options")
-            public ShaderOptions shader = new ShaderOptions();
-
-        builder.comment({"Terminal root path.", "Default: {.../config}/gregtech/terminal"})
-            @Config.RequiresMcRestart
-            public String terminalRootPath = "gregtech/terminal";
-
-        builder.comment({"Whether to hook depth texture. Has no effect on performance, but if there is a problem with rendering, try disabling it.", "Default: true"})
-            public boolean hookDepthTexture = true;
-
-        builder.comment({"Resolution level for fragment shaders.",
-                    "Higher values increase quality (limited by the resolution of your screen) but are more GPU intensive.", "Default: 2"})
-            @Config.RangeDouble(min = 0, max = 5)
-            @Config.SlidingOption
-            public double resolution = 2;
-
-        builder.comment({"Whether or not to enable Emissive Textures for GregTech Machines.", "Default: true"})
-            public boolean machinesEmissiveTextures = true;
-
-        builder.comment({"Whether or not to enable Emissive Textures for GregTech Casings " +
-                    "when the multiblock is working (EBF coils, Fusion Casings, etc.).", "Default: false"})
-            public boolean casingsActiveEmissiveTextures = false;
-
-        builder.comment({"Whether or not sounds should be played when using tools outside of crafting.", "Default: true"})
-            public boolean toolUseSounds = true;
-
-        builder.comment({"Whether or not sounds should be played when crafting with tools.", "Default: true"})
-            public boolean toolCraftingSounds = true;
-
-        builder.comment({"Overrides the MC total playable sounds limit. MC's default is 28, which causes problems with many machine sounds at once",
-                    "If sounds are causing large amounts of lag, try lowering this.",
-                    "If sounds are not working at all, try setting this to the lowest value (28).", "Default: 512"})
-            @Config.RangeInt(min = 28, max = 2048)
-            @Config.RequiresMcRestart
-            public int maxNumSounds = 512;
-
-        builder.comment({"The default color to overlay onto machines.", "16777215 (0xFFFFFF in decimal) is no coloring (like GTCE).",
-                    "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
-            public int defaultPaintingColor = 0xD2DCFF;
-
-        builder.comment({"The default color to overlay onto Machine (and other) UIs.", "16777215 (0xFFFFFF) is no coloring (like GTCE).",
-                    "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
-            public int defaultUIColor = 0xD2DCFF;
-
-
-
-
-
-            public static class ShaderOptions {
-
-            builder.comment("Bloom config options for the fusion reactor.")
-                    builder.push("Fusion Reactor")
-                public FusionBloom fusionBloom = new FusionBloom();
-
-            builder.comment("Bloom config options for the heat effect (cable burning).")
-                    builder.push("Heat Effect")
-                public HeatEffectBloom heatEffectBloom = new HeatEffectBloom();
-
-            builder.comment({"Whether to use shader programs.", "Default: true"})
-                public boolean useShader = true;
-
-            builder.comment({"Whether or not to enable Emissive Textures with bloom effect.", "Default: true"})
-                public boolean emissiveTexturesBloom = true;
-
-            builder.comment({"Bloom Algorithm", "0 - Simple Gaussian Blur Bloom (Fast)", "1 - Unity Bloom", "2 - Unreal Bloom", "Default: 2"})
-                @Config.RangeInt(min = 0, max = 2)
-                @Config.SlidingOption
-                public int bloomStyle = 2;
-
-            builder.comment({"The brightness after bloom should not exceed this value. It can be used to limit the brightness of highlights " +
-                        "(e.g., daytime).", "OUTPUT = BACKGROUND + BLOOM * strength * (base + LT + (1 - BACKGROUND_BRIGHTNESS)*({HT}-LT)))", "This value should be greater than lowBrightnessThreshold.", "Default: 0.5"})
-                @Config.RangeDouble(min = 0)
-                public double highBrightnessThreshold = 0.5;
-
-            builder.comment({"The brightness after bloom should not smaller than this value. It can be used to limit the brightness of dusky parts " +
-                        "(e.g., night/caves).", "OUTPUT = BACKGROUND + BLOOM * strength * (base + {LT} + (1 - BACKGROUND_BRIGHTNESS)*(HT-{LT})))", "This value should be smaller than highBrightnessThreshold.", "Default: 0.2"})
-                @Config.RangeDouble(min = 0)
-                public double lowBrightnessThreshold = 0.2;
-
-            builder.comment({"The base brightness of the bloom.", "It is similar to strength", "This value should be smaller than highBrightnessThreshold.", "OUTPUT = BACKGROUND + BLOOM * strength * ({base} + LT + (1 - BACKGROUND_BRIGHTNESS)*(HT-LT)))", "Default: 0.1"})
-                @Config.RangeDouble(min = 0)
-                public double baseBrightness = 0.1;
-
-            builder.comment({"Mipmap Size.", "Higher values increase quality, but are slower to render.", "Default: 5"})
-                @Config.RangeInt(min = 2, max = 5)
-                @Config.SlidingOption
-                public int nMips = 5;
-
-            builder.comment({"Bloom Strength", "OUTPUT = BACKGROUND + BLOOM * {strength} * (base + LT + (1 - BACKGROUND_BRIGHTNESS)*(HT-LT)))", "Default: 2"})
-                @Config.RangeDouble(min = 0)
-                public double strength = 1.5;
-
-            builder.comment({"Blur Step (bloom range)", "Default: 1"})
-                @Config.RangeDouble(min = 0)
-                public double step = 1;
-            }
-        }
+        builder.comment("Config options for Shaders and Post-processing Effects").push("Shader Options");
 
         builder.comment("Config options for Mod Compatibility")
         builder.push("Compatibility Options")
