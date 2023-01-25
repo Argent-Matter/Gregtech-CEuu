@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.client.renderer.texture;
 import codechicken.lib.render.BlockRenderer;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
+import codechicken.lib.texture.AtlasRegistrar;
 import codechicken.lib.texture.IIconRegister;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
@@ -14,15 +15,21 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.renderer.CubeRendererState;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
-import net.nemezanevem.gregtech.client.renderer.texture.cube.SimpleOverlayRenderer;
+import net.nemezanevem.gregtech.client.renderer.cclop.UVMirror;
+import net.nemezanevem.gregtech.client.renderer.texture.cube.*;
+import net.nemezanevem.gregtech.client.renderer.texture.cube.OrientedOverlayRenderer.OverlayFace;
+import net.nemezanevem.gregtech.client.renderer.texture.custom.*;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static net.nemezanevem.gregtech.client.renderer.texture.cube.OrientedOverlayRenderer.OverlayFace.*;
 
 public class Textures {
 
@@ -278,26 +285,26 @@ public class Textures {
         }
     }
 
-    public static void register(TextureMap textureMap) {
-        GTLog.logger.info("Loading meta tile entity texture sprites...");
+    public static void register(AtlasRegistrar textureMap) {
+        GregTech.LOGGER.info("Loading meta tile entity texture sprites...");
         for (IIconRegister iconRegister : iconRegisters) {
             iconRegister.registerIcons(textureMap);
         }
 
-        RESTRICTIVE_OVERLAY = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_restrictive"));
-        PIPE_BLOCKED_OVERLAY = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_blocked"));
-        PIPE_TINY = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_tiny_in"));
-        PIPE_SMALL = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_small_in"));
-        PIPE_NORMAL = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_normal_in"));
-        PIPE_LARGE = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_large_in"));
-        PIPE_HUGE = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_huge_in"));
-        PIPE_QUADRUPLE = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_quadruple_in"));
-        PIPE_NONUPLE = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_nonuple_in"));
-        PIPE_SIDE = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_side"));
-        PIPE_SMALL_WOOD = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_small_in_wood"));
-        PIPE_NORMAL_WOOD = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_normal_in_wood"));
-        PIPE_LARGE_WOOD = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_large_in_wood"));
-        PIPE_SIDE_WOOD = textureMap.registerSprite(new ResourceLocation(GTValues.MODID, "blocks/pipe/pipe_side_wood"));
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_restrictive"), val -> RESTRICTIVE_OVERLAY = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_blocked"), val -> PIPE_BLOCKED_OVERLAY = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_tiny_in"), val -> PIPE_TINY = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_small_in"), val -> PIPE_SMALL = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_normal_in"), val -> PIPE_NORMAL = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_large_in"), val -> PIPE_LARGE = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_huge_in"), val -> PIPE_HUGE = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_quadruple_in"), val -> PIPE_QUADRUPLE = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_nonuple_in"), val -> PIPE_NONUPLE = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_side"), val -> PIPE_SIDE = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_small_in_wood"), val -> PIPE_SMALL_WOOD = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_normal_in_wood"), val -> PIPE_NORMAL_WOOD = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_large_in_wood"), val -> PIPE_LARGE_WOOD = val);
+        textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_side_wood"), val -> PIPE_SIDE_WOOD = val);
     }
 
     public static void renderFace(CCRenderState renderState, Matrix4 translation, IVertexOperation[] ops, Direction face, Cuboid6 bounds, TextureAtlasSprite sprite, RenderType layer) {
@@ -306,9 +313,9 @@ public class Textures {
             return;
         }
         BlockRenderer.BlockFace blockFace = blockFaces.get();
-        blockFace.loadCuboidFace(bounds, face.get3DDataValue());
+        blockFace.loadCuboidFace(bounds, face.ordinal());
         UVTransformationList uvList = new UVTransformationList(new IconTransformation(sprite));
-        if (face.getIndex() == 0) {
+        if (face.ordinal() == 0) {
             uvList.prepend(new UVMirror(0, 0, bounds.min.z, bounds.max.z));
         }
         renderState.setPipeline(blockFace, 0, blockFace.verts.length,

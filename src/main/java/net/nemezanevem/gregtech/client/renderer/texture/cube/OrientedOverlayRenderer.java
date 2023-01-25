@@ -2,15 +2,22 @@ package net.nemezanevem.gregtech.client.renderer.texture.cube;
 
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
+import codechicken.lib.texture.AtlasRegistrar;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.Rotation;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.gui.resources.ResourceHelper;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.cclop.LightMapOperation;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.client.util.RenderUtil;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -95,7 +102,7 @@ public class OrientedOverlayRenderer implements ICubeRenderer {
 
 
     @Override
-    public void registerIcons(TextureMap textureMap) {
+    public void registerIcons(AtlasRegistrar textureMap) {
         this.sprites = new EnumMap<>(OverlayFace.class);
         String modID = GregTech.MODID;
         String basePath = this.basePath;
@@ -106,25 +113,46 @@ public class OrientedOverlayRenderer implements ICubeRenderer {
         }
         for (OverlayFace overlayFace : faces) {
             String faceName = overlayFace.name().toLowerCase();
+            var ref = new Object() {
+                TextureAtlasSprite pausedSprite = null;
+                TextureAtlasSprite normalSprite = null;
+                TextureAtlasSprite activeSprite = null;
+
+                TextureAtlasSprite normalSpriteEmissive = null;
+                TextureAtlasSprite pausedSpriteEmissive = null;
+                TextureAtlasSprite activeSpriteEmissive = null;
+            };
+
             ResourceLocation normalLocation = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s", basePath, faceName));
-            TextureAtlasSprite normalSprite = textureMap.registerSprite(normalLocation);
+            if(ResourceHelper.isTextureExist(normalLocation)) {
+                textureMap.registerSprite(normalLocation, val -> ref.normalSprite = val);
+            }
             ResourceLocation activeLocation = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s_active", basePath, faceName));
-            TextureAtlasSprite activeSprite = textureMap.registerSprite(activeLocation);
+            if(ResourceHelper.isTextureExist(activeLocation)) {
+                textureMap.registerSprite(activeLocation, val -> ref.activeSprite = val);
+            }
             ResourceLocation pausedLocation = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s_paused", basePath, faceName));
-            TextureAtlasSprite pausedSprite = ResourceHelper.isTextureExist(pausedLocation) ? textureMap.registerSprite(pausedLocation) : null;
+            if(ResourceHelper.isTextureExist(pausedLocation)) {
+                textureMap.registerSprite(pausedLocation, val -> ref.pausedSprite = val);
+            }
 
             ResourceLocation normalLocationEmissive = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s_emissive", basePath, faceName));
-            TextureAtlasSprite normalSpriteEmissive = ResourceHelper.isTextureExist(normalLocationEmissive) ? textureMap.registerSprite(normalLocationEmissive) : null;
+            if(ResourceHelper.isTextureExist(normalLocationEmissive)) {
+                textureMap.registerSprite(normalLocationEmissive, val -> ref.normalSpriteEmissive = val);
+            }
             ResourceLocation activeLocationEmissive = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s_active_emissive", basePath, faceName));
-            TextureAtlasSprite activeSpriteEmissive = ResourceHelper.isTextureExist(activeLocationEmissive) ? textureMap.registerSprite(activeLocationEmissive) : null;
+            if(ResourceHelper.isTextureExist(activeLocationEmissive)) {
+                textureMap.registerSprite(activeLocationEmissive, val -> ref.activeSpriteEmissive = val);
+            }
             ResourceLocation pausedLocationEmissive = new ResourceLocation(modID, String.format("blocks/%s/overlay_%s_paused_emissive", basePath, faceName));
-            TextureAtlasSprite pausedSpriteEmissive = ResourceHelper.isTextureExist(pausedLocationEmissive) ? textureMap.registerSprite(pausedLocationEmissive) : null;
-            sprites.put(overlayFace, new ActivePredicate(normalSprite, activeSprite, pausedSprite, normalSpriteEmissive, activeSpriteEmissive, pausedSpriteEmissive));
+            if(ResourceHelper.isTextureExist(pausedLocationEmissive)) {
+                textureMap.registerSprite(pausedLocationEmissive, val -> ref.pausedSpriteEmissive = val);
+            }
+            sprites.put(overlayFace, new ActivePredicate(ref.normalSprite, ref.activeSprite, ref.pausedSprite, ref.normalSpriteEmissive, ref.activeSpriteEmissive, ref.pausedSpriteEmissive));
         }
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public TextureAtlasSprite getParticleSprite() {
         for (OrientedOverlayRenderer.ActivePredicate predicate : sprites.values()) {
             if (predicate != null) {
@@ -139,7 +167,7 @@ public class OrientedOverlayRenderer implements ICubeRenderer {
 
     @Override
     public void renderOrientedState(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 bounds, Direction frontFacing, boolean isActive, boolean isWorkingEnabled) {
-        for (Direction renderSide : Direction.VALUES) {
+        for (Direction renderSide : Direction.values()) {
 
             ActivePredicate predicate = sprites.get(OverlayFace.bySide(renderSide, frontFacing));
             if (predicate != null) {
@@ -165,16 +193,16 @@ public class OrientedOverlayRenderer implements ICubeRenderer {
                     renderTranslation.apply(rotation);
                 }
 
-                Textures.renderFace(renderState, renderTranslation, ArrayUtils.addAll(pipeline, rotation), renderSide, bounds, renderSprite, BlockRenderLayer.CUTOUT_MIPPED);
+                Textures.renderFace(renderState, renderTranslation, ArrayUtils.addAll(pipeline, rotation), renderSide, bounds, renderSprite, RenderType.cutoutMipped());
 
                 TextureAtlasSprite emissiveSprite = predicate.getEmissiveSprite(isActive, isWorkingEnabled);
                 if (emissiveSprite != null) {
-                    if (ConfigHolder.client.machinesEmissiveTextures) {
+                    if (ConfigHolder.ClientConfig.machinesEmissiveTextures) {
                         IVertexOperation[] lightPipeline = ArrayUtils.addAll(pipeline, new LightMapOperation(240, 240), rotation);
                         Textures.renderFace(renderState, renderTranslation, lightPipeline, renderSide, bounds, emissiveSprite, BloomEffectUtil.getRealBloomLayer());
                     } else {
                         // have to still render both overlays or else textures will be broken
-                        Textures.renderFace(renderState, renderTranslation, ArrayUtils.addAll(pipeline, rotation), renderSide, bounds, emissiveSprite, BlockRenderLayer.CUTOUT_MIPPED);
+                        Textures.renderFace(renderState, renderTranslation, ArrayUtils.addAll(pipeline, rotation), renderSide, bounds, emissiveSprite, RenderType.cutoutMipped());
                     }
                 }
             }

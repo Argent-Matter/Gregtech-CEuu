@@ -47,7 +47,7 @@ import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
-import net.nemezanevem.gregtech.api.util.GTValues;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 

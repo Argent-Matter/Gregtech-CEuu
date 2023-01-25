@@ -3,14 +3,13 @@ package net.nemezanevem.gregtech.client.util;
 import net.minecraft.ChatFormatting;
 import net.minecraftforge.event.TickEvent;
 import net.nemezanevem.gregtech.GregTech;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static net.minecraft.ChatFormatting.*;
-import static net.nemezanevem.gregtech.api.util.GTValues.CLIENT_TIME;
+import static net.nemezanevem.gregtech.api.GTValues.CLIENT_TIME;
 
 public class TooltipHelper {
 

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static net.nemezanevem.gregtech.api.registry.material.MaterialRegistry.MATERIALS;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags.*;
 
 /**
@@ -77,7 +78,7 @@ public class GtMaterials {
         EXT2_METAL.addAll(Arrays.asList(GENERATE_LONG_ROD.get(), GENERATE_BOLT_SCREW.get()));
     }
 
-    public static final MarkerMaterial NULL = new MarkerMaterial("null");
+    public static final RegistryObject<Material> NULL = MATERIALS.register("null", () -> new MarkerMaterial("null"));
 
     /**
      * Direct Elements

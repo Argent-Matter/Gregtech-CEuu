@@ -11,7 +11,7 @@ import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import gregtech.core.advancement.AdvancementTriggers;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.PlayerMP;
 import net.minecraft.init.SoundEvents;
@@ -127,7 +127,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
         BlockPos machinePos = metaTileEntity.getPos();
         Direction ventingSide = getVentingSide();
         BlockPos ventingBlockPos = machinePos.offset(ventingSide);
-        IBlockState blockOnPos = metaTileEntity.getWorld().getBlockState(ventingBlockPos);
+        BlockState blockOnPos = metaTileEntity.getWorld().getBlockState(ventingBlockPos);
         if (blockOnPos.getCollisionBoundingBox(metaTileEntity.getWorld(), ventingBlockPos) == Block.NULL_AABB) {
             performVentingAnimation(ventingBlockPos, machinePos);
         } else if (GTUtility.tryBreakSnowLayer(metaTileEntity.getWorld(), ventingBlockPos, blockOnPos, false)) {

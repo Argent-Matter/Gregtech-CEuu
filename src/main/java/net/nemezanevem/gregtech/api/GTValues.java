@@ -1,4 +1,10 @@
-package net.nemezanevem.gregtech.api.util;
+package net.nemezanevem.gregtech.api;
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.nemezanevem.gregtech.api.util.XSTR;
+
+import java.util.Random;
 
 import static net.minecraft.ChatFormatting.*;
 
@@ -20,6 +26,8 @@ public class GTValues {
 
     public static long CLIENT_TIME = 0;
 
+
+    public static final Random RNG = new XSTR();
 
 
     public static final long[] V = new long[]{8, 32, 128, 512, 2048, 8192, 32768, 131072, 524288, 2097152, 8388608, 33554432, 134217728, 536870912, Integer.MAX_VALUE};
@@ -71,4 +79,12 @@ public class GTValues {
      */
     public static final String[] VOLTAGE_NAMES = new String[]{"Ultra Low Voltage", "Low Voltage", "Medium Voltage", "High Voltage", "Extreme Voltage", "Insane Voltage", "Ludicrous Voltage", "ZPM Voltage", "Ultimate Voltage",
             "Ultra High Voltage", "Ultra Excessive Voltage", "Ultra Immense Voltage", "Ultra Extreme Voltage", "Overpowered Voltage", "Maximum Voltage"};
+
+
+    private static Boolean isClient;
+
+    public static boolean isClientSide() {
+        if (isClient == null) isClient = FMLLoader.getDist().isClient();
+        return isClient;
+    }
 }

@@ -3,7 +3,7 @@ package net.nemezanevem.gregtech.api.capability.impl.miner;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.recipes.RecipeMap;
 import gregtech.client.renderer.ICubeRenderer;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
@@ -46,13 +46,13 @@ public class MultiblockMinerLogic extends MinerLogic {
     }
 
     @Override
-    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, IBlockState blockState) {
+    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, BlockState blockState) {
         // Small ores: use (fortune bonus + overclockAmount) value here for fortune, since every overclock increases the yield for small ores
         super.getSmallOreBlockDrops(blockDrops, world, blockToMine, blockState);
     }
 
     @Override
-    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull IBlockState blockState) {
+    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull BlockState blockState) {
         if (!isSilkTouchMode) // 3X the ore compared to the single blocks
             applyTieredHammerNoRandomDrops(blockState, blockDrops, 3, this.blockDropRecipeMap, this.voltageTier);
         else

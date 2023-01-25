@@ -24,14 +24,20 @@ public class SimpleMachineRecipe implements Recipe<CraftingContainer> {
     private final boolean isSimple;
 
     private final Machine machine;
+    private final long EUt;
 
-    public SimpleMachineRecipe(ResourceLocation pId, String pGroup, NonNullList<ItemStack> results, NonNullList<Ingredient> pIngredients, Machine machine) {
+    public SimpleMachineRecipe(ResourceLocation pId, String pGroup, NonNullList<ItemStack> results, NonNullList<Ingredient> pIngredients, Machine machine, long EUt) {
         this.machine = machine;
         this.id = pId;
         this.group = pGroup;
         this.results = results;
         this.ingredients = pIngredients;
         this.isSimple = pIngredients.stream().allMatch(Ingredient::isSimple);
+        this.EUt = EUt;
+    }
+
+    public long getEUt() {
+        return EUt;
     }
 
     @Override
@@ -110,12 +116,13 @@ public class SimpleMachineRecipe implements Recipe<CraftingContainer> {
     public static class Serializer implements RecipeSerializer<SimpleMachineRecipe> {
         public SimpleMachineRecipe fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
             String s = GsonHelper.getAsString(pJson, "group", "");
+            long eUt = GsonHelper.getAsLong(pJson, "EUt");
             NonNullList<Ingredient> nonnulllist = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "ingredients"));
             if (nonnulllist.isEmpty()) {
                 throw new JsonParseException("No ingredients for shapeless recipe");
             }
             NonNullList<ItemStack> results = resultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
-            return new SimpleMachineRecipe(pRecipeId, s, results, nonnulllist);
+            return new SimpleMachineRecipe(pRecipeId, s, results, nonnulllist,  eUt);
         }
 
         private static NonNullList<Ingredient> itemsFromJson(JsonArray pIngredientArray) {

@@ -9,13 +9,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.gui.overlay.NamedGuiOverlay;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.nemezanevem.gregtech.api.util.GTValues;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.util.TooltipHelper;
 
 import java.util.Map;
@@ -93,7 +93,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onConfigChanged(ConfigChangedEvent.PostConfigChangedEvent event) {
-        if (GTValues.MODID.equals(event.getModID()) && event.isWorldRunning()) {
+        if (GregTech.MODID.equals(event.getModID()) && event.isWorldRunning()) {
             Minecraft.getMinecraft().renderGlobal.loadRenderers();
         }
     }

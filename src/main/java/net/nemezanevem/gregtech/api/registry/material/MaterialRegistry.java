@@ -14,7 +14,7 @@ public class MaterialRegistry {
 
     public static final DeferredRegister<Material> MATERIALS = DeferredRegister.create(new ResourceLocation(GregTech.MODID, "material"), GregTech.MODID);
 
-    public static Supplier<IForgeRegistry<Material>> MATERIALS_BUILTIN = MATERIALS.makeRegistry(() -> new RegistryBuilder<Material>().setDefaultKey(new ResourceLocation(GregTech.MODID, "d")));
+    public static Supplier<IForgeRegistry<Material>> MATERIALS_BUILTIN = MATERIALS.makeRegistry(() -> new RegistryBuilder<Material>().setDefaultKey(new ResourceLocation(GregTech.MODID, "empty")));
 
     public static void init() {}
 }

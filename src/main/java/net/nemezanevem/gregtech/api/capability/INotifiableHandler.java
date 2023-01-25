@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.capability;
 
 import gregtech.api.metatileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 
 /**
  * For Item and Fluid handlers capable of notifying entities when

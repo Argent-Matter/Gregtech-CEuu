@@ -101,10 +101,10 @@ public class CapesRegistry {
     }
 
     public static void checkAdvancements(World world) {
-        registerCape(new ResourceLocation(GTValues.MODID, "ultimate_voltage/74_wetware_mainframe"), Textures.GREGTECH_CAPE_TEXTURE, world);
-        registerCape(new ResourceLocation(GTValues.MODID, "steam/12_electronic_circuit"), Textures.RED_CAPE_TEXTURE, world);
-        registerCape(new ResourceLocation(GTValues.MODID, "high_voltage/82_large_chemical_reactor"), Textures.YELLOW_CAPE_TEXTURE, world);
-        registerCape(new ResourceLocation(GTValues.MODID, "ludicrous_voltage/60_fusion"), Textures.GREEN_CAPE_TEXTURE, world);
+        registerCape(new ResourceLocation(GregTech.MODID, "ultimate_voltage/74_wetware_mainframe"), Textures.GREGTECH_CAPE_TEXTURE, world);
+        registerCape(new ResourceLocation(GregTech.MODID, "steam/12_electronic_circuit"), Textures.RED_CAPE_TEXTURE, world);
+        registerCape(new ResourceLocation(GregTech.MODID, "high_voltage/82_large_chemical_reactor"), Textures.YELLOW_CAPE_TEXTURE, world);
+        registerCape(new ResourceLocation(GregTech.MODID, "ludicrous_voltage/60_fusion"), Textures.GREEN_CAPE_TEXTURE, world);
         for (Tuple<ResourceLocation, ResourceLocation> tuple : ctRegisterCapes) {
             registerCape(tuple.getFirst(), tuple.getSecond(), world);
         }
@@ -139,7 +139,7 @@ public class CapesRegistry {
 
     private static List<Tuple<ResourceLocation, ResourceLocation>> ctRegisterCapes = new ArrayList<>();
 
-    @Optional.Method(modid = GTValues.MODID_CT)
+    @Optional.Method(modid = GregTech.MODID_CT)
     @ZenMethod
     public static void registerCape(String advancement, String cape) {
         ctRegisterCapes.add(new Tuple<>(new ResourceLocation(advancement), new ResourceLocation(cape)));

@@ -1,10 +1,11 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import net.minecraft.network.PacketBuffer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import java.util.function.Supplier;
 
@@ -49,11 +50,11 @@ public class SyncableColorRectWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
         Position position = getPosition();
         Size size = getSize();
-        drawSolidRect(position.x, position.y, size.width, size.height, borderColor);
+        drawSolidRect(poseStack, position.x, position.y, size.width, size.height, borderColor);
         if (drawCheckerboard) {
             int white = 0xFFFFFFFF;
             int grey = 0xFFBFBFBF;
@@ -62,13 +63,13 @@ public class SyncableColorRectWidget extends Widget {
             boolean whiteGrey = false;
             for (int i = 0; i < checkerboardGridRows; i++) {
                 for (int j = 0; j < checkerboardGridColumns; j++) {
-                    drawSolidRect(position.x + borderWidth + i * columnWidth, position.y + borderWidth + j * rowHeight, columnWidth, rowHeight, whiteGrey ? white : grey);
+                    drawSolidRect(poseStack,position.x + borderWidth + i * columnWidth, position.y + borderWidth + j * rowHeight, columnWidth, rowHeight, whiteGrey ? white : grey);
                     whiteGrey = !whiteGrey;
                 }
                 whiteGrey = !whiteGrey;
             }
         }
-        drawSolidRect(position.x + borderWidth, position.y + borderWidth, size.width - 2*borderWidth, size.height - 2*borderWidth, color);
+        drawSolidRect(poseStack,position.x + borderWidth, position.y + borderWidth, size.width - 2*borderWidth, size.height - 2*borderWidth, color);
     }
 
     @Override
@@ -81,7 +82,7 @@ public class SyncableColorRectWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 1) {
             this.color = buffer.readInt();

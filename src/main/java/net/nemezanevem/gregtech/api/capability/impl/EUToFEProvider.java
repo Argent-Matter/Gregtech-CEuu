@@ -9,7 +9,7 @@ import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.IEnergyStorage;
-import net.nemezanevem.gregtech.api.util.GTValues;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;

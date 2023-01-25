@@ -11,11 +11,14 @@ import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.SimpleMachineRecipe;
+import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.nemezanevem.gregtech.api.GTValues.ULV;
 
 public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable, IParallelableRecipeLogic {
 
@@ -648,8 +651,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @param recipe the recipe to overclock
      * @return an int array of {OverclockedEUt, OverclockedDuration}
      */
-    protected int[] performOverclocking(@Nonnull Recipe recipe) {
-        int recipeTier = GTUtility.getTierByVoltage(recipe.getEUt());
+    protected int[] performOverclocking(@Nonnull SimpleMachineRecipe recipe) {
+        int recipeTier = Util.getTierByVoltage(recipe.getEUt());
         int maximumTier = getOverclockForTier(getMaximumOverclockVoltage());
 
         // The maximum number of overclocks is determined by the difference between the tier the recipe is running at,

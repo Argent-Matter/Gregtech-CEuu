@@ -15,7 +15,7 @@ public class AdoptableTextureArea extends SizedTextureArea {
     }
 
     public static AdoptableTextureArea fullImage(String imageLocation, int imageWidth, int imageHeight, int cornerWidth, int cornerHeight) {
-        return new AdoptableTextureArea(new ResourceLocation(GTValues.MODID, imageLocation), 0.0, 0.0, 1.0, 1.0, imageWidth, imageHeight, cornerWidth, cornerHeight);
+        return new AdoptableTextureArea(new ResourceLocation(GregTech.MODID, imageLocation), 0.0, 0.0, 1.0, 1.0, imageWidth, imageHeight, cornerWidth, cornerHeight);
     }
 
     @Override

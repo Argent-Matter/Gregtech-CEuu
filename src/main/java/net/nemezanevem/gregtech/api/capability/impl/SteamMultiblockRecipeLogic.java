@@ -8,7 +8,7 @@ import gregtech.api.recipes.RecipeMap;
 import gregtech.common.ConfigHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSnow;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.Direction;
@@ -140,7 +140,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
         BlockPos machinePos = metaTileEntity.getPos();
         Direction ventingSide = metaTileEntity.getFrontFacing();
         BlockPos ventingBlockPos = machinePos.offset(ventingSide);
-        IBlockState blockOnPos = metaTileEntity.getWorld().getBlockState(ventingBlockPos);
+        BlockState blockOnPos = metaTileEntity.getWorld().getBlockState(ventingBlockPos);
         if (blockOnPos.getCollisionBoundingBox(metaTileEntity.getWorld(), ventingBlockPos) == Block.NULL_AABB) {
             performVentingAnimation(machinePos, ventingSide);
         }

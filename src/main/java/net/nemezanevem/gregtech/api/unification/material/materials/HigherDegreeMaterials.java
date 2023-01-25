@@ -3,13 +3,13 @@ package net.nemezanevem.gregtech.api.unification.material.materials;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.BlastProperty.GasTier;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
-import net.nemezanevem.gregtech.api.util.GTValues;
+import net.nemezanevem.gregtech.api.GTValues;
 
 import static net.nemezanevem.gregtech.api.registry.material.MaterialRegistry.MATERIALS;
 import static net.nemezanevem.gregtech.api.unification.material.GtMaterials.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets.*;
-import static net.nemezanevem.gregtech.api.util.GTValues.*;
+import static net.nemezanevem.gregtech.api.GTValues.*;
 
 public class HigherDegreeMaterials {
 

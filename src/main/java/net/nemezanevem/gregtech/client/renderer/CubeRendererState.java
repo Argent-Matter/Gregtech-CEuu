@@ -24,7 +24,7 @@ public class CubeRendererState {
     }
 
     public boolean shouldSideBeRendered(Direction face, Cuboid6 bounds) {
-        if (!sideMask[face.get3DDataValue()]) { // check if the side is unnecessary be rendered
+        if (!sideMask[face.ordinal()]) { // check if the side is unnecessary be rendered
             if (bounds == Cuboid6.full) {
                 return false;
             }

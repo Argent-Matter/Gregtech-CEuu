@@ -4,11 +4,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.properties.MaterialPropertyRegistry;
+import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
@@ -17,7 +21,7 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import static net.nemezanevem.gregtech.api.util.GTValues.V;
+import static net.nemezanevem.gregtech.api.GTValues.V;
 
 public class Util {
 
@@ -148,7 +152,37 @@ public class Util {
         return merged;
     }
 
+    //just because CCL uses a different color format
+    //0xRRGGBBAA
+    public static int convertRGBtoOpaqueRGBA_CL(int colorValue) {
+        return convertRGBtoRGBA_CL(colorValue, 255);
+    }
 
+    public static int convertRGBtoRGBA_CL(int colorValue, int opacity) {
+        return colorValue << 8 | (opacity & 0xFF);
+    }
+
+    public static int convertOpaqueRGBA_CLtoRGB(int colorAlpha) {
+        return colorAlpha >>> 8;
+    }
+
+    //0xAARRGGBB
+    public static int convertRGBtoOpaqueRGBA_MC(int colorValue) {
+        return convertRGBtoOpaqueRGBA_MC(colorValue, 255);
+    }
+
+    public static int convertRGBtoOpaqueRGBA_MC(int colorValue, int opacity) {
+        return opacity << 24 | colorValue;
+    }
+
+    public static int convertOpaqueRGBA_MCtoRGB(int alphaColor) {
+        return alphaColor & 0xFFFFFF;
+    }
+
+
+    public static ResourceLocation getId(Material flag) {
+        return MaterialRegistry.MATERIALS_BUILTIN.get().getKey(flag);
+    }
     public static ResourceLocation getId(MaterialFlag flag) {
         return MaterialFlagRegistry.MATERIAL_FLAGS_BUILTIN.get().getKey(flag);
     }
@@ -160,5 +194,8 @@ public class Util {
     }
     public static ResourceLocation getId(Item key) {
         return ForgeRegistries.ITEMS.getKey(key);
+    }
+    public static ResourceLocation getId(Block key) {
+        return ForgeRegistries.BLOCKS.getKey(key);
     }
 }

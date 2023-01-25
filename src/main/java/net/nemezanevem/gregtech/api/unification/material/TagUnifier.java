@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,6 +15,7 @@ import net.nemezanevem.gregtech.api.unification.stack.*;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 import net.nemezanevem.gregtech.api.util.CustomModPriorityComparator;
 import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 
 import javax.annotation.Nullable;
@@ -21,7 +23,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static net.nemezanevem.gregtech.api.util.GTValues.M;
+import static net.nemezanevem.gregtech.api.GTValues.M;
 
 public class TagUnifier {
 
@@ -41,7 +43,7 @@ public class TagUnifier {
 
     public static Comparator<Item> getSimpleItemStackComparator() {
         if (stackComparator == null) {
-            List<String> modPriorities = Arrays.asList(ConfigHolder.compat.modPriorities);
+            List<String> modPriorities = Arrays.asList(ConfigHolder.CompatConfig.modPriorities);
             if (modPriorities.isEmpty()) {
                 //noinspection ConstantConditions
                 Function<Item, String> modIdExtractor = item -> Util.getId(item).getNamespace();
@@ -216,6 +218,14 @@ public class TagUnifier {
             return null;
         ArrayList<Item> keys = stackUnificationItems.get(unificationEntry);
         return keys.size() > 0 ? keys.get(0) : null;
+    }
+
+    public static ItemStack get(TagPrefix orePrefix, Material material, int stackSize) {
+        UnificationEntry unificationEntry = new UnificationEntry(orePrefix, material);
+        if (!stackUnificationItems.containsKey(unificationEntry))
+            return ItemStack.EMPTY;
+        ArrayList<Item> keys = stackUnificationItems.get(unificationEntry);
+        return keys.size() > 0 ? new ItemStack(keys.get(0), stackSize) : ItemStack.EMPTY;
     }
 
     public static Item get(String oreDictName) {

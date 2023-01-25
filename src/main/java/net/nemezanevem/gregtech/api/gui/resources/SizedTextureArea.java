@@ -26,7 +26,7 @@ public class SizedTextureArea extends TextureArea {
     }
 
     public static SizedTextureArea fullImage(String imageLocation, int imageWidth, int imageHeight) {
-        return new SizedTextureArea(new ResourceLocation(GTValues.MODID, imageLocation), 0.0, 0.0, 1.0, 1.0, imageWidth, imageHeight);
+        return new SizedTextureArea(new ResourceLocation(GregTech.MODID, imageLocation), 0.0, 0.0, 1.0, 1.0, imageWidth, imageHeight);
     }
 
     public void drawHorizontalCutArea(int x, int y, int width, int height) {

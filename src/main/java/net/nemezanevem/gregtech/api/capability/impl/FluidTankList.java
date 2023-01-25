@@ -1,16 +1,15 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,7 +19,7 @@ import java.util.*;
  * Recommended to use this with {@link NotifiableFluidTankFromList} to ensure
  * proper behavior of the "allowSameFluidFill" setting, but not required.
  */
-public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTSerializable<NBTTagCompound> {
+public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTSerializable<CompoundTag> {
 
     protected final List<IFluidTank> fluidTanks;
     protected IFluidTankProperties[] properties;
@@ -71,6 +70,21 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
     }
 
     @Override
+    public @NotNull FluidStack getFluidInTank(int tank) {
+        return fluidTanks.get(tank).getFluid();
+    }
+
+    @Override
+    public int getTankCapacity(int tank) {
+        return fluidTanks.get(tank).getCapacity();
+    }
+
+    @Override
+    public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        return true;
+    }
+
+    @Override
     public IFluidTank getTankAt(int index) {
         return fluidTanks.get(index);
     }
@@ -91,36 +105,36 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
     }
 
     @Override
-    public int fill(FluidStack resource, boolean doFill) {
-        if (resource == null || resource.amount <= 0) {
+    public int fill(FluidStack resource, FluidAction action) {
+        if (resource == null || resource.getAmount() <= 0) {
             return 0;
         }
-        return fillTanksImpl(resource.copy(), doFill);
+        return fillTanksImpl(resource.copy(), action);
     }
 
     //fills exactly one tank if multi-filling is not allowed
     //and as much tanks as possible otherwise
     //note that it will always try to fill tanks with same fluid first
-    private int fillTanksImpl(FluidStack resource, boolean doFill) {
+    private int fillTanksImpl(FluidStack resource, FluidAction action) {
         int totalFilled = 0;
         //first, try to fill tanks that already have same fluid type
         for (IFluidTank handler : fluidTanks) {
             if (resource.isFluidEqual(handler.getFluid())) {
-                int filledAmount = handler.fill(resource, doFill);
+                int filledAmount = handler.fill(resource, action);
                 totalFilled += filledAmount;
-                resource.amount -= filledAmount;
+                resource.setAmount(resource.getAmount() - filledAmount);
                 //if filling multiple tanks is not allowed, or resource is empty, return now
-                if (!allowSameFluidFill() || resource.amount == 0)
+                if (!allowSameFluidFill() || resource.getAmount() == 0)
                     return totalFilled;
             }
         }
         //otherwise, try to fill empty tanks
         for (IFluidTank handler : fluidTanks) {
             if (handler.getFluidAmount() == 0) {
-                int filledAmount = handler.fill(resource, doFill);
+                int filledAmount = handler.fill(resource, action);
                 totalFilled += filledAmount;
-                resource.amount -= filledAmount;
-                if (!allowSameFluidFill() || resource.amount == 0)
+                resource.setAmount(resource.getAmount() - filledAmount);
+                if (!allowSameFluidFill() || resource.getAmount() == 0)
                     return totalFilled;
             }
         }
@@ -129,8 +143,8 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
 
     @Nullable
     @Override
-    public FluidStack drain(FluidStack resource, boolean doDrain) {
-        if (resource == null || resource.amount <= 0) {
+    public FluidStack drain(FluidStack resource, FluidAction action) {
+        if (resource == null || resource.getAmount() <= 0) {
             return null;
         }
         resource = resource.copy();
@@ -139,40 +153,40 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
             if (!resource.isFluidEqual(handler.getFluid())) {
                 continue;
             }
-            FluidStack drain = handler.drain(resource.amount, doDrain);
+            FluidStack drain = handler.drain(resource.getAmount(), action);
             if (drain == null) {
                 continue;
             }
             if (totalDrained == null) {
                 totalDrained = drain;
-            } else totalDrained.amount += drain.amount;
+            } else totalDrained.setAmount(totalDrained.getAmount() + drain.getAmount());
 
-            resource.amount -= drain.amount;
-            if (resource.amount == 0) break;
+            resource.setAmount(resource.getAmount() - drain.getAmount());
+            if (resource.getAmount() == 0) break;
         }
         return totalDrained;
     }
 
     @Nullable
     @Override
-    public FluidStack drain(int maxDrain, boolean doDrain) {
+    public FluidStack drain(int maxDrain, FluidAction action) {
         if (maxDrain == 0) {
             return null;
         }
         FluidStack totalDrained = null;
         for (IFluidTank handler : fluidTanks) {
             if (totalDrained == null) {
-                totalDrained = handler.drain(maxDrain, doDrain);
+                totalDrained = handler.drain(maxDrain, action);
                 if (totalDrained != null)
-                    maxDrain -= totalDrained.amount;
+                    maxDrain -= totalDrained.getAmount();
             } else {
                 FluidStack copy = totalDrained.copy();
-                copy.amount = maxDrain;
+                copy.setAmount(maxDrain);
                 if (!copy.isFluidEqual(handler.getFluid())) continue;
-                FluidStack drain = handler.drain(copy.amount, doDrain);
+                FluidStack drain = handler.drain(copy.getAmount(), action);
                 if (drain != null) {
-                    totalDrained.amount += drain.amount;
-                    maxDrain -= drain.amount;
+                    totalDrained.setAmount(totalDrained.getAmount() + drain.getAmount());
+                    maxDrain -= drain.getAmount();
                 }
             }
             if (maxDrain <= 0) break;
@@ -181,36 +195,36 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
     }
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound fluidInventory = new NBTTagCompound();
-        fluidInventory.setInteger("TankAmount", this.getTanks());
+    public CompoundTag serializeNBT() {
+        CompoundTag fluidInventory = new CompoundTag();
+        fluidInventory.putInt("TankAmount", this.getTanks());
 
-        NBTTagList tanks = new NBTTagList();
+        ListTag tanks = new ListTag();
         for (int i = 0; i < this.getTanks(); i++) {
-            NBTBase writeTag;
+            Tag writeTag;
             IFluidTank fluidTank = fluidTanks.get(i);
             if (fluidTank instanceof FluidTank) {
-                writeTag = ((FluidTank) fluidTank).writeToNBT(new NBTTagCompound());
+                writeTag = ((FluidTank) fluidTank).writeToNBT(new CompoundTag());
             } else if (fluidTank instanceof INBTSerializable) {
                 writeTag = ((INBTSerializable) fluidTank).serializeNBT();
-            } else writeTag = new NBTTagCompound();
+            } else writeTag = new CompoundTag();
 
-            tanks.appendTag(writeTag);
+            tanks.add(writeTag);
         }
-        fluidInventory.setTag("Tanks", tanks);
+        fluidInventory.put("Tanks", tanks);
         return fluidInventory;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound nbt) {
-        NBTTagList tanks = nbt.getTagList("Tanks", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < Math.min(fluidTanks.size(), nbt.getInteger("TankAmount")); i++) {
-            NBTBase nbtTag = tanks.get(i);
+    public void deserializeNBT(CompoundTag nbt) {
+        ListTag tanks = nbt.getList("Tanks", Tag.TAG_COMPOUND);
+        for (int i = 0; i < Math.min(fluidTanks.size(), nbt.getInt("TankAmount")); i++) {
+            CompoundTag nbtTag = tanks.getCompound(i);
             IFluidTank fluidTank = fluidTanks.get(i);
             if (fluidTank instanceof FluidTank) {
-                ((FluidTank) fluidTank).readFromNBT((NBTTagCompound) nbtTag);
+                ((FluidTank) fluidTank).readFromNBT((CompoundTag) nbtTag);
             } else if (fluidTank instanceof INBTSerializable) {
-                ((INBTSerializable) fluidTank).deserializeNBT(nbtTag);
+                ((INBTSerializable<CompoundTag>) fluidTank).deserializeNBT(nbtTag);
             }
         }
     }

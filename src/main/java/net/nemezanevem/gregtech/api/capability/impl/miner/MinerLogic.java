@@ -8,7 +8,7 @@ import net.nemezanevem.gregtech.api.capability.IMiner;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeMap;
-import gregtech.api.unification.OreDictUnifier;
+import gregtech.api.unification.TagUnifier;
 import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.util.GTLog;
 import gregtech.api.util.GTTransferUtils;
@@ -17,7 +17,7 @@ import gregtech.client.renderer.ICubeRenderer;
 import gregtech.client.renderer.texture.Textures;
 import gregtech.common.ConfigHolder;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -71,7 +71,7 @@ public class MinerLogic {
     private boolean isWorkingEnabled = true;
     protected boolean wasActiveAndNeedsUpdate;
 
-    private final IBlockState oreReplacementBlock = findMiningReplacementBlock();
+    private final BlockState oreReplacementBlock = findMiningReplacementBlock();
 
     /**
      * Creates the general logic for all in-world ore block miners
@@ -92,7 +92,7 @@ public class MinerLogic {
         this.PIPE_TEXTURE = pipeTexture;
     }
 
-    private IBlockState findMiningReplacementBlock() {
+    private BlockState findMiningReplacementBlock() {
 
         String[] blockDescription = StringUtils.split(ConfigHolder.machines.replaceMinedBlocksWith, ":");
         Block replacementBlock;
@@ -162,7 +162,7 @@ public class MinerLogic {
         // if there are blocks to mine and the correct amount of time has passed, do the mining
         if (metaTileEntity.getOffsetTimer() % this.speed == 0 && !blocksToMine.isEmpty()) {
             NonNullList<ItemStack> blockDrops = NonNullList.create();
-            IBlockState blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
+            BlockState blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
 
             // check to make sure the ore is still there,
             while(!GTUtility.isOre(GTUtility.toItem(blockState))) {
@@ -239,9 +239,9 @@ public class MinerLogic {
      * @param blockDrops the List of items to fill after the operation
      * @param world the {@link WorldServer} the miner is in
      * @param blockToMine the {@link BlockPos} of the block being mined
-     * @param blockState the {@link IBlockState} of the block being mined
+     * @param blockState the {@link BlockState} of the block being mined
      */
-    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, IBlockState blockState) {
+    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, BlockState blockState) {
         /*small ores
             if orePrefix of block in blockPos is small
                 applyTieredHammerNoRandomDrops...
@@ -255,9 +255,9 @@ public class MinerLogic {
      * @param blockDrops the List of items to fill after the operation
      * @param world the {@link WorldServer} the miner is in
      * @param blockToMine the {@link BlockPos} of the block being mined
-     * @param blockState the {@link IBlockState} of the block being mined
+     * @param blockState the {@link BlockState} of the block being mined
      */
-    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull IBlockState blockState) {
+    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull BlockState blockState) {
         blockState.getBlock().getDrops(blockDrops, world, blockToMine, blockState, 0); // regular ores do not get fortune applied
     }
 
@@ -358,7 +358,7 @@ public class MinerLogic {
                     // check every block along the x-axis
                     if (x.get() <= startX.get() + currentRadius * 2) {
                         BlockPos blockPos = new BlockPos(x.get(), y.get(), z.get());
-                        IBlockState state = metaTileEntity.getWorld().getBlockState(blockPos);
+                        BlockState state = metaTileEntity.getWorld().getBlockState(blockPos);
                         if (state.getBlock().blockHardness >= 0 && metaTileEntity.getWorld().getTileEntity(blockPos) == null && GTUtility.isOre(GTUtility.toItem(state))) {
                             blocks.addLast(blockPos);
                         }
@@ -401,14 +401,14 @@ public class MinerLogic {
      * @param map the recipemap from which to get the drops
      * @param tier the tier at which the operation is performed, used for calculating the chanced output boost
      */
-    protected static void applyTieredHammerNoRandomDrops(@Nonnull IBlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeMap<?> map, int tier) {
+    protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeMap<?> map, int tier) {
         ItemStack itemStack = GTUtility.toItem(blockState);
         Recipe recipe = map.findRecipe(Long.MAX_VALUE, Collections.singletonList(itemStack), Collections.emptyList(), 0);
         if (recipe != null && !recipe.getOutputs().isEmpty()) {
             drops.clear();
             for (ItemStack outputStack : recipe.getResultItemOutputs(GTUtility.getTierByVoltage(recipe.getEUt()), tier, map)) {
                 outputStack = outputStack.copy();
-                if (OreDictUnifier.getPrefix(outputStack) == OrePrefix.crushed) {
+                if (TagUnifier.getPrefix(outputStack) == OrePrefix.crushed) {
                     if (fortuneLevel > 0) {
                         outputStack.grow(outputStack.getCount() * fortuneLevel);
                     }

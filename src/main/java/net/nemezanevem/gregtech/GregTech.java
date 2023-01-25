@@ -1,7 +1,11 @@
 package net.nemezanevem.gregtech;
 
 import com.mojang.logging.LogUtils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TagsUpdatedEvent;
@@ -16,6 +20,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
+import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
@@ -25,8 +30,10 @@ import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMater
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
+import org.apache.commons.compress.harmony.pack200.Pack200Exception;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -44,6 +51,16 @@ public class GregTech {
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
+
+    public static final Object2ObjectOpenHashMap<BlockState, IHeatingCoilBlockStats> HEATING_COILS = new Object2ObjectOpenHashMap<>();
+
+    public static final CreativeModeTab TAB_GREGTECH = new CreativeModeTab("tab.gregtech.main") {
+        @Override
+        public ItemStack makeIcon() {
+            return null;
+        }
+    };
+
 
     public GregTech() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -80,6 +97,7 @@ public class GregTech {
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIOpen.class, PacketUIOpen::encode, PacketUIOpen::decode, PacketUIOpen::handle);
+        NETWORK_HANDLER.registerMessage(packetIndex++, PacketBlockParticle.class, PacketBlockParticle::encode, PacketBlockParticle::decode, PacketBlockParticle::handle);
     }
 
     private void register(RegisterEvent event) {

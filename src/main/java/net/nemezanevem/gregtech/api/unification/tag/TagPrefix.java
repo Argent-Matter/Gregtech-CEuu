@@ -18,7 +18,6 @@ import org.apache.logging.log4j.util.TriConsumer;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -26,7 +25,7 @@ import static net.nemezanevem.gregtech.api.unification.material.properties.info.
 import static net.nemezanevem.gregtech.api.unification.tag.TagPrefix.Conditions.*;
 import static net.nemezanevem.gregtech.api.unification.tag.TagPrefix.Flags.ENABLE_UNIFICATION;
 import static net.nemezanevem.gregtech.api.unification.tag.TagPrefix.Flags.SELF_REFERENCING;
-import static net.nemezanevem.gregtech.api.util.GTValues.M;
+import static net.nemezanevem.gregtech.api.GTValues.M;
 
 public class TagPrefix {
 

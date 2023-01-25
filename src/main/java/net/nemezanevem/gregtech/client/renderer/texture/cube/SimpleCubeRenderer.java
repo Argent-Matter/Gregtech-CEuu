@@ -18,7 +18,7 @@ public class SimpleCubeRenderer implements ICubeRenderer {
 
     @Override
     public void registerIcons(TextureMap textureMap) {
-        String modID = GTValues.MODID;
+        String modID = GregTech.MODID;
         String basePath = this.basePath;
         String[] split = this.basePath.split(":");
         if (split.length == 2) {
@@ -34,8 +34,8 @@ public class SimpleCubeRenderer implements ICubeRenderer {
     }
 
     @Override
-    public void renderOrientedState(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 bounds, EnumFacing frontFacing, boolean isActive, boolean isWorkingEnabled) {
-        Textures.renderFace(renderState, translation, pipeline, frontFacing, bounds, sprite, BlockRenderLayer.CUTOUT_MIPPED);
+    public void renderOrientedState(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 bounds, Direction frontFacing, boolean isActive, boolean isWorkingEnabled) {
+        Textures.renderFace(renderState, translation, pipeline, frontFacing, bounds, sprite, RenderType.cutoutMipped());
     }
 
 }
