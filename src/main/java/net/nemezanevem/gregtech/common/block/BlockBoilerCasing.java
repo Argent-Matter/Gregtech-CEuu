@@ -1,35 +1,28 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.IStateHarvestLevel;
-import gregtech.api.block.VariantBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLiving.SpawnPlacementType;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.block.IStateHarvestLevel;
+import net.nemezanevem.gregtech.api.block.VariantBlock;
 
 import javax.annotation.Nonnull;
 
-public class BlockBoilerCasing extends VariantBlock<BlockBoilerCasing.BoilerCasingType> {
+public class BlockBoilerCasing extends VariantBlock<BoilerCasingType> {
 
     public BlockBoilerCasing() {
-        super(Material.IRON);
-        setTranslationKey("boiler_casing");
-        setHardness(5.0f);
-        setResistance(10.0f);
-        setSoundType(SoundType.METAL);
-        setDefaultState(getState(BoilerCasingType.BRONZE_PIPE));
+        super(BlockBehaviour.Properties.of(Material.METAL).strength(5.0f, 10.0f).sound(SoundType.METAL));
+        registerDefaultState(getState(BoilerCasingType.BRONZE_PIPE));
     }
+}
 
-    @Override
-    public boolean canCreatureSpawn(@Nonnull BlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull SpawnPlacementType type) {
-        return false;
-    }
-
-    public enum BoilerCasingType implements IStringSerializable, IStateHarvestLevel {
+public enum BoilerCasingType implements StringRepresentable, IStateHarvestLevel {
 
         BRONZE_PIPE("bronze_pipe", 2),
         STEEL_PIPE("steel_pipe", 3),
@@ -47,7 +40,7 @@ public class BlockBoilerCasing extends VariantBlock<BlockBoilerCasing.BoilerCasi
 
         @Nonnull
         @Override
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 
@@ -60,6 +53,4 @@ public class BlockBoilerCasing extends VariantBlock<BlockBoilerCasing.BoilerCasi
         public String getHarvestTool(BlockState state) {
             return ToolClasses.WRENCH;
         }
-    }
-
 }

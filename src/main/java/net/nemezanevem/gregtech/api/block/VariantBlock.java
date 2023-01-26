@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.block;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,6 +36,14 @@ public class VariantBlock<T extends Enum<T> & StringRepresentable> extends Block
 
     public T getState(BlockState blockState) {
         return blockState.getValue(VARIANT);
+    }
+
+    public ItemStack getItemVariant(T variant) {
+        return getItemVariant(variant, 1);
+    }
+
+    public ItemStack getItemVariant(T variant, int amount) {
+        return new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation()), amount);
     }
 
     @Override
