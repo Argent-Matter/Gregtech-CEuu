@@ -62,4 +62,4 @@ Almost all\* original code is from **[Gregtech CEu](https://www.curseforge.com/m
 
 See something we forgot to credit? Reach out to us on Discord, or open an issue and ask for appropriate credit, we will happily mark it here
 
-* <sub>some parts of the original code has been rewritten.</sub>
+\* <sub>some parts of the original code has been rewritten.</sub>
