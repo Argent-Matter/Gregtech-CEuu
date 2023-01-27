@@ -5,7 +5,7 @@ import net.nemezanevem.gregtech.api.capability.FeCompat;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IElectricItem;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.common.ConfigHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
@@ -40,7 +40,7 @@ public class EnergyContainerBatteryCharger extends EnergyContainerHandler {
 
         if (side == null || inputsEnergy(side)) {
             if (voltage > getInputVoltage()) {
-                metaTileEntity.doExplosion(GTUtility.getExplosionPower(voltage));
+                metaTileEntity.doExplosion(Util.getExplosionPower(voltage));
             }
 
             //Prioritizes as many packets as available from the buffer
@@ -71,7 +71,7 @@ public class EnergyContainerBatteryCharger extends EnergyContainerHandler {
     }
 
     @Override
-    public void update() {
+    public void tick() {
         amps = 0;
         if (metaTileEntity.getWorld().isClientSide) {
             return;

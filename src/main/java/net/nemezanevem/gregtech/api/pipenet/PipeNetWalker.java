@@ -105,7 +105,7 @@ public abstract class PipeNetWalker {
         running = false;
         root.walked.clear();
         if (i >= maxWalks)
-            GTLog.logger.fatal("The walker reached the maximum amount of walks {}", i);
+            GregTech.LOGGER.fatal("The walker reached the maximum amount of walks {}", i);
         invalid = true;
     }
 
@@ -147,7 +147,7 @@ public abstract class PipeNetWalker {
         if (pipeTile == null) {
             if (walkedBlocks == 1) {
                 // if it is the first block, it wasn't already checked
-                GTLog.logger.error("First PipeTile is null during walk at {}", currentPos);
+                GregTech.LOGGER.error("First PipeTile is null during walk at {}", currentPos);
                 this.failed = true;
                 return;
             } else
@@ -158,7 +158,7 @@ public abstract class PipeNetWalker {
 
         BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
         // check for surrounding pipes and item handlers
-        for (Direction accessSide : Direction.VALUES) {
+        for (Direction accessSide : Direction.values()) {
             //skip sides reported as blocked by pipe network
             if (!pipeTile.isConnected(accessSide))
                 continue;

@@ -1,5 +1,7 @@
 package net.nemezanevem.gregtech.api.recipe.property;
 
+import com.google.gson.JsonObject;
+import net.minecraft.network.FriendlyByteBuf;
 import net.nemezanevem.gregtech.GregTech;
 
 import java.util.Collections;
@@ -64,5 +66,15 @@ public class EmptyRecipePropertyStorage implements IRecipePropertyStorage {
     @Override
     public Object getRawRecipePropertyValue(String key) {
         return null;
+    }
+
+    @Override
+    public void toNetwork(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(true); // IS empty
+    }
+
+    @Override
+    public void toJson(JsonObject json) {
+        // no-op
     }
 }

@@ -9,7 +9,7 @@ import gregtech.api.metatileentity.multiblock.ICleanroomProvider;
 import gregtech.api.metatileentity.multiblock.ICleanroomReceiver;
 import gregtech.api.recipes.FluidKey;
 import gregtech.api.recipes.RecipeType;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.renderer.ICubeRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
@@ -154,26 +154,26 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
 
         if (workable != null) {
             list.add(Component.translatable("behavior.tricorder.workable_progress",
-                    Component.translatable(GTUtility.formatNumbers(workable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
-                    Component.translatable(GTUtility.formatNumbers(workable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
+                    Component.translatable(Util.formatNumbers(workable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
+                    Component.translatable(Util.formatNumbers(workable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
             ));
 
             if (energyContainer != null) {
                 list.add(Component.translatable("behavior.tricorder.workable_stored_energy",
-                        Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
-                        Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
+                        Component.translatable(Util.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
+                        Component.translatable(Util.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
                 ));
             }
             // multi amp recipes: change 0 ? 0 : 1 to 0 ? 0 : amperage
             if (workable.getRecipeEUt() > 0) {
                 list.add(Component.translatable("behavior.tricorder.workable_consumption",
-                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt())).withStyle(ChatFormatting.RED),
-                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
+                        Component.translatable(Util.formatNumbers(workable.getRecipeEUt())).withStyle(ChatFormatting.RED),
+                        Component.translatable(Util.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
                 ));
             } else {
                 list.add(Component.translatable("behavior.tricorder.workable_production",
-                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() * -1)).withStyle(ChatFormatting.RED),
-                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
+                        Component.translatable(Util.formatNumbers(workable.getRecipeEUt() * -1)).withStyle(ChatFormatting.RED),
+                        Component.translatable(Util.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
                 ));
             }
         }

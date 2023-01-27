@@ -162,7 +162,7 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
     public Direction[] getValidRotations(@Nonnull Level world, @Nonnull BlockPos pos) {
         MetaTileEntity metaTileEntity = getMetaTileEntity(world, pos);
         if (metaTileEntity == null || !metaTileEntity.hasFrontFacing()) return null;
-        return Arrays.stream(Direction.VALUES)
+        return Arrays.stream(Direction.values())
                 .filter(metaTileEntity::isValidFrontFacing)
                 .toArray(Direction[]::new);
     }

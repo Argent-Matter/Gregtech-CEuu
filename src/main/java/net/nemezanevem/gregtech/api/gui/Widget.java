@@ -11,12 +11,17 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.phys.Vec2;
+import net.minecraftforge.common.data.SoundDefinition;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
 import net.nemezanevem.gregtech.api.util.Position;
@@ -551,7 +556,7 @@ public abstract class Widget {
     }
 
     protected void playButtonClickSound() {
-        Minecraft.getInstance().getSoundManager().play(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     protected boolean isShiftDown() {
@@ -560,10 +565,6 @@ public abstract class Widget {
 
     protected boolean isCtrlDown() {
         return Screen.hasControlDown();
-    }
-
-    public boolean isClientSide() {
-        return gui.holder.isClientSide();
     }
 
     protected static boolean isClientSide() {

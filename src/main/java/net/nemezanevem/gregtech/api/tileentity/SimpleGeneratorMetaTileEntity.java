@@ -78,14 +78,14 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
 
     @Override
     public <T> T getCapability(Capability<T> capability, Direction side) {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+        if (capability == CapabilityFluidHandler.FLUID_HANDLER) {
             if (fluidInventory.getTankProperties().length > 0) {
-                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(fluidInventory);
+                return CapabilityFluidHandler.FLUID_HANDLER.cast(fluidInventory);
             }
             return null;
-        } else if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        } else if (capability == CapabilityItemHandler.ITEM_HANDLER) {
             if (itemInventory.getSlots() > 0) {
-                return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(itemInventory);
+                return CapabilityItemHandler.ITEM_HANDLER.cast(itemInventory);
             }
             return null;
         }

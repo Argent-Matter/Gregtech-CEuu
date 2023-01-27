@@ -1,43 +1,43 @@
 package net.nemezanevem.gregtech.api.recipe;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
-import net.nemezanevem.gregtech.api.recipe.ingredient.GTRecipeInput;
 import net.nemezanevem.gregtech.api.recipe.property.EmptyRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
-import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.util.ItemStackHashStrategy;
 import net.nemezanevem.gregtech.api.util.Util;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer> {
-    private static final NonNullList<ItemStack> EMPTY = NonNullList.create();
+public class GTRecipe implements Recipe<CraftingContainer> {
+
     public static int getMaxChancedValue() {
         return 10000;
     }
@@ -47,15 +47,15 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
 
     public ResourceLocation id;
 
-    private final List<ExtendedIngredient> inputs;
+    private final NonNullList<ExtendedIngredient> inputs;
     private final NonNullList<ItemStack> outputs;
 
     /**
      * A chance of 10000 equals 100%
      */
-    private final List<ChanceEntry> chancedOutputs;
-    private final List<FluidIngredient> fluidInputs;
-    private final List<FluidStack> fluidOutputs;
+    private final NonNullList<ChanceEntry> chancedOutputs;
+    private final NonNullList<FluidIngredient> fluidInputs;
+    private final NonNullList<FluidStack> fluidOutputs;
 
     private final int duration;
     private final IRecipePropertyStorage recipePropertyStorage;
@@ -72,38 +72,29 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
     private final boolean hidden;
 
 
-    private final RecipeType<?> type;
+    private RecipeType<?> type;
 
-    public GTRecipe(RecipeType<?> type, ResourceLocation id, List<ExtendedIngredient> inputs, List<ItemStack> outputs, List<ChanceEntry> chancedOutputs,
-                    List<FluidIngredient> fluidInputs, List<FluidStack> fluidOutputs,
+    public GTRecipe(RecipeType<?> type, ResourceLocation id, NonNullList<ExtendedIngredient> inputs, NonNullList<ItemStack> outputs, NonNullList<ChanceEntry> chancedOutputs,
+                    NonNullList<FluidIngredient> fluidInputs, NonNullList<FluidStack> fluidOutputs,
                     int duration, int EUt, boolean hidden,
                     IRecipePropertyStorage recipePropertyStorage) {
         this.recipePropertyStorage =
                 recipePropertyStorage == null ? EmptyRecipePropertyStorage.INSTANCE : recipePropertyStorage;
-        if (inputs.isEmpty()) {
-            this.inputs = Collections.emptyList();
-        } else {
-            this.inputs = NonNullList.create();
-            this.inputs.addAll(inputs);
-        }
-        if (outputs.isEmpty()) {
-            this.outputs = EMPTY;
-        } else {
-            this.outputs = NonNullList.create();
-            this.outputs.addAll(outputs);
-        }
-        this.chancedOutputs = chancedOutputs.isEmpty() ? Collections.emptyList() : new ArrayList<>(chancedOutputs);
-        this.fluidInputs = fluidInputs.isEmpty() ? Collections.emptyList() : ImmutableList.copyOf(fluidInputs);
-        this.fluidOutputs = fluidOutputs.isEmpty() ? Collections.emptyList() : ImmutableList.copyOf(fluidOutputs);
+        this.inputs = inputs;
+        this.outputs = outputs;
+        this.chancedOutputs = chancedOutputs;
+        this.fluidInputs = fluidInputs;
+        this.fluidOutputs = fluidOutputs;
         this.duration = duration;
         this.EUt = EUt;
         this.hidden = hidden;
         this.type = type;
+        this.id = id;
     }
 
 
-    public GTRecipe<R> copy() {
-        return new GTRecipe<R>(this.type, this.id, this.inputs, this.outputs, this.chancedOutputs, this.fluidInputs,
+    public GTRecipe copy() {
+        return new GTRecipe(this.type, this.id, this.inputs, this.outputs, this.chancedOutputs, this.fluidInputs,
                 this.fluidOutputs, this.duration, this.EUt, this.hidden, this.recipePropertyStorage);
     }
 
@@ -114,7 +105,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return GtRecipes.SIMPLE_SERIALIZER.get();
+        return GtRecipeTypes.SIMPLE_SERIALIZER.get();
     }
 
     /**
@@ -126,7 +117,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
      * @param fluidTrimLimit The Limit to which fluid outputs should be trimmed to, -1 for no trimming
      * @return A new Recipe whose outputs have been trimmed.
      */
-    public GTRecipe<R> trimRecipeOutputs(GTRecipe<R> currentRecipe, RecipeType<?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
+    public GTRecipe trimRecipeOutputs(GTRecipe currentRecipe, GTRecipeType<?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
 
         // Fast return early if no trimming desired
         if (itemTrimLimit == -1 && fluidTrimLimit == -1) {
@@ -135,11 +126,11 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         // Chanced outputs are removed in this if they cannot fit the limit
         Pair<List<ItemStack>, List<GTRecipe.ChanceEntry>> recipeOutputs = currentRecipe.getItemAndChanceOutputs(itemTrimLimit);
 
-        List<FluidStack> recipeFluidOutputs = currentRecipe.getAllFluidOutputs(fluidTrimLimit);
+        NonNullList<FluidStack> recipeFluidOutputs = currentRecipe.getAllFluidOutputs(fluidTrimLimit);
 
 
 
-        return new GTRecipe<>(currentRecipe.type, currentRecipe.id, currentRecipe.inputs, recipeOutputs.getFirst(), recipeOutputs.getSecond(), currentRecipe.fluidInputs, recipeFluidOutputs, currentRecipe.duration, currentRecipe.EUt, currentRecipe.hidden, currentRecipe.recipePropertyStorage);
+        return new GTRecipe(currentRecipe.type, currentRecipe.id, currentRecipe.inputs, NonNullList.of(ItemStack.EMPTY, recipeOutputs.getFirst().toArray(ItemStack[]::new)), NonNullList.of(ChanceEntry.EMPTY, recipeOutputs.getSecond().toArray(ChanceEntry[]::new)), currentRecipe.fluidInputs, recipeFluidOutputs, currentRecipe.duration, currentRecipe.EUt, currentRecipe.hidden, currentRecipe.recipePropertyStorage);
     }
 
     public final boolean matches(boolean consumeIfSuccessful, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
@@ -206,8 +197,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         int indexed = 0;
 
         List<ExtendedIngredient> gtRecipeInputs = this.inputs;
-        for (int i = 0; i < gtRecipeInputs.size(); i++) {
-            ExtendedIngredient ingredient = gtRecipeInputs.get(i);
+        for (ExtendedIngredient ingredient : gtRecipeInputs) {
             int ingredientAmount = ingredient.getItems()[0].getCount();
             for (int j = 0; j < inputs.size(); j++) {
                 ItemStack inputStack = inputs.get(j);
@@ -238,8 +228,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         int indexed = 0;
 
         List<FluidIngredient> gtRecipeInputs = this.fluidInputs;
-        for (int i = 0; i < gtRecipeInputs.size(); i++) {
-            FluidIngredient fluid = gtRecipeInputs.get(i);
+        for (FluidIngredient fluid : gtRecipeInputs) {
             int fluidAmount = fluid.getAmount();
             for (int j = 0; j < fluidInputs.size(); j++) {
                 FluidStack tankFluid = fluidInputs.get(j);
@@ -267,12 +256,13 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        GTRecipe<R> recipe = (GTRecipe) o;
-        return hasSameInputs(recipe) && hasSameFluidInputs(recipe);
+        if (o instanceof GTRecipe recipe) {
+            return hasSameInputs(recipe) && hasSameFluidInputs(recipe);
+        }
+        return false;
     }
 
-    private int makeHashCode() {
+    public int hashCode() {
         int hash = 31 * hashInputs();
         hash = 31 * hash + hashFluidList(this.fluidInputs);
         return hash;
@@ -292,7 +282,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         return hash;
     }
 
-    private boolean hasSameInputs(GTRecipe<R> otherRecipe) {
+    private boolean hasSameInputs(GTRecipe otherRecipe) {
         List<ItemStack> otherStackList = new ObjectArrayList<>(otherRecipe.inputs.size());
         for (ExtendedIngredient otherInputs : otherRecipe.inputs) {
             otherStackList.addAll(Arrays.asList(otherInputs.getItems()));
@@ -316,7 +306,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         return hash;
     }
 
-    private boolean hasSameFluidInputs(GTRecipe<R> otherRecipe) {
+    private boolean hasSameFluidInputs(GTRecipe otherRecipe) {
         List<FluidStack> otherFluidList = new ObjectArrayList<>(otherRecipe.fluidInputs.size());
         for (FluidIngredient otherInputs : otherRecipe.fluidInputs) {
             FluidStack[] fluidStack = otherInputs.getFluids();
@@ -379,10 +369,10 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         List<ItemStack> resultChanced = new ArrayList<>();
         for (ChanceEntry chancedOutput : chancedOutputsList) {
             int outputChance = recipeType.getChanceFunction().chanceFor(
-                    chancedOutput.getChance(), chancedOutput.getBoostPerTier(),
+                    chancedOutput.chance(), chancedOutput.boostPerTier(),
                     recipeTier, machineTier);
             if (GTValues.RNG.nextInt(GTRecipe.getMaxChancedValue()) <= outputChance) {
-                ItemStack stackToAdd = chancedOutput.getItemStack();
+                ItemStack stackToAdd = chancedOutput.itemStack();
                 Util.addStackToItemStackList(stackToAdd, resultChanced);
             }
         }
@@ -449,7 +439,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         List<ItemStack> recipeOutputs = new ArrayList<>(this.outputs);
 
         for (ChanceEntry entry : this.chancedOutputs) {
-            recipeOutputs.add(entry.getItemStack());
+            recipeOutputs.add(entry.itemStack());
         }
 
         return recipeOutputs;
@@ -460,7 +450,7 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         return chancedOutputs;
     }
 
-    public List<FluidIngredient> getFluidInputs() {
+    public List<FluidIngredient> getFluidIngredients() {
         return fluidInputs;
     }
 
@@ -477,14 +467,20 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
 
     /**
      * Trims the list of fluid outputs based on some passed factor.
-     * Similar to {@link GTRecipe<R>#getItemAndChanceOutputs(int)} but does not handle chanced fluid outputs
+     * Similar to {@link GTRecipe#getItemAndChanceOutputs(int)} but does not handle chanced fluid outputs
      *
      * @param outputLimit The limiting factor to trim the fluid outputs to, -1 for disabled.
      * @return A trimmed List of fluid outputs.
      */
     // TODO, implement future chanced fluid outputs here
-    public List<FluidStack> getAllFluidOutputs(int outputLimit) {
-        return outputLimit == -1 ? fluidOutputs : fluidOutputs.subList(0, Math.min(fluidOutputs.size(), outputLimit));
+    public NonNullList<FluidStack> getAllFluidOutputs(int outputLimit) {
+        if(outputLimit == -1) {
+            return fluidOutputs;
+        } else {
+            var list = NonNullList.<FluidStack>createWithCapacity(outputLimit);
+            list.addAll(fluidOutputs.subList(0, Math.min(fluidOutputs.size(), outputLimit)));
+            return list;
+        }
     }
 
     public int getDuration() {
@@ -551,7 +547,11 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
 
     @Override
     public RecipeType<?> getType() {
-        return null;
+        return this.type;
+    }
+
+    public void setType(RecipeType<?> type) {
+        this.type = type;
     }
 
     /**
@@ -598,27 +598,28 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
         return pWidth * pHeight >= this.inputs.size();
     }
 
-    public static class Serializer<R extends GTRecipe<R>> implements RecipeSerializer<GTRecipe<R>> {
-        public GTRecipe<R> fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
-            String group = GsonHelper.getAsString(pJson, "group", "");
+    public static class Serializer implements RecipeSerializer<GTRecipe> {
+        public GTRecipe fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
             String type = GsonHelper.getAsString(pJson, "type", "gregtech:basic");
-            long eUt = GsonHelper.getAsLong(pJson, "EUt");
+            int eUt = GsonHelper.getAsInt(pJson, "EUt");
+            int duration = GsonHelper.getAsInt(pJson, "duration");
+            boolean hidden = GsonHelper.getAsBoolean(pJson, "hidden");
             var typeReal = ForgeRegistries.RECIPE_TYPES.getValue(new ResourceLocation(type));
-            ResourceLocation machineId = new ResourceLocation(GsonHelper.getAsString(pJson, "machine"));
-            MetaTileEntity mte = MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get().getValue(machineId);
-            NonNullList<Ingredient> nonnulllist = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "ingredients"));
-            if (nonnulllist.isEmpty()) {
-                throw new JsonParseException("No ingredients for shapeless recipe");
-            }
+            NonNullList<ExtendedIngredient> inputs = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "itemIngredients"));
+            NonNullList<FluidIngredient> fluids = fluidsFromJson(GsonHelper.getAsJsonArray(pJson, "fluidIngredients"));
+
             NonNullList<ItemStack> results = resultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
-            return new GTRecipe<R>(typeReal, pRecipeId, group, results, nonnulllist, mte, eUt);
+            NonNullList<ChanceEntry> chanceds = chancedsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
+            NonNullList<FluidStack> fluidResults = fluidResultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
+            IRecipePropertyStorage storage = IRecipePropertyStorage.fromJson(pJson);
+            return new GTRecipe(typeReal, pRecipeId, inputs, results, chanceds, fluids, fluidResults, duration, eUt, hidden, storage);
         }
 
-        private static NonNullList<Ingredient> itemsFromJson(JsonArray pIngredientArray) {
-            NonNullList<Ingredient> nonnulllist = NonNullList.create();
+        private static NonNullList<ExtendedIngredient> itemsFromJson(JsonArray pIngredientArray) {
+            NonNullList<ExtendedIngredient> nonnulllist = NonNullList.create();
 
             for(int i = 0; i < pIngredientArray.size(); ++i) {
-                Ingredient ingredient = Ingredient.fromJson(pIngredientArray.get(i));
+                ExtendedIngredient ingredient = ExtendedIngredient.Serializer.INSTANCE.parse(pIngredientArray.get(i).getAsJsonObject());
                 if (!ingredient.isEmpty()) { // FORGE: Skip checking if an ingredient is empty during shapeless recipe deserialization to prevent complex ingredients from caching tags too early. Can not be done using a config value due to sync issues.
                     nonnulllist.add(ingredient);
                 }
@@ -640,89 +641,161 @@ public class GTRecipe<R extends GTRecipe<R>> implements Recipe<CraftingContainer
             return results;
         }
 
-        public GTRecipe<R> fromNetwork(ResourceLocation pRecipeId, FriendlyByteBuf pBuffer) {
-            RecipeType<?> type = pBuffer.readRegistryId();
-            int sizeInputs = pBuffer.readVarInt();
-            NonNullList<Ingredient> nonnulllist = NonNullList.withSize(sizeInputs, Ingredient.EMPTY);
+        private static NonNullList<ChanceEntry> chancedsFromJson(JsonArray pIngredientArray) {
+            NonNullList<ChanceEntry> results = NonNullList.create();
 
-            nonnulllist.replaceAll(ignored -> Ingredient.fromNetwork(pBuffer));
-
-            int sizeResults = pBuffer.readVarInt();
-            NonNullList<ItemStack> results = NonNullList.withSize(sizeResults, ItemStack.EMPTY);
-
-            results.replaceAll(ignored -> pBuffer.readItem());
-
-            MetaTileEntity mte = pBuffer.readRegistryId();
-            long eUt = pBuffer.readVarLong();
-
-
-            return new GTRecipe<R>(type, s, results, nonnulllist, mte, eUt);
-        }
-
-        public void toNetwork(FriendlyByteBuf pBuffer, GTRecipe<R> pRecipe) {
-            pBuffer.writeRegistryId(ForgeRegistries.RECIPE_TYPES, pRecipe.type);
-            pBuffer.writeVarInt(pRecipe.inputs.size());
-
-            for(ExtendedIngredient ingredient : pRecipe.inputs) {
-                ingredient.toNetwork(pBuffer);
+            for(int i = 0; i < pIngredientArray.size(); ++i) {
+                ChanceEntry stack = ChanceEntry.fromJson(pIngredientArray.get(i).getAsJsonObject());
+                if (!stack.isEmpty()) {
+                    results.add(stack);
+                }
             }
 
-            pBuffer.writeVarInt(pRecipe.outputs.size());
-            for (ItemStack result : pRecipe.outputs) {
+            return results;
+        }
+
+        private static NonNullList<FluidIngredient> fluidsFromJson(JsonArray pIngredientArray) {
+            NonNullList<FluidIngredient> nonnulllist = NonNullList.create();
+
+            for(int i = 0; i < pIngredientArray.size(); ++i) {
+                FluidIngredient ingredient = FluidIngredient.fromJson(pIngredientArray.get(i).getAsJsonObject());
+                if (!ingredient.isEmpty()) { // FORGE: Skip checking if an ingredient is empty during shapeless recipe deserialization to prevent complex ingredients from caching tags too early. Can not be done using a config value due to sync issues.
+                    nonnulllist.add(ingredient);
+                }
+            }
+
+            return nonnulllist;
+        }
+
+        private static NonNullList<FluidStack> fluidResultsFromJson(JsonArray pIngredientArray) {
+            NonNullList<FluidStack> results = NonNullList.create();
+
+            for(int i = 0; i < pIngredientArray.size(); ++i) {
+                FluidStack.CODEC.parse(JsonOps.INSTANCE, pIngredientArray.get(i).getAsJsonObject())
+                        .resultOrPartial(GregTech.LOGGER::error)
+                        .ifPresent(results::add);
+            }
+
+            return results;
+        }
+
+        public GTRecipe fromNetwork(ResourceLocation pRecipeId, FriendlyByteBuf pBuffer) {
+            RecipeType<?> type = pBuffer.readRegistryId();
+            ResourceLocation id = pBuffer.readResourceLocation();
+
+            int size = pBuffer.readVarInt();
+            NonNullList<ExtendedIngredient> inputs = NonNullList.withSize(size, ExtendedIngredient.EMPTY);
+
+            inputs.replaceAll(ignored -> ExtendedIngredient.Serializer.INSTANCE.parse(pBuffer));
+
+            size = pBuffer.readVarInt();
+            NonNullList<ItemStack> results = NonNullList.withSize(size, ItemStack.EMPTY);
+            results.replaceAll(ignored -> pBuffer.readItem());
+
+            size = pBuffer.readVarInt();
+            NonNullList<ChanceEntry> chanced = NonNullList.withSize(size, ChanceEntry.EMPTY);
+            chanced.replaceAll(ignored -> ChanceEntry.fromNetwork(pBuffer));
+
+            size = pBuffer.readVarInt();
+            NonNullList<FluidIngredient> fluids = NonNullList.withSize(size, FluidIngredient.EMPTY);
+            fluids.replaceAll(ignored -> FluidIngredient.fromNetwork(pBuffer));
+
+
+            size = pBuffer.readVarInt();
+            NonNullList<FluidStack> fluidOutputs = NonNullList.withSize(size, FluidStack.EMPTY);
+            fluidOutputs.replaceAll(ignored -> FluidStack.readFromPacket(pBuffer));
+
+            int duration = pBuffer.readVarInt();
+            int eUt = pBuffer.readVarInt();
+            boolean hidden = pBuffer.readBoolean();
+
+            IRecipePropertyStorage storage = IRecipePropertyStorage.fromNetwork(pBuffer);
+
+            return new GTRecipe(type, id, inputs, results, chanced, fluids, fluidOutputs, duration, eUt, hidden, storage);
+        }
+
+        public void toNetwork(FriendlyByteBuf pBuffer, GTRecipe recipe) {
+            pBuffer.writeRegistryId(ForgeRegistries.RECIPE_TYPES, recipe.type);
+            pBuffer.writeResourceLocation(recipe.id);
+
+            pBuffer.writeVarInt(recipe.inputs.size());
+            for(ExtendedIngredient ingredient : recipe.inputs) {
+                ExtendedIngredient.Serializer.INSTANCE.write(pBuffer, ingredient);
+            }
+
+            pBuffer.writeVarInt(recipe.outputs.size());
+            for (ItemStack result : recipe.outputs) {
                 pBuffer.writeItem(result);
             }
 
-            pBuffer.writeVarInt(pRecipe.chancedOutputs.size());
-            for ()
+            pBuffer.writeVarInt(recipe.chancedOutputs.size());
+            for (ChanceEntry ingredient : recipe.chancedOutputs) {
+                ingredient.toNetwork(pBuffer);
+            }
 
-            pBuffer.writeRegistryId(MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get(), pRecipe.machine);
-            pBuffer.writeVarLong(pRecipe.EUt);
+            pBuffer.writeVarInt(recipe.chancedOutputs.size());
+            for (FluidIngredient ingredient : recipe.fluidInputs) {
+                ingredient.toNetwork(pBuffer);
+            }
+
+            pBuffer.writeVarInt(recipe.fluidOutputs.size());
+            for (FluidStack result : recipe.fluidOutputs) {
+                pBuffer.writeFluidStack(result);
+            }
+
+            pBuffer.writeVarInt(recipe.duration);
+            pBuffer.writeVarLong(recipe.EUt);
+            pBuffer.writeBoolean(recipe.hidden);
+
+            recipe.recipePropertyStorage.toNetwork(pBuffer);
         }
     }
 
     ///////////////////////////////////////////////////////////
-    //                   Chanced Output                      //
-    ///////////////////////////////////////////////////////////
-    public static class ChanceEntry {
-        private final ItemStack itemStack;
-        private final int chance;
-        private final int boostPerTier;
+        //                   Chanced Output                      //
+        ///////////////////////////////////////////////////////////
+        public record ChanceEntry(ItemStack itemStack, int chance, int boostPerTier) {
+            public static final ChanceEntry EMPTY = new ChanceEntry(ItemStack.EMPTY, 0, 0);
 
-        public ChanceEntry(ItemStack itemStack, int chance, int boostPerTier) {
-            this.itemStack = itemStack.copy();
-            this.chance = chance;
-            this.boostPerTier = boostPerTier;
-        }
+            public ChanceEntry(ItemStack itemStack, int chance, int boostPerTier) {
+                this.itemStack = itemStack.copy();
+                this.chance = chance;
+                this.boostPerTier = boostPerTier;
+            }
 
-        public ItemStack getItemStack() {
-            return itemStack.copy();
-        }
+            @Override
+            public ItemStack itemStack() {
+                return itemStack.copy();
+            }
 
-        public ItemStack getItemStackRaw() {
-            return itemStack;
-        }
+            public ItemStack getItemStackRaw() {
+                return itemStack;
+            }
 
-        public int getChance() {
-            return chance;
-        }
+            public boolean isEmpty() {
+                return itemStack.isEmpty() || chance == 0;
+            }
 
-        public int getBoostPerTier() {
-            return boostPerTier;
-        }
+            public ChanceEntry copy() {
+                return new ChanceEntry(itemStack, chance, boostPerTier);
+            }
 
-        public ChanceEntry copy() {
-            return new ChanceEntry(itemStack, chance, boostPerTier);
-        }
+            public void toNetwork(FriendlyByteBuf pBuffer) {
+                pBuffer.writeItem(itemStack);
+                pBuffer.writeVarInt(chance);
+                pBuffer.writeVarInt(boostPerTier);
+            }
 
-        public void toNetwork(FriendlyByteBuf pBuffer) {
-            pBuffer.writeItem(itemStack);
-            pBuffer.writeVarInt(chance);
-            pBuffer.writeVarInt(boostPerTier);
-        }
+            public static ChanceEntry fromNetwork(FriendlyByteBuf pBuffer) {
+                return new ChanceEntry(pBuffer.readItem(), pBuffer.readVarInt(), pBuffer.readVarInt());
+            }
 
-        public static ChanceEntry fromNetwork(FriendlyByteBuf pBuffer) {
-            return new ChanceEntry(pBuffer.readItem(), pBuffer.readVarInt(), pBuffer.readVarInt());
+            public static ChanceEntry fromJson(JsonObject object) {
+                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(GsonHelper.getAsString(object, "item")));
+                int chance = GsonHelper.getAsInt(object, "chance");
+                int boostPerTier = GsonHelper.getAsInt(object, "boostPerTier");
+                return new ChanceEntry(new ItemStack(item), chance, boostPerTier);
+            }
         }
-    }
 }
 

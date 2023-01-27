@@ -10,7 +10,7 @@ import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.*;
 import gregtech.api.pipenet.block.BlockPipe;
 import gregtech.api.pipenet.block.BlockPipe.PipeConnectionData;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.utils.RenderUtil;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -206,7 +206,7 @@ public interface ICoverable {
     }
 
     static Direction determineGridSideHit(BlockHitResult result) {
-        return GTUtility.determineWrenchingSide(result.getDirection(),
+        return Util.determineWrenchingSide(result.getDirection(),
                 (float) (result.getLocation().x - result.getBlockPos().getX()),
                 (float) (result.getLocation().y - result.getBlockPos().getY()),
                 (float) (result.getLocation().z - result.getBlockPos().getZ()));

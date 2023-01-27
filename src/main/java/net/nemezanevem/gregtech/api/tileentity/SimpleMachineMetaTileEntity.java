@@ -18,7 +18,7 @@ import gregtech.api.gui.widgets.*;
 import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
 import gregtech.api.recipes.RecipeType;
 import gregtech.api.recipes.ingredients.IntCircuitIngredient;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.renderer.ICubeRenderer;
 import gregtech.client.renderer.texture.Textures;
 import gregtech.client.utils.RenderUtil;
@@ -91,7 +91,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     private static final int FONT_HEIGHT = 9; // Minecraft's FontRenderer FONT_HEIGHT value
 
     public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing) {
-        this(metaTileEntityId, recipeMap, renderer, tier, hasFrontFacing, GTUtility.defaultTankSizeFunction);
+        this(metaTileEntityId, recipeMap, renderer, tier, hasFrontFacing, Util.defaultTankSizeFunction);
     }
 
     public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing,
@@ -184,8 +184,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     }
 
     @Override
-    public void update() {
-        super.update();
+    public void tick() {
+        super.tick();
         if (!getWorld().isClientSide) {
             ((EnergyContainerHandler) this.energyContainer).dischargeOrRechargeEnergyContainers(chargerInventory, 0);
 
@@ -218,16 +218,16 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
 
     @Override
     public <T> T getCapability(Capability<T> capability, Direction side) {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+        if (capability == CapabilityFluidHandler.FLUID_HANDLER) {
             IFluidHandler fluidHandler = (side == getOutputFacingFluids() && !isAllowInputFromOutputSideFluids()) ? outputFluidInventory : fluidInventory;
             if (fluidHandler.getTankProperties().length > 0) {
-                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(fluidHandler);
+                return CapabilityFluidHandler.FLUID_HANDLER.cast(fluidHandler);
             }
             return null;
-        } else if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        } else if (capability == CapabilityItemHandler.ITEM_HANDLER) {
             IItemHandler itemHandler = (side == getOutputFacingItems() && !isAllowInputFromOutputSideFluids()) ? outputItemInventory : itemInventory;
             if (itemHandler.getSlots() > 0) {
-                return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(itemHandler);
+                return CapabilityItemHandler.ITEM_HANDLER.cast(itemHandler);
             }
             return null;
         } else if (capability == GregtechTileCapabilities.CAPABILITY_ACTIVE_OUTPUT_SIDE) {
@@ -260,8 +260,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         if (data.hasKey("CircuitInventory")) {
             this.circuitInventory.deserializeNBT(data.getCompoundTag("CircuitInventory"));
         }
-        this.outputFacingItems = Direction.VALUES[data.getInteger("OutputFacing")];
-        this.outputFacingFluids = Direction.VALUES[data.getInteger("OutputFacingF")];
+        this.outputFacingItems = Direction.values()[data.getInteger("OutputFacing")];
+        this.outputFacingFluids = Direction.values()[data.getInteger("OutputFacingF")];
         this.autoOutputItems = data.getBoolean("AutoOutputItems");
         this.autoOutputFluids = data.getBoolean("AutoOutputFluids");
         this.allowInputFromOutputSideItems = data.getBoolean("AllowInputFromOutputSide");
@@ -280,8 +280,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     @Override
     public void receiveInitialSyncData(FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
-        this.outputFacingItems = Direction.VALUES[buf.readByte()];
-        this.outputFacingFluids = Direction.VALUES[buf.readByte()];
+        this.outputFacingItems = Direction.values()[buf.readByte()];
+        this.outputFacingFluids = Direction.values()[buf.readByte()];
         this.autoOutputItems = buf.readBoolean();
         this.autoOutputFluids = buf.readBoolean();
     }
@@ -290,8 +290,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         super.receiveCustomData(dataId, buf);
         if (dataId == UPDATE_OUTPUT_FACING) {
-            this.outputFacingItems = Direction.VALUES[buf.readByte()];
-            this.outputFacingFluids = Direction.VALUES[buf.readByte()];
+            this.outputFacingItems = Direction.values()[buf.readByte()];
+            this.outputFacingFluids = Direction.values()[buf.readByte()];
             scheduleRenderUpdate();
         } else if (dataId == UPDATE_AUTO_OUTPUT_ITEMS) {
             this.autoOutputItems = buf.readBoolean();

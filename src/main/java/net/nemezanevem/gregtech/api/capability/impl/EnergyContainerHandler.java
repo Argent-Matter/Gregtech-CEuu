@@ -13,7 +13,7 @@ import net.nemezanevem.gregtech.api.capability.IElectricItem;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import gregtech.api.metatileentity.MTETrait;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.common.ConfigHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
@@ -197,7 +197,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
     }
 
     @Override
-    public void update() {
+    public void tick() {
         amps = 0;
         if (getMetaTileEntity().getWorld().isClientSide)
             return;

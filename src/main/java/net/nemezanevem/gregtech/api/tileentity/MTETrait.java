@@ -30,7 +30,7 @@ public abstract class MTETrait {
     public void onFrontFacingSet(Direction newFrontFacing) {
     }
 
-    public void update() {
+    public void tick() {
     }
 
     public CompoundTag serializeNBT() {

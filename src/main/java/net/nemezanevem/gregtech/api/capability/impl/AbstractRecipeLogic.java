@@ -1,18 +1,23 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.property.CleanroomProperty;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.tileentity.MTETrait;
 import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.tileentity.multiblock.CleanroomType;
@@ -34,7 +39,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
     private static final String OVERCLOCK_VOLTAGE = "OverclockVoltage";
 
 
-    private final RecipeType<?> recipeMap;
+    private final GTRecipeType<?> recipeMap;
 
     protected GTRecipe previousRecipe;
     private boolean allowOverclocking = true;
@@ -65,12 +70,12 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      */
     private int parallelLimit = 1;
 
-    public AbstractRecipeLogic(MetaTileEntity tileEntity, RecipeType<?> recipeMap) {
+    public AbstractRecipeLogic(MetaTileEntity tileEntity, GTRecipeType<?> recipeMap) {
         super(tileEntity);
         this.recipeMap = recipeMap;
     }
 
-    public AbstractRecipeLogic(MetaTileEntity tileEntity, RecipeType<?> recipeMap, boolean hasPerfectOC) {
+    public AbstractRecipeLogic(MetaTileEntity tileEntity, GTRecipeType<?> recipeMap, boolean hasPerfectOC) {
         super(tileEntity);
         this.recipeMap = recipeMap;
         this.hasPerfectOC = hasPerfectOC;
@@ -167,7 +172,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
     }
 
     @Override
-    public void update() {
+    public void tick() {
         Level world = getMetaTileEntity().getWorld();
         if (world != null && !world.isClientSide) {
             if (workingEnabled) {
@@ -198,7 +203,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @return the current RecipeType of the logic
      */
     @Nullable
-    public RecipeType<?> getRecipeType() {
+    public GTRecipeType<?> getRecipeType() {
         return this.recipeMap;
     }
 
@@ -208,7 +213,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @return the previous recipe run
      */
     @Nullable
-    public Recipe getPreviousRecipe() {
+    public GTRecipe getPreviousRecipe() {
         return previousRecipe;
     }
 
@@ -356,7 +361,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      */
     protected void trySearchNewRecipe() {
         long maxVoltage = getMaxVoltage();
-        Recipe currentRecipe;
+        GTRecipe currentRecipe;
         IItemHandlerModifiable importInventory = getInputInventory();
         IMultipleTankHandler importFluids = getInputTank();
 
@@ -394,7 +399,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @param recipe the recipe to check
      * @return true if the recipe is allowed to be used, else false
      */
-    protected boolean checkRecipe(@Nonnull GTRecipe<?> recipe) {
+    protected boolean checkRecipe(@Nonnull GTRecipe recipe) {
         CleanroomType requiredType = null;
         if (recipe.hasProperty(CleanroomProperty.getInstance())) {
             requiredType = recipe.getProperty(CleanroomProperty.getInstance(), null);
@@ -422,7 +427,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @param recipe the recipe to prepare
      * @return true if the recipe was successfully prepared, else false
      */
-    protected boolean prepareRecipe(Recipe recipe) {
+    protected boolean prepareRecipe(GTRecipe recipe) {
         recipe = recipe.trimRecipeOutputs(recipe, getRecipeType(), metaTileEntity.getItemOutputLimit(), metaTileEntity.getFluidOutputLimit());
 
         // Pass in the trimmed recipe to the parallel logic
@@ -491,8 +496,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @return the recipe if found, otherwise null
      */
     @Nullable
-    protected Recipe findRecipe(long maxVoltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
-        RecipeType<?> map = getRecipeType();
+    protected GTRecipe findRecipe(long maxVoltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs) {
+        GTRecipeType<?> map = getRecipeType();
         if (map == null || !isRecipeTypeValid(map)) {
             return null;
         }
@@ -504,7 +509,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @param recipeMap the recipemap to check
      * @return true if the recipemap is valid for recipe search
      */
-    public boolean isRecipeTypeValid(@Nonnull RecipeType<?> recipeMap) {
+    public boolean isRecipeTypeValid(@Nonnull GTRecipeType<?> recipeMap) {
         return true;
     }
 
@@ -515,8 +520,8 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      */
     protected static boolean areItemStacksEqual(@Nonnull ItemStack stackA, @Nonnull ItemStack stackB) {
         return (stackA.isEmpty() && stackB.isEmpty()) ||
-                (ItemStack.areItemsEqual(stackA, stackB) &&
-                        ItemStack.areItemStackTagsEqual(stackA, stackB));
+                (ItemStack.matches(stackA, stackB) &&
+                        ItemStack.tagMatches(stackA, stackB));
     }
 
     /**
@@ -531,7 +536,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      *                        a specific bus
      * @return - true if the recipe is successful, false if the recipe is not successful
      */
-    protected boolean setupAndConsumeRecipeInputs(@Nonnull Recipe recipe, @Nonnull IItemHandlerModifiable importInventory) {
+    protected boolean setupAndConsumeRecipeInputs(@Nonnull GTRecipe recipe, @Nonnull IItemHandlerModifiable importInventory) {
         this.overclockResults = calculateOverclock(recipe);
 
         performNonOverclockBonuses(overclockResults);
@@ -615,7 +620,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @param recipe the recipe to run
      * @return an int array of {OverclockedEUt, OverclockedDuration}
      */
-    protected int[] calculateOverclock(@Nonnull Recipe recipe) {
+    protected int[] calculateOverclock(@Nonnull GTRecipe recipe) {
         int recipeEUt = recipe.getEUt();
         int recipeDuration = recipe.getDuration();
         // Cannot overclock, keep recipe the same
@@ -648,7 +653,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
         // If the maximum tier that the machine can overclock to is ULV, return false.
         // There is no overclocking allowed in ULV
         if (overclockTier <= GTValues.LV) return false;
-        int recipeTier = GTUtility.getTierByVoltage(recipeEUt);
+        int recipeTier = Util.getTierByVoltage(recipeEUt);
 
         // Do overclock if the overclock tier is greater than the recipe tier
         return overclockTier > recipeTier;
@@ -720,7 +725,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      * @return the highest voltage tier the machine should use to overclock with
      */
     protected int getOverclockForTier(long voltage) {
-        return GTUtility.getTierByVoltage(voltage);
+        return Util.getTierByVoltage(voltage);
     }
 
     /**
@@ -743,13 +748,13 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      *
      * @param recipe the recipe to run
      */
-    protected void setupRecipe(Recipe recipe) {
+    protected void setupRecipe(GTRecipe recipe) {
         this.progressTime = 1;
         setMaxProgress(overclockResults[1]);
         this.recipeEUt = overclockResults[0];
-        this.fluidOutputs = GTUtility.copyFluidList(recipe.getAllFluidOutputs(metaTileEntity.getFluidOutputLimit()));
-        this.itemOutputs = GTUtility.copyStackList(recipe.getResultItemOutputs(
-                GTUtility.getTierByVoltage(recipe.getEUt()),
+        this.fluidOutputs = Util.copyFluidList(recipe.getAllFluidOutputs(metaTileEntity.getFluidOutputLimit()));
+        this.itemOutputs = Util.copyStackList(recipe.getResultItemOutputs(
+                Util.getTierByVoltage(recipe.getEUt()),
                 getOverclockForTier(getMaximumOverclockVoltage()),
                 getRecipeType())
         );
@@ -821,7 +826,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
         if (this.isActive != active) {
             this.isActive = active;
             metaTileEntity.markDirty();
-            World world = metaTileEntity.getWorld();
+            Level world = metaTileEntity.getWorld();
             if (world != null && !world.isClientSide) {
                 writeCustomData(GregtechDataCodes.WORKABLE_ACTIVE, buf -> buf.writeBoolean(active));
             }
@@ -832,7 +837,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
     public void setWorkingEnabled(boolean workingEnabled) {
         this.workingEnabled = workingEnabled;
         metaTileEntity.markDirty();
-        World world = metaTileEntity.getWorld();
+        Level world = metaTileEntity.getWorld();
         if (world != null && !world.isClientSide) {
             writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
         }
@@ -953,24 +958,24 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compound = new CompoundTag();
-        compound.setBoolean("WorkEnabled", workingEnabled);
-        compound.setBoolean("CanRecipeProgress", canRecipeProgress);
-        compound.setBoolean(ALLOW_OVERCLOCKING, allowOverclocking);
-        compound.setLong(OVERCLOCK_VOLTAGE, this.overclockVoltage);
+        compound.putBoolean("WorkEnabled", workingEnabled);
+        compound.putBoolean("CanRecipeProgress", canRecipeProgress);
+        compound.putBoolean(ALLOW_OVERCLOCKING, allowOverclocking);
+        compound.putLong(OVERCLOCK_VOLTAGE, this.overclockVoltage);
         if (progressTime > 0) {
-            compound.setInteger("Progress", progressTime);
-            compound.setInteger("MaxProgress", maxProgressTime);
-            compound.setInteger("RecipeEUt", this.recipeEUt);
+            compound.putInt("Progress", progressTime);
+            compound.putInt("MaxProgress", maxProgressTime);
+            compound.putInt("RecipeEUt", this.recipeEUt);
             ListTag itemOutputsList = new ListTag();
             for (ItemStack itemOutput : itemOutputs) {
-                itemOutputsList.appendTag(itemOutput.writeToNBT(new CompoundTag()));
+                itemOutputsList.add(itemOutput.save(new CompoundTag()));
             }
             ListTag fluidOutputsList = new ListTag();
             for (FluidStack fluidOutput : fluidOutputs) {
-                fluidOutputsList.appendTag(fluidOutput.writeToNBT(new CompoundTag()));
+                fluidOutputsList.add(fluidOutput.writeToNBT(new CompoundTag()));
             }
-            compound.setTag("ItemOutputs", itemOutputsList);
-            compound.setTag("FluidOutputs", fluidOutputsList);
+            compound.put("ItemOutputs", itemOutputsList);
+            compound.put("FluidOutputs", fluidOutputsList);
         }
         return compound;
     }
@@ -979,23 +984,23 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
     public void deserializeNBT(@Nonnull CompoundTag compound) {
         this.workingEnabled = compound.getBoolean("WorkEnabled");
         this.canRecipeProgress = compound.getBoolean("CanRecipeProgress");
-        this.progressTime = compound.getInteger("Progress");
+        this.progressTime = compound.getInt("Progress");
         this.allowOverclocking = compound.getBoolean(ALLOW_OVERCLOCKING);
         this.overclockVoltage = compound.getLong(OVERCLOCK_VOLTAGE);
         this.isActive = false;
         if (progressTime > 0) {
             this.isActive = true;
-            this.maxProgressTime = compound.getInteger("MaxProgress");
-            this.recipeEUt = compound.getInteger("RecipeEUt");
-            ListTag itemOutputsList = compound.getTagList("ItemOutputs", Constants.NBT.TAG_COMPOUND);
+            this.maxProgressTime = compound.getInt("MaxProgress");
+            this.recipeEUt = compound.getInt("RecipeEUt");
+            ListTag itemOutputsList = compound.getList("ItemOutputs", Tag.TAG_COMPOUND);
             this.itemOutputs = NonNullList.create();
-            for (int i = 0; i < itemOutputsList.tagCount(); i++) {
-                this.itemOutputs.add(new ItemStack(itemOutputsList.getCompoundTagAt(i)));
+            for (int i = 0; i < itemOutputsList.size(); i++) {
+                this.itemOutputs.add(ItemStack.of(itemOutputsList.getCompound(i)));
             }
-            ListTag fluidOutputsList = compound.getTagList("FluidOutputs", Constants.NBT.TAG_COMPOUND);
+            ListTag fluidOutputsList = compound.getList("FluidOutputs", Tag.TAG_COMPOUND);
             this.fluidOutputs = new ArrayList<>();
-            for (int i = 0; i < fluidOutputsList.tagCount(); i++) {
-                this.fluidOutputs.add(FluidStack.loadFluidStackFromNBT(fluidOutputsList.getCompoundTagAt(i)));
+            for (int i = 0; i < fluidOutputsList.size(); i++) {
+                this.fluidOutputs.add(FluidStack.loadFluidStackFromNBT(fluidOutputsList.getCompound(i)));
             }
         }
     }

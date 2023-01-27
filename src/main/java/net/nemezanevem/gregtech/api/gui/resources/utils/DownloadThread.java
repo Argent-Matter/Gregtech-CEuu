@@ -26,7 +26,7 @@ import java.util.Set;
 
 @SideOnly(Side.CLIENT)
 public class DownloadThread extends Thread {
-    public static final Logger LOGGER = GTLog.logger;
+    public static final Logger LOGGER = GregTech.LOGGER;
 
     public static final TextureCache TEXTURE_CACHE = new TextureCache();
     public static final DateFormat FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");

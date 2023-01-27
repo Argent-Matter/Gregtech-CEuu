@@ -1,21 +1,40 @@
 package net.nemezanevem.gregtech.api.util;
 
 import com.google.common.collect.Lists;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagManager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
@@ -301,6 +320,87 @@ public class Util {
             itemStackList.add(stackToAdd.copy());
         }
         return itemStackList;
+    }
+
+    public static boolean harvestBlock(Level level, BlockPos pos, Player player) {
+        BlockState blockState = level.getBlockState(pos);
+        BlockEntity tileEntity = level.getBlockEntity(pos);
+
+        if (blockState.isAir()) {
+            return false;
+        }
+
+        if (!blockState.getBlock().canHarvestBlock(blockState, level, pos, player)) {
+            return false;
+        }
+
+        int expToDrop = 0;
+        if (!level.isClientSide) {
+            ServerPlayer playerMP = (ServerPlayer) player;
+            expToDrop = ForgeHooks.onBlockBreakEvent(level, playerMP.gameMode.getGameModeForPlayer(), playerMP, pos);
+            if (expToDrop == -1) {
+                //notify client if block can't be removed because of BreakEvent cancelled on server side
+                playerMP.connection.send(new ClientboundBlockUpdatePacket(level, pos));
+                return false;
+            }
+        }
+
+        level.levelEvent(player, 2001, pos, Block.getId(blockState));
+
+        FluidState fluidstate = level.getFluidState(pos);
+        boolean wasRemovedByPlayer = blockState.onDestroyedByPlayer(level, pos, player, !player.getAbilities().instabuild, fluidstate);
+        if (wasRemovedByPlayer) {
+            blockState.getBlock().destroy(level, pos, blockState);
+
+            if (!level.isClientSide && !player.isCreative()) {
+                ItemStack stackInHand = player.getMainHandItem();
+                int fortuneLevel = EnchantmentHelper.getTagEnchantmentLevel(Enchantments.BLOCK_FORTUNE, stackInHand);
+                int silkTouchLevel = EnchantmentHelper.getTagEnchantmentLevel(Enchantments.SILK_TOUCH, stackInHand);
+                if (expToDrop > 0) {
+                    blockState.getExpDrop(level, level.random, pos, fortuneLevel, silkTouchLevel);
+                }
+            }
+        }
+
+        if (!level.isClientSide) {
+            ServerPlayer playerMP = (ServerPlayer) player;
+            playerMP.connection.send(new ClientboundBlockUpdatePacket(level, pos));
+        } else {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                Minecraft mc = Minecraft.getInstance();
+                mc.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, mc.hitResult.getType() == HitResult.Type.BLOCK ? ((BlockHitResult)mc.hitResult).getDirection() : null));
+            });
+        }
+        return wasRemovedByPlayer;
+    }
+
+    public static void writeItems(IItemHandler handler, String tagName, CompoundTag tag) {
+        ListTag tagList = new ListTag();
+
+        for (int i = 0; i < handler.getSlots(); i++) {
+            if (!handler.getStackInSlot(i).isEmpty()) {
+                CompoundTag stackTag = new CompoundTag();
+                stackTag.putInt("Slot", i);
+                handler.getStackInSlot(i).save(stackTag);
+                tagList.add(stackTag);
+            }
+        }
+
+        tag.put(tagName, tagList);
+    }
+
+    public static void readItems(IItemHandlerModifiable handler, String tagName, CompoundTag tag) {
+        if (tag.contains(tagName)) {
+            ListTag tagList = tag.getList(tagName, Tag.TAG_COMPOUND);
+
+            for (int i = 0; i < tagList.size(); i++) {
+                int slot = tagList.getCompound(i).getInt("Slot");
+
+                if (slot >= 0 && slot < handler.getSlots()) {
+                    handler.setStackInSlot(slot, ItemStack.of(tagList.getCompound(i)));
+                }
+            }
+        }
     }
 
 

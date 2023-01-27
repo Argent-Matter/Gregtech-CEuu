@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.recipe.property;
 
+import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.Objects;
 
@@ -23,6 +25,10 @@ public abstract class RecipeProperty<T> {
         return key;
     }
 
+    public Class<T> getType() {
+        return type;
+    }
+
     public T castValue(Object value) {
         return this.type.cast(value);
     }
@@ -43,6 +49,14 @@ public abstract class RecipeProperty<T> {
         RecipeProperty<?> that = (RecipeProperty<?>) o;
         return Objects.equals(type, that.type) && Objects.equals(key, that.key);
     }
+
+    public abstract void writeToNetwork(FriendlyByteBuf buffer, Object value);
+
+    public abstract T readFromNetwork(FriendlyByteBuf buffer);
+
+    public abstract void writeToJson(JsonObject json, Object value);
+
+    public abstract T readFromJson(JsonObject json);
 
     @Override
     public int hashCode() {

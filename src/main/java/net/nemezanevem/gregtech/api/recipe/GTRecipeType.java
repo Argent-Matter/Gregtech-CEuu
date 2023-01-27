@@ -1,8 +1,17 @@
 package net.nemezanevem.gregtech.api.recipe;
 
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
+import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
+import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
+
+import java.util.List;
 
 public interface GTRecipeType<T extends Recipe<?>> extends RecipeType<T> {
 
@@ -14,6 +23,10 @@ public interface GTRecipeType<T extends Recipe<?>> extends RecipeType<T> {
     };
 
     IChanceFunction getChanceFunction();
+
+    GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity);
+
+    GTRecipe findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity);
 
     @FunctionalInterface
     interface IChanceFunction {

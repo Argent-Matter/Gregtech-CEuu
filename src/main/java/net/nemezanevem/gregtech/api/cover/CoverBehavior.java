@@ -16,7 +16,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
@@ -29,7 +31,7 @@ import java.util.function.Consumer;
  * Represents cover instance attached on the specific side of meta tile entity
  * Cover filters out interaction and logic of meta tile entity
  * <p>
- * Can implement {@link net.minecraft.world.level.block.entity} to listen to meta tile entity updates
+ * Can implement {@link BlockEntityTicker <CoverBehavior>} to listen to meta tile entity updates
  */
 @SuppressWarnings("unused")
 public abstract class CoverBehavior implements IUIHolder {
@@ -178,7 +180,7 @@ public abstract class CoverBehavior implements IUIHolder {
      * @param defaultValue value of the capability from meta tile entity itself
      * @return result capability value external caller will receive
      */
-    public <T> T getCapability(Capability<T> capability, T defaultValue) {
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, LazyOptional<T> defaultValue) {
         return defaultValue;
     }
 

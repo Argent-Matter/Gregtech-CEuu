@@ -15,7 +15,7 @@ import gregtech.api.unification.material.Material;
 import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.info.MaterialIconType;
 import gregtech.api.util.GTLog;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.model.IModelSupplier;
 import gregtech.client.model.SimpleStateMapper;
 import gregtech.common.blocks.properties.PropertyMaterial;
@@ -180,7 +180,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
             if (pipeTile instanceof TileEntityPipeBase) {
                 ((TileEntityPipeBase<?, ?>) pipeTile).setFrameMaterial(getGtMaterial(getMetaFromState(state)));
             } else {
-                GTLog.logger.error("Pipe was not placed!");
+                GregTech.LOGGER.error("Pipe was not placed!");
                 return false;
             }
             SoundType type = blockPipe.getSoundType(state, worldIn, pos, playerIn);

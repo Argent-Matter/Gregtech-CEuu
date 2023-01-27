@@ -21,7 +21,7 @@ import gregtech.api.damagesources.DamageSources;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeType;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.common.ConfigHolder;
 import gregtech.core.advancement.AdvancementTriggers;
 import net.minecraft.block.Block;
@@ -182,13 +182,13 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    public void update() {
+    public void tick() {
         if (getMetaTileEntity().getWorld().isClientSide)
             return;
         if (this.needsVenting && metaTileEntity.getOffsetTimer() % 10 == 0) {
             tryDoVenting();
         }
-        super.update();
+        super.tick();
     }
 
     @Override
@@ -254,7 +254,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     @Override
     public void deserializeNBT(@Nonnull CompoundTag compound) {
         super.deserializeNBT(compound);
-        this.ventingSide = Direction.VALUES[compound.getInteger("VentingSide")];
+        this.ventingSide = Direction.values()[compound.getInteger("VentingSide")];
         this.needsVenting = compound.getBoolean("NeedsVenting");
         this.ventingStuck = compound.getBoolean("VentingStuck");
     }

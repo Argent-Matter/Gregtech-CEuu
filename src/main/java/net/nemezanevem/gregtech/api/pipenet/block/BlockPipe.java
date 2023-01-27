@@ -176,7 +176,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             if (pipeTile != null) {
                 Direction facing = null;
                 for (Direction facing1 : Direction.values()) {
-                    if (GTUtility.arePosEqual(fromPos, pos.offset(facing1))) {
+                    if (Util.arePosEqual(fromPos, pos.offset(facing1))) {
                         facing = facing1;
                         break;
                     }
@@ -543,7 +543,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
         // Always add normal collision so player doesn't "fall through" the cable/pipe when
         // a tool is put in hand, and will still be standing where they were before.
         result.add(new IndexedCuboid6(new PrimaryBoxData(true), getSideBox(null, thickness)));
-        for (Direction side : Direction.VALUES) {
+        for (Direction side : Direction.values()) {
             if ((actualConnections & 1 << side.getIndex()) > 0) {
                 result.add(new IndexedCuboid6(new PipeConnectionData(side), getSideBox(side, thickness)));
             }
@@ -565,7 +565,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public boolean hasPipeCollisionChangingItem(BlockGetter world, BlockPos pos, ItemStack stack) {
         return isPipeTool(stack) || ToolHelper.isTool(stack, ToolClasses.SCREWDRIVER) ||
-                GTUtility.isCoverBehaviorItem(stack, () -> hasCover(getPipeTileEntity(world, pos)),
+                Util.isCoverBehaviorItem(stack, () -> hasCover(getPipeTileEntity(world, pos)),
                 coverDef -> ICoverable.canPlaceCover(coverDef, getPipeTileEntity(world, pos).getCoverableImplementation()));
     }
 

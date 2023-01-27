@@ -63,8 +63,8 @@ public class MultiblockFuelRecipeLogic extends MultiblockRecipeLogic {
     }
 
     @Override
-    public void update() {
-        super.update();
+    public void tick() {
+        super.tick();
         if (workingEnabled && isActive && progressTime > 0) {
                 totalContinuousRunningTime ++;
         } else {

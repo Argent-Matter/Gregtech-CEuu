@@ -27,8 +27,15 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -40,21 +47,22 @@ import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.capability.IControllable;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import net.nemezanevem.gregtech.api.capability.impl.FluidHandlerProxy;
-import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
-import net.nemezanevem.gregtech.api.capability.impl.ItemHandlerProxy;
-import net.nemezanevem.gregtech.api.capability.impl.NotifiableFluidTank;
+import net.nemezanevem.gregtech.api.capability.impl.*;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClasses;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -65,10 +73,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.COVER_ATTACHED_MTE;
-import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.COVER_REMOVED_MTE;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
 
 public abstract class MetaTileEntity implements ICoverable, IVoidable {
 
@@ -101,7 +107,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     private int cachedLightValue;
     protected boolean isFragile = false;
 
-    private final CoverBehavior[] coverBehaviors = new CoverBehavior[6];
+    protected final CoverBehavior[] coverBehaviors = new CoverBehavior[6];
     protected List<IItemHandlerModifiable> notifiedItemOutputList = new ArrayList<>();
     protected List<IItemHandlerModifiable> notifiedItemInputList = new ArrayList<>();
     protected List<IFluidHandler> notifiedFluidInputList = new ArrayList<>();
@@ -393,7 +399,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         } else if (playerIn.isCrouching() && playerIn.getMainHandItem().isEmpty()) {
             Direction hitFacing = hitResult.getDirection();
 
-            CoverBehavior coverBehavior = hitFacing == null ? null : getCoverAtSide(hitFacing);
+            CoverBehavior coverBehavior = getCoverAtSide(hitFacing);
 
             InteractionResult coverResult = coverBehavior == null ? InteractionResult.PASS :
                     coverBehavior.onScrewdriverClick(playerIn, hand, hitResult);
@@ -707,24 +713,20 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         }
     }
 
-    public void update() {
-        for (MTETrait mteTrait : this.mteTraits) {
-            if (shouldUpdate(mteTrait)) {
-                mteTrait.update();
-            }
-        }
-        if (!getLevel().isClientSide) {
-            for (CoverBehavior coverBehavior : coverBehaviors) {
-                if (coverBehavior instanceof TickGe) {
-                    ((ITickable) coverBehavior).update();
-                }
-            }
+    public void tick() {
+        if(!getLevel().isClientSide) {
             if (getOffsetTimer() % 5 == 0L) {
                 updateComparatorValue();
             }
         } else {
             updateSound();
         }
+        for (MTETrait mteTrait : mteTraits) {
+            if (shouldUpdate(mteTrait)) {
+                mteTrait.tick();
+            }
+        }
+
         if (getOffsetTimer() % 5 == 0L) {
             updateLightValue();
         }
@@ -734,7 +736,6 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         return true;
     }
 
-    @SideOnly(Side.CLIENT)
     private void updateSound() {
         if (!ConfigHolder.machines.machineSounds || isMuffled()) {
             return;
@@ -777,14 +778,13 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public ItemStack getPickItem(VoxelShapeBlockHitResult result, Player player) {
-        IndexedCuboid6 hitCuboid = result.cuboid6;
-        if (hitCuboid.data instanceof CoverSideData) {
-            CoverSideData coverSideData = (CoverSideData) hitCuboid.data;
+        IndexedVoxelShape hitCuboid = result.shape;
+        if (hitCuboid.getData() instanceof CoverSideData coverSideData) {
             CoverBehavior behavior = getCoverAtSide(coverSideData.side);
             return behavior == null ? ItemStack.EMPTY : behavior.getPickItem();
-        } else if (hitCuboid.data == null || hitCuboid.data instanceof PrimaryBoxData) {
+        } else if (hitCuboid.getData() == null || hitCuboid.getData() instanceof PrimaryBoxData) {
             //data is null -> MetaTileEntity hull hit
-            CoverBehavior behavior = getCoverAtSide(result.sideHit);
+            CoverBehavior behavior = getCoverAtSide(result.getDirection());
             if (behavior != null) {
                 return behavior.getPickItem();
             }
@@ -816,13 +816,6 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     /**
-     * Retrieves face shape on the current side of this meta tile entity
-     */
-    public BlockFaceShape getFaceShape(Direction side) {
-        return isOpaqueCube() ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
-    }
-
-    /**
      * @return tool required to dismantle this meta tile entity properly
      */
     public String getHarvestTool() {
@@ -837,14 +830,14 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public void writeInitialSyncData(FriendlyByteBuf buf) {
-        buf.writeByte(this.frontFacing.getIndex());
+        buf.writeByte(this.frontFacing.ordinal());
         buf.writeInt(this.paintingColor);
         buf.writeShort(mteTraits.size());
         for (MTETrait trait : mteTraits) {
             buf.writeVarInt(trait.getNetworkID());
             trait.writeInitialData(buf);
         }
-        for (Direction coverSide : Direction.VALUES) {
+        for (Direction coverSide : Direction.values()) {
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             if (coverBehavior != null) {
                 int coverId = CoverDefinition.getNetworkIdForCover(coverBehavior.getCoverDefinition());
@@ -863,7 +856,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public void receiveInitialSyncData(FriendlyByteBuf buf) {
-        this.frontFacing = Direction.VALUES[buf.readByte()];
+        this.frontFacing = Direction.values()[buf.readByte()];
         this.paintingColor = buf.readInt();
         int amountOfTraits = buf.readShort();
         for (int i = 0; i < amountOfTraits; i++) {
@@ -871,13 +864,13 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             MTETrait trait = mteTraits.stream().filter(otherTrait -> otherTrait.getNetworkID() == traitNetworkId).findAny().get();
             trait.receiveInitialData(buf);
         }
-        for (Direction coverSide : Direction.VALUES) {
+        for (Direction coverSide : Direction.values()) {
             int coverId = buf.readVarInt();
             if (coverId != -1) {
                 CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
                 CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
                 coverBehavior.readInitialSyncData(buf);
-                this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
+                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
             }
         }
         this.isFragile = buf.readBoolean();
@@ -894,7 +887,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
 
     public void writeCoverData(CoverBehavior cover, int internalId, Consumer<FriendlyByteBuf> dataWriter) {
         writeCustomData(UPDATE_COVER_DATA_MTE, buffer -> {
-            buffer.writeByte(cover.attachedSide.getIndex());
+            buffer.writeByte(cover.attachedSide.ordinal());
             buffer.writeVarInt(internalId);
             dataWriter.accept(buffer);
         });
@@ -902,7 +895,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
 
     public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         if (dataId == UPDATE_FRONT_FACING) {
-            this.frontFacing = Direction.VALUES[buf.readByte()];
+            this.frontFacing = Direction.values()[buf.readByte()];
             scheduleRenderUpdate();
         } else if (dataId == UPDATE_PAINTING_COLOR) {
             this.paintingColor = buf.readInt();
@@ -914,23 +907,23 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             trait.receiveCustomData(internalId, buf);
         } else if (dataId == COVER_ATTACHED_MTE) {
             //cover placement event
-            Direction placementSide = Direction.VALUES[buf.readByte()];
+            Direction placementSide = Direction.values()[buf.readByte()];
             int coverId = buf.readVarInt();
             CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
-            this.coverBehaviors[placementSide.getIndex()] = coverBehavior;
+            this.coverBehaviors[placementSide.ordinal()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);
             onCoverPlacementUpdate();
             scheduleRenderUpdate();
         } else if (dataId == COVER_REMOVED_MTE) {
             //cover removed event
-            Direction placementSide = Direction.VALUES[buf.readByte()];
-            this.coverBehaviors[placementSide.getIndex()] = null;
+            Direction placementSide = Direction.values()[buf.readByte()];
+            this.coverBehaviors[placementSide.ordinal()] = null;
             onCoverPlacementUpdate();
             scheduleRenderUpdate();
         } else if (dataId == UPDATE_COVER_DATA_MTE) {
             //cover custom data received
-            Direction coverSide = Direction.VALUES[buf.readByte()];
+            Direction coverSide = Direction.values()[buf.readByte()];
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             int internalId = buf.readVarInt();
             if (coverBehavior != null) {
@@ -947,34 +940,28 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         }
     }
 
-    public BlockFaceShape getCoverFaceShape(Direction side) {
-        if (getCoverAtSide(side) != null) {
-            return BlockFaceShape.SOLID; //covers are always solid
-        }
-        return getFaceShape(side);
-    }
-
-    public final <T> T getCoverCapability(Capability<T> capability, Direction side) {
+    public final <T> LazyOptional<T> getCoverCapability(Capability<T> capability, Direction side) {
         boolean isCoverable = capability == GregtechTileCapabilities.CAPABILITY_COVERABLE;
         CoverBehavior coverBehavior = side == null ? null : getCoverAtSide(side);
-        T originalCapability = getCapability(capability, side);
+        LazyOptional<T> originalCapability = getCapability(capability, side);
         if (coverBehavior != null && !isCoverable) {
             return coverBehavior.getCapability(capability, originalCapability);
         }
         return originalCapability;
     }
 
+    LazyOptional<ICoverable> coverableLazy = LazyOptional.of(() -> this);
 
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if (capability == GregtechTileCapabilities.CAPABILITY_COVERABLE) {
-            return GregtechTileCapabilities.CAPABILITY_COVERABLE.cast(this);
+            coverableLazy.cast();
         }
         if (capability == ForgeCapabilities.FLUID_HANDLER &&
                 getFluidInventory().getTanks() > 0) {
-            return ForgeCapabilities.FLUID_HANDLER.orEmpty(capability, fluidHandlerLazy);
+            return fluidHandlerLazy.cast();
         } else if (capability == ForgeCapabilities.ITEM_HANDLER &&
                 getItemInventory().getSlots() > 0) {
-            return ForgeCapabilities.ITEM_HANDLER.orEmpty(capability, ItemInventoryLazy);
+            return itemHandlerLazy.cast();
         }
         LazyOptional<T> capabilityResult = null;
         for (MTETrait mteTrait : this.mteTraits) {
@@ -1002,7 +989,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             FluidActionResult result = FluidUtil.tryEmptyContainer(inputContainerStack, fluidHandler, Integer.MAX_VALUE, null, false);
             if (result.isSuccess()) {
                 ItemStack remainingItem = result.getResult();
-                if (ItemStack.areItemStacksEqual(inputContainerStack, remainingItem))
+                if (ItemStack.matches(inputContainerStack, remainingItem))
                     continue; //do not fill if item stacks match
                 if (!remainingItem.isEmpty() && !GTTransferUtils.insertItem(exportItems, remainingItem, true).isEmpty())
                     continue; //do not fill if can't put remaining item
@@ -1033,38 +1020,37 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public void pushFluidsIntoNearbyHandlers(Direction... allowedFaces) {
-        transferToNearby(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, GTTransferUtils::transferFluids, allowedFaces);
+        transferToNearby(ForgeCapabilities.FLUID_HANDLER, GTTransferUtils::transferFluids, allowedFaces);
     }
 
     public void pullFluidsFromNearbyHandlers(Direction... allowedFaces) {
-        transferToNearby(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, (thisCap, otherCap) -> GTTransferUtils.transferFluids(otherCap, thisCap), allowedFaces);
+        transferToNearby(ForgeCapabilities.FLUID_HANDLER, (thisCap, otherCap) -> GTTransferUtils.transferFluids(otherCap, thisCap), allowedFaces);
     }
 
     public void pushItemsIntoNearbyHandlers(Direction... allowedFaces) {
-        transferToNearby(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, GTTransferUtils::moveInventoryItems, allowedFaces);
+        transferToNearby(ForgeCapabilities.ITEM_HANDLER, GTTransferUtils::moveInventoryItems, allowedFaces);
     }
 
     public void pullItemsFromNearbyHandlers(Direction... allowedFaces) {
-        transferToNearby(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, (thisCap, otherCap) -> GTTransferUtils.moveInventoryItems(otherCap, thisCap), allowedFaces);
+        transferToNearby(ForgeCapabilities.ITEM_HANDLER, (thisCap, otherCap) -> GTTransferUtils.moveInventoryItems(otherCap, thisCap), allowedFaces);
     }
 
-    private <T> void transferToNearby(Capability<T> capability, BiConsumer<T, T> transfer, Direction... allowedFaces) {
-        PooledMutableBlockPos blockPos = PooledMutableBlockPos.retain();
+    private <T> void transferToNearby(Capability<T> capability, BiConsumer<LazyOptional<T>, LazyOptional<T>> transfer, Direction... allowedFaces) {
+        BlockPos.MutableBlockPos blockPos = getPos().mutable();
         for (Direction nearbyFacing : allowedFaces) {
-            blockPos.setPos(getPos()).move(nearbyFacing);
-            TileEntity tileEntity = getLevel().getTileEntity(blockPos);
+            blockPos.set(getPos()).move(nearbyFacing);
+            BlockEntity tileEntity = getLevel().getBlockEntity(blockPos);
             if (tileEntity == null) {
                 continue;
             }
-            T otherCap = tileEntity.getCapability(capability, nearbyFacing.getOpposite());
+            LazyOptional<T> otherCap = tileEntity.getCapability(capability, nearbyFacing.getOpposite());
             //use getCoverCapability so item/ore dictionary filter covers will work properly
-            T thisCap = getCoverCapability(capability, nearbyFacing);
+            LazyOptional<T> thisCap = getCoverCapability(capability, nearbyFacing);
             if (otherCap == null || thisCap == null) {
                 continue;
             }
             transfer.accept(thisCap, otherCap);
         }
-        blockPos.release();
     }
 
     public final int getOutputRedstoneSignal(@Nullable Direction side) {
@@ -1072,15 +1058,15 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             return getHighestOutputRedstoneSignal();
         }
         CoverBehavior behavior = getCoverAtSide(side);
-        int sidedOutput = sidedRedstoneOutput[side.getIndex()];
+        int sidedOutput = sidedRedstoneOutput[side.ordinal()];
         return behavior == null ? sidedOutput : behavior.getRedstoneSignalOutput();
     }
 
     public final int getHighestOutputRedstoneSignal() {
         int highestSignal = 0;
-        for (Direction side : Direction.VALUES) {
+        for (Direction side : Direction.values()) {
             CoverBehavior behavior = getCoverAtSide(side);
-            int sidedOutput = sidedRedstoneOutput[side.getIndex()];
+            int sidedOutput = sidedRedstoneOutput[side.ordinal()];
             int sideResult = behavior == null ? sidedOutput : behavior.getRedstoneSignalOutput();
             highestSignal = Math.max(highestSignal, sideResult);
         }
@@ -1089,7 +1075,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
 
     public final void setOutputRedstoneSignal(Direction side, int strength) {
         Preconditions.checkNotNull(side, "side");
-        this.sidedRedstoneOutput[side.getIndex()] = strength;
+        this.sidedRedstoneOutput[side.ordinal()] = strength;
         if (getLevel() != null && !getLevel().isClientSide && getCoverAtSide(side) == null) {
             notifyBlockUpdate();
             markDirty();
@@ -1112,7 +1098,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         if (getLevel() != null && !getLevel().isClientSide) {
             notifyBlockUpdate();
             markDirty();
-            writeCustomData(UPDATE_FRONT_FACING, buf -> buf.writeByte(frontFacing.getIndex()));
+            writeCustomData(UPDATE_FRONT_FACING, buf -> buf.writeByte(frontFacing.ordinal()));
             mteTraits.forEach(trait -> trait.onFrontFacingSet(frontFacing));
         }
     }
@@ -1127,7 +1113,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public int getDefaultPaintingColor() {
-        return ConfigHolder.client.defaultPaintingColor;
+        return ConfigHolder.ClientConfig.defaultPaintingColor;
     }
 
     public void setFragile(boolean fragile) {
@@ -1181,15 +1167,15 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             if (coverBehavior != null) {
                 CompoundTag tagCompound = new CompoundTag();
                 ResourceLocation coverId = coverBehavior.getCoverDefinition().getCoverId();
-                tagCompound.setString("CoverId", coverId.toString());
-                tagCompound.setByte("Side", (byte) coverSide.getIndex());
+                tagCompound.putString("CoverId", coverId.toString());
+                tagCompound.putByte("Side", (byte) coverSide.ordinal());
                 coverBehavior.writeToNBT(tagCompound);
-                coversList.appendTag(tagCompound);
+                coversList.add(tagCompound);
             }
         }
-        data.setTag("Covers", coversList);
-        data.setBoolean(TAG_KEY_FRAGILE, isFragile);
-        data.setBoolean(TAG_KEY_MUFFLED, muffled);
+        data.put("Covers", coversList);
+        data.putBoolean(TAG_KEY_FRAGILE, isFragile);
+        data.putBoolean(TAG_KEY_MUFFLED, muffled);
         return data;
     }
 
@@ -1209,20 +1195,20 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         }
 
         for (MTETrait mteTrait : this.mteTraits) {
-            CompoundTag traitCompound = data.getCompoundTag(mteTrait.getName());
+            CompoundTag traitCompound = data.getCompound(mteTrait.getName());
             mteTrait.deserializeNBT(traitCompound);
         }
 
-        ListTag coversList = data.getTagList("Covers", NBT.TAG_COMPOUND);
-        for (int index = 0; index < coversList.tagCount(); index++) {
-            CompoundTag tagCompound = coversList.getCompoundTagAt(index);
-            if (tagCompound.hasKey("CoverId", NBT.TAG_STRING)) {
-                Direction coverSide = Direction.VALUES[tagCompound.getByte("Side")];
+        ListTag coversList = data.getList("Covers", Tag.TAG_COMPOUND);
+        for (int index = 0; index < coversList.size(); index++) {
+            CompoundTag tagCompound = coversList.getCompound(index);
+            if (tagCompound.contains("CoverId", Tag.TAG_STRING)) {
+                Direction coverSide = Direction.values()[tagCompound.getByte("Side")];
                 ResourceLocation coverId = new ResourceLocation(tagCompound.getString("CoverId"));
                 CoverDefinition coverDefinition = CoverDefinition.getCoverById(coverId);
                 CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
                 coverBehavior.readFromNBT(tagCompound);
-                this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
+                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
             }
         }
 
@@ -1258,9 +1244,9 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     /**
-     * Called whenever a MetaTileEntity is placed in world by {@link Block#onBlockPlacedBy}
+     * Called whenever a MetaTileEntity is placed in world by {@link Block#setPlacedBy}
      * <p>
-     * If placing an MTE with methods such as {@link Level#setBlockState(BlockPos, BlockState)},
+     * If placing an MTE with methods such as {@link Level#setBlock(BlockPos, BlockState, int)},
      * this should be manually called immediately afterwards
      */
     public void onPlacement() {
@@ -1279,6 +1265,8 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         if (getLevel() != null && getLevel().isClientSide) {
             GregTechAPI.soundManager.stopTileSound(getPos());
         }
+        this.itemHandlerLazy.invalidate();
+        this.fluidHandlerLazy.invalidate();
     }
 
     public SoundEvent getSound() {
@@ -1298,7 +1286,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
 
-    private LazyOptional<IItemHandler> ItemInventoryLazy = LazyOptional.of(this::getItemInventory);
+    private LazyOptional<IItemHandler> itemHandlerLazy = LazyOptional.of(this::getItemInventory);
 
     public IItemHandler getItemInventory() {
         return itemInventory;
@@ -1393,7 +1381,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         return face == this.getFrontFacing() && this.canRenderFrontFaceX();
     }
 
-    public RecipeType<?> getRecipeType() {
+    public GTRecipeType<?> getRecipeType() {
         for (int i = 0; i < mteTraits.size(); i++) {
             if (mteTraits.get(i).getName().equals("RecipeTypeWorkable")) {
                 return ((AbstractRecipeLogic) mteTraits.get(i)).getRecipeType();
@@ -1406,9 +1394,11 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         Level world = getLevel();
         if (!world.isClientSide && ConfigHolder.machines.doTerrainExplosion && !getIsWeatherOrTerrainResistant() && energyContainer.getEnergyStored() != 0) {
             if (GTValues.RNG.nextInt(1000) == 0) {
-                for (Direction side : Direction.VALUES) {
-                    Block block = getLevel().getBlockState(getPos().offset(side)).getBlock();
-                    if (block == Blocks.FIRE || block == Blocks.WATER || block == Blocks.FLOWING_WATER || block == Blocks.LAVA || block == Blocks.FLOWING_LAVA) {
+                for (Direction side : Direction.values()) {
+                    BlockPos offset = getPos().offset(side.getNormal());
+                    Block block = getLevel().getBlockState(offset).getBlock();
+                    Fluid fluid = getLevel().getFluidState(offset).getType();
+                    if (block == Blocks.FIRE || fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER || fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) {
                         doExplosion(explosionPower);
                         return;
                     }
@@ -1427,22 +1417,22 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public void doExplosion(float explosionPower) {
-        getLevel().setBlockToAir(getPos());
-        getLevel().createExplosion(null, getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5,
-                explosionPower, ConfigHolder.machines.doesExplosionDamagesTerrain);
+        getLevel().setBlock(getPos(), Blocks.AIR.defaultBlockState(), 11);
+        getLevel().explode(null, getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5,
+                explosionPower, ConfigHolder.machines.doesExplosionDamagesTerrain ? Explosion.BlockInteraction.DESTROY : Explosion.BlockInteraction.NONE);
     }
 
     public void setOnFire(double additionalFireChance) {
         boolean isFirstFireSpawned = false;
-        for (Direction side : Direction.VALUES) {
-            if (getLevel().isAirBlock(getPos().offset(side))) {
+        for (Direction side : Direction.values()) {
+            if (getLevel().getBlockState(getPos().offset(side.getNormal())).isAir()) {
                 if (!isFirstFireSpawned) {
-                    getLevel().setBlockState(getPos().offset(side), Blocks.FIRE.getDefaultState(), 11);
-                    if (!getLevel().isAirBlock(getPos().offset(side))) {
+                    getLevel().setBlock(getPos().offset(side.getNormal()), Blocks.FIRE.defaultBlockState(), 11);
+                    if (!getLevel().getBlockState(getPos().offset(side.getNormal())).isAir()) {
                         isFirstFireSpawned = true;
                     }
                 } else if (additionalFireChance >= GTValues.RNG.nextDouble() * 100) {
-                    getLevel().setBlockState(getPos().offset(side), Blocks.FIRE.getDefaultState(), 11);
+                    getLevel().setBlock(getPos().offset(side.getNormal()), Blocks.FIRE.defaultBlockState(), 11);
                 }
             }
         }
@@ -1469,21 +1459,5 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     @Override
     public boolean canVoidRecipeFluidOutputs() {
         return false;
-    }
-
-    @Nonnull
-    @Method(modid = GregTech.MODID_APPENG)
-    public AECableType getCableConnectionType(@Nonnull AEPartLocation part) {
-        return AECableType.NONE;
-    }
-
-    @Nullable
-    @Method(modid = GregTech.MODID_APPENG)
-    public AENetworkProxy getProxy() {
-        return null;
-    }
-
-    @Method(modid = GregTech.MODID_APPENG)
-    public void gridChanged() {
     }
 }

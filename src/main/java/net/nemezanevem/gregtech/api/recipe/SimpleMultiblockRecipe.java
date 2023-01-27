@@ -40,7 +40,7 @@ public class SimpleMultiblockRecipe implements Recipe<CraftingContainer> {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return GtRecipes.SIMPLE_SERIALIZER.get();
+        return GtRecipeTypes.SIMPLE_SERIALIZER.get();
     }
 
     @Override

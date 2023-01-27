@@ -32,7 +32,7 @@ public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
     @Override
     protected CoverBehavior readHolderFromSyncData(FriendlyByteBuf syncData) {
         BlockPos blockPos = syncData.readBlockPos();
-        Direction attachedSide = Direction.VALUES[syncData.readByte()];
+        Direction attachedSide = Direction.values()[syncData.readByte()];
         TileEntity tileEntity = Minecraft.getMinecraft().world.getTileEntity(blockPos);
         ICoverable coverable = tileEntity == null ? null : tileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, attachedSide);
         if (coverable != null) {

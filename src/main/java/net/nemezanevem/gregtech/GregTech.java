@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.crafting.*;
-import net.minecraftforge.common.crafting.conditions.*;
 import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,12 +16,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
+import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredientSerializer;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
@@ -40,7 +39,6 @@ import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
 import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
-import org.apache.commons.compress.harmony.pack200.Pack200Exception;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -118,6 +116,7 @@ public class GregTech {
         if (event.getRegistryKey().equals(ForgeRegistries.Keys.RECIPE_SERIALIZERS))
         {
             CraftingHelper.register(new ResourceLocation(MODID, "fluid"), FluidIngredientSerializer.INSTANCE);
+            CraftingHelper.register(new ResourceLocation(MODID, "extended"), ExtendedIngredient.Serializer.INSTANCE);
 
         }
     }

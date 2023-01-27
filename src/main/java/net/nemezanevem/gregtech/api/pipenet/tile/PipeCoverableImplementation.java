@@ -105,7 +105,7 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     public final void dropAllCovers() {
-        for (Direction coverSide : Direction.VALUES) {
+        for (Direction coverSide : Direction.values()) {
             CoverBehavior coverBehavior = coverBehaviors[coverSide.getIndex()];
             if (coverBehavior == null) continue;
             List<ItemStack> drops = coverBehavior.getDrops();
@@ -125,7 +125,7 @@ public class PipeCoverableImplementation implements ICoverable {
 
     public void onLoad() {
         for (Direction side : Direction.values()) {
-            this.sidedRedstoneInput[side.ordinal()] = GTUtility.getRedstonePower(getWorld(), getPos(), side);
+            this.sidedRedstoneInput[side.ordinal()] = Util.getRedstonePower(getWorld(), getPos(), side);
         }
     }
 
@@ -139,7 +139,7 @@ public class PipeCoverableImplementation implements ICoverable {
 
     public void updateInputRedstoneSignals() {
         for (Direction side : Direction.values()) {
-            int redstoneValue = GTUtility.getRedstonePower(getWorld(), getPos(), side);
+            int redstoneValue = Util.getRedstonePower(getWorld(), getPos(), side);
             int currentValue = sidedRedstoneInput[side.ordinal()];
             if (redstoneValue != currentValue) {
                 this.sidedRedstoneInput[side.ordinal()] = redstoneValue;

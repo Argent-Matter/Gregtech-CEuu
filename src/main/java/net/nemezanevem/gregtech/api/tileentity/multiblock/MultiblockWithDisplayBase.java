@@ -168,8 +168,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public void update() {
-        super.update();
+    public void tick() {
+        super.tick();
         if (!getWorld().isClientSide) {
             boolean state = isActive();
             if (lastActive != state) {
@@ -214,14 +214,14 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      */
     public void outputRecoveryItems() {
         IMufflerHatch muffler = getAbilities(MultiblockAbility.MUFFLER_HATCH).get(0);
-        muffler.recoverItemsTable(GTUtility.copyStackList(recoveryItems));
+        muffler.recoverItemsTable(Util.copyStackList(recoveryItems));
     }
 
     public void outputRecoveryItems(int parallel) {
         IMufflerHatch muffler = getAbilities(MultiblockAbility.MUFFLER_HATCH).get(0);
         ArrayList<ItemStack> parallelRecover = new ArrayList<>();
         IntStream.range(0, parallel).forEach(value -> parallelRecover.addAll(recoveryItems));
-        muffler.recoverItemsTable(GTUtility.copyStackList(parallelRecover));
+        muffler.recoverItemsTable(Util.copyStackList(parallelRecover));
     }
 
     /**

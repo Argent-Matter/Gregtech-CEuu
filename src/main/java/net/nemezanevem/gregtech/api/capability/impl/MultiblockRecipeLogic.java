@@ -28,11 +28,11 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public void update() {
+    public void tick() {
     }
 
     public void updateWorkable() {
-        super.update();
+        super.tick();
     }
 
     @Override

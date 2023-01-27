@@ -13,6 +13,7 @@ import net.nemezanevem.gregtech.api.gui.ingredient.IGhostIngredientTarget;
 import net.nemezanevem.gregtech.api.gui.ingredient.IIngredientSlot;
 import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.ArrayList;
 import java.util.Collections;

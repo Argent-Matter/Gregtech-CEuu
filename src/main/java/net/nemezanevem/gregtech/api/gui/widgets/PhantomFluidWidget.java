@@ -176,7 +176,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
                     CompoundTag tagCompound = buffer.readCompoundTag();
                     this.lastFluidStack = FluidStack.loadFluidStackFromNBT(tagCompound);
                 } catch (IOException e) {
-                    GTLog.logger.error("Could not read NBT from PhantomFluidWidget buffer", e);
+                    GregTech.LOGGER.error("Could not read NBT from PhantomFluidWidget buffer", e);
                 }
             } else {
                 this.lastFluidStack = null;

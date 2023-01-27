@@ -56,7 +56,7 @@ public class CapesRegistry {
         try {
             CompressedStreamTools.safeWrite(comp, new File(FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0).getSaveHandler().getWorldDirectory(), "gregtech_cape.dat"));
         } catch (IOException exception) {
-            GTLog.logger.error(exception);
+            GregTech.LOGGER.error(exception);
         }
     }
 
@@ -65,7 +65,7 @@ public class CapesRegistry {
         try {
             comp = CompressedStreamTools.read(new File(FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0).getSaveHandler().getWorldDirectory(), "gregtech_cape.dat"));
         } catch (IOException exception) {
-            GTLog.logger.error(exception);
+            GregTech.LOGGER.error(exception);
         }
         clearMaps();
         if (comp == null) {

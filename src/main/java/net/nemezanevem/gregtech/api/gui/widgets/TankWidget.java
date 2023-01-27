@@ -1,30 +1,35 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.ingredient.IIngredientSlot;
-import gregtech.api.gui.resources.IGuiTexture;
-import gregtech.api.util.*;
-import gregtech.client.utils.RenderUtil;
-import gregtech.client.utils.TooltipHelper;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.SoundActions;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.*;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.ingredient.IIngredientSlot;
+import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
+import net.nemezanevem.gregtech.api.util.FluidTooltipUtil;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
+import net.nemezanevem.gregtech.api.util.TextFormattingUtil;
+import net.nemezanevem.gregtech.client.util.RenderUtil;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class TankWidget extends Widget implements IIngredientSlot {
 
@@ -105,15 +110,15 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     public String getFormattedFluidAmount() {
-        return String.format("%,d", lastFluidInTank == null ? 0 : lastFluidInTank.amount);
+        return String.format("%,d", lastFluidInTank == null ? 0 : lastFluidInTank.getAmount());
     }
 
     public String getFluidLocalizedName() {
-        return lastFluidInTank == null ? "" : lastFluidInTank.getLocalizedName();
+        return lastFluidInTank == null ? "" : lastFluidInTank.getTranslationKey();
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundTexture != null) {
@@ -125,10 +130,10 @@ public class TankWidget extends Widget implements IIngredientSlot {
         if (lastFluidInTank != null && !gui.isJEIHandled) {
             RenderSystem.disableBlend();
             FluidStack stackToDraw = lastFluidInTank;
-            int drawAmount = alwaysShowFull ? lastFluidInTank.amount : lastTankCapacity;
-            if (alwaysShowFull && lastFluidInTank.amount == 0) {
+            int drawAmount = alwaysShowFull ? lastFluidInTank.getAmount() : lastTankCapacity;
+            if (alwaysShowFull && lastFluidInTank.getAmount() == 0) {
                 stackToDraw = lastFluidInTank.copy();
-                stackToDraw.amount = 1;
+                stackToDraw.setAmount(1);
                 drawAmount = 1;
             }
             RenderUtil.drawFluidForGui(stackToDraw, drawAmount,
@@ -136,14 +141,14 @@ public class TankWidget extends Widget implements IIngredientSlot {
                     size.width - fluidRenderOffset, size.height - fluidRenderOffset);
 
             if (alwaysShowFull && !hideTooltip && drawHoveringText) {
-                RenderSystem.pushMatrix();
-                RenderSystem.scale(0.5, 0.5, 1);
+                poseStack.pushPose();
+                poseStack.scale(0.5f, 0.5f, 1);
 
-                String s = TextFormattingUtil.formatLongToCompactString(lastFluidInTank.amount, 4) + "L";
+                String s = TextFormattingUtil.formatLongToCompactString(lastFluidInTank.getAmount(), 4) + "L";
 
-                FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-                fontRenderer.drawStringWithShadow(s, (pos.x + (size.width / 3)) * 2 - fontRenderer.getStringWidth(s) + 21, (pos.y + (size.height / 3) + 6) * 2, 0xFFFFFF);
-                RenderSystem.popMatrix();
+                Font fontRenderer = Minecraft.getInstance().font;
+                fontRenderer.drawShadow(poseStack, s, (pos.x + (size.width / 3f)) * 2 - fontRenderer.width(s) + 21, (pos.y + (size.height / 3f) + 6) * 2, 0xFFFFFF);
+                poseStack.popPose();
             }
             RenderSystem.enableBlend();
         }
@@ -153,48 +158,48 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (!hideTooltip && !gui.isJEIHandled && isMouseOverElement(mouseX, mouseY)) {
-            List<String> tooltips = new ArrayList<>();
+            List<Component> tooltips = new ArrayList<>();
             if (lastFluidInTank != null) {
                 Fluid fluid = lastFluidInTank.getFluid();
                 tooltips.add(fluid.getLocalizedName(lastFluidInTank));
 
                 // Amount Tooltip
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.amount", lastFluidInTank.amount, lastTankCapacity));
+                tooltips.add(Component.translatable("gregtech.fluid.amount", lastFluidInTank.getAmount(), lastTankCapacity));
 
                 // Add various tooltips from the material
-                List<String> formula = FluidTooltipUtil.getFluidTooltip(lastFluidInTank);
+                List<Component> formula = FluidTooltipUtil.getFluidTooltip(lastFluidInTank);
                 if (formula != null) {
-                    for (String s : formula) {
-                        if (s.isEmpty()) continue;
+                    for (Component s : formula) {
+                        if (s.getString().matches(s.getContents().visit(Optional::of).get())) continue;
                         tooltips.add(s);
                     }
                 }
 
             } else {
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.empty"));
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.amount", 0, lastTankCapacity));
+                tooltips.add(Component.translatable("gregtech.fluid.empty"));
+                tooltips.add(Component.translatable("gregtech.fluid.amount", 0, lastTankCapacity));
             }
             if(allowClickEmptying && allowClickFilling) {
-                tooltips.add(""); // Add an empty line to separate from the bottom material tooltips
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.click_combined"));
+                tooltips.add(Component.empty()); // Add an empty line to separate from the bottom material tooltips
+                tooltips.add(Component.translatable("gregtech.fluid.click_combined"));
             }
             else if (allowClickFilling) {
-                tooltips.add(""); // Add an empty line to separate from the bottom material tooltips
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.click_to_fill"));
+                tooltips.add(Component.empty()); // Add an empty line to separate from the bottom material tooltips
+                tooltips.add(Component.translatable("gregtech.fluid.click_to_fill"));
             }
             else if (allowClickEmptying) {
-                tooltips.add(""); // Add an empty line to separate from the bottom material tooltips
-                tooltips.add(LocalizationUtils.format("gregtech.fluid.click_to_empty"));
+                tooltips.add(Component.empty()); // Add an empty line to separate from the bottom material tooltips
+                tooltips.add(Component.translatable("gregtech.fluid.click_to_empty"));
             }
-            drawHoveringText(ItemStack.EMPTY, tooltips, 300, mouseX, mouseY);
-            RenderSystem.color(1.0f, 1.0f, 1.0f);
+            drawHoveringText(poseStack, ItemStack.EMPTY, tooltips, 300, mouseX, mouseY);
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
 
     @Override
-    public void updateScreen() {
+    public void updateScreenOnFrame() {
         if (isClient) {
             FluidStack fluidStack = fluidTank.getFluid();
             if (fluidTank.getCapacity() != lastTankCapacity) {
@@ -206,8 +211,8 @@ public class TankWidget extends Widget implements IIngredientSlot {
             } else if (fluidStack != null) {
                 if (!fluidStack.isFluidEqual(lastFluidInTank)) {
                     this.lastFluidInTank = fluidStack.copy();
-                } else if (fluidStack.amount != lastFluidInTank.amount) {
-                    this.lastFluidInTank.amount = fluidStack.amount;
+                } else if (fluidStack.getAmount() != lastFluidInTank.getAmount()) {
+                    this.lastFluidInTank.setAmount(fluidStack.getAmount());
                 }
             }
         }
@@ -228,10 +233,10 @@ public class TankWidget extends Widget implements IIngredientSlot {
             if (!fluidStack.isFluidEqual(lastFluidInTank)) {
                 this.lastFluidInTank = fluidStack.copy();
                 CompoundTag fluidStackTag = fluidStack.writeToNBT(new CompoundTag());
-                writeUpdateInfo(2, buffer -> buffer.writeCompoundTag(fluidStackTag));
-            } else if (fluidStack.amount != lastFluidInTank.amount) {
-                this.lastFluidInTank.amount = fluidStack.amount;
-                writeUpdateInfo(3, buffer -> buffer.writeVarInt(lastFluidInTank.amount));
+                writeUpdateInfo(2, buffer -> buffer.writeNbt(fluidStackTag));
+            } else if (fluidStack.getAmount() != lastFluidInTank.getAmount()) {
+                this.lastFluidInTank.setAmount(fluidStack.getAmount());
+                writeUpdateInfo(3, buffer -> buffer.writeVarInt(lastFluidInTank.getAmount()));
             }
         }
     }
@@ -244,21 +249,17 @@ public class TankWidget extends Widget implements IIngredientSlot {
             this.lastFluidInTank = null;
         } else if (id == 2) {
             CompoundTag fluidStackTag;
-            try {
-                fluidStackTag = buffer.readCompoundTag();
-            } catch (IOException ignored) {
-                return;
-            }
+            fluidStackTag = buffer.readAnySizeNbt();
             this.lastFluidInTank = FluidStack.loadFluidStackFromNBT(fluidStackTag);
         } else if (id == 3 && lastFluidInTank != null) {
-            this.lastFluidInTank.amount = buffer.readVarInt();
+            this.lastFluidInTank.setAmount(buffer.readVarInt());
         }
 
         if (id == 4) {
-            ItemStack currentStack = gui.Player.inventory.getItemStack();
+            ItemStack currentStack = gui.player.getInventory().getSelected();
             int newStackSize = buffer.readVarInt();
             currentStack.setCount(newStackSize);
-            gui.Player.inventory.setItemStack(currentStack);
+            gui.player.getInventory().setPickedItem(currentStack);
         }
     }
 
@@ -275,9 +276,9 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     private int tryClickContainer(boolean isShiftKeyDown) {
-        Player player = gui.Player;
-        ItemStack currentStack = player.inventory.getItemStack();
-        if (!currentStack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null))
+        Player player = gui.player;
+        ItemStack currentStack = player.getInventory().getSelected();
+        if (!currentStack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null).isPresent())
             return -1;
         int maxAttempts = isShiftKeyDown ? currentStack.getCount() : 1;
 
@@ -289,17 +290,17 @@ public class TankWidget extends Widget implements IIngredientSlot {
                         (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && !player.getInventory().add(remainingStack))
                     break; //do not continue if we can't add resulting container into inventory
                 FluidUtil.tryFillContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
                 currentStack.shrink(1);
                 performedFill = true;
             }
             if (performedFill) {
-                SoundEvent soundevent = initialFluid.getFluid().getFillSound(initialFluid);
-                player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
-                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                gui.Player.inventory.setItemStack(currentStack);
+                SoundEvent soundevent = initialFluid.getFluid().getFluidType().getSound(SoundActions.BUCKET_FILL);
+                player.level.playSound(null, player.getX(), player.getY() + 0.5, player.getZ(),
+                        soundevent, SoundSource.BLOCKS, 1.0F, 1.0F);
+                gui.player.getInventory().setPickedItem(currentStack);
                 return currentStack.getCount();
             }
         }
@@ -311,7 +312,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
                         (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, false);
                 if (!result.isSuccess()) break;
                 ItemStack remainingStack = result.getResult();
-                if (!remainingStack.isEmpty() && !player.inventory.addItemStackToInventory(remainingStack))
+                if (!remainingStack.isEmpty() && !player.getInventory().add(remainingStack))
                     break; //do not continue if we can't add resulting container into inventory
                 FluidUtil.tryEmptyContainer(currentStack, (IFluidHandler) fluidTank, Integer.MAX_VALUE, null, true);
                 currentStack.shrink(1);
@@ -319,10 +320,10 @@ public class TankWidget extends Widget implements IIngredientSlot {
             }
             FluidStack filledFluid = fluidTank.getFluid();
             if (performedEmptying && filledFluid != null) {
-                SoundEvent soundevent = filledFluid.getFluid().getEmptySound(filledFluid);
-                player.world.playSound(null, player.posX, player.posY + 0.5, player.posZ,
-                        soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                gui.Player.inventory.setItemStack(currentStack);
+                SoundEvent soundevent = filledFluid.getFluid().getFluidType().getSound(SoundActions.BUCKET_EMPTY);
+                player.level.playSound(null, player.getX(), player.getY() + 0.5, player.getZ(),
+                        soundevent, SoundSource.BLOCKS, 1.0F, 1.0F);
+                gui.player.getInventory().setPickedItem(currentStack);
                 return currentStack.getCount();
             }
         }
@@ -333,10 +334,10 @@ public class TankWidget extends Widget implements IIngredientSlot {
     @Override
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
-            ItemStack currentStack = gui.Player.inventory.getItemStack();
+            ItemStack currentStack = gui.player.getInventory().getSelected();
             if (button == 0 && (allowClickEmptying || allowClickFilling) &&
-                    currentStack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null)) {
-                boolean isShiftKeyDown = TooltipHelper.isShiftDown();
+                    currentStack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null).isPresent()) {
+                boolean isShiftKeyDown = Screen.hasShiftDown();
                 writeClientAction(1, writer -> writer.writeBoolean(isShiftKeyDown));
                 playButtonClickSound();
                 return true;

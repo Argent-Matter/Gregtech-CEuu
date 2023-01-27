@@ -1,8 +1,7 @@
 package net.nemezanevem.gregtech.api.tileentity;
 
-import gregtech.api.GTValues;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.ITickable;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,6 +40,13 @@ public abstract class TickableTileEntityBase extends SyncedTileEntityBase implem
     }
 
     protected void onFirstTick() {
+    }
+
+
+
+    @Override
+    public void tick(Level pLevel, BlockPos pPos, BlockState pState, TickableTileEntityBase pBlockEntity) {
+        pBlockEntity.update();
     }
 
 }

@@ -12,7 +12,7 @@ import gregtech.api.unification.TagUnifier;
 import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.util.GTLog;
 import gregtech.api.util.GTTransferUtils;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.renderer.ICubeRenderer;
 import gregtech.client.renderer.texture.Textures;
 import gregtech.common.ConfigHolder;
@@ -104,7 +104,7 @@ public class MinerLogic {
             replacementBlock = Block.getBlockFromName(String.format("%s:%s", blockDescription[0], blockDescription[1]));
         }
         if(replacementBlock == null) {
-            GTLog.logger.error("Miner Config Replacement block was null, replacing with Cobblestone");
+            GregTech.LOGGER.error("Miner Config Replacement block was null, replacing with Cobblestone");
             return Blocks.COBBLESTONE.getDefaultState();
         }
 
@@ -165,13 +165,13 @@ public class MinerLogic {
             BlockState blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
 
             // check to make sure the ore is still there,
-            while(!GTUtility.isOre(GTUtility.toItem(blockState))) {
+            while(!Util.isOre(Util.toItem(blockState))) {
                 blocksToMine.removeFirst();
                 if (blocksToMine.isEmpty()) break;
                 blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
             }
             // When we are here we have an ore to mine! I'm glad we aren't threaded
-            if (!blocksToMine.isEmpty() & GTUtility.isOre(GTUtility.toItem(blockState))) {
+            if (!blocksToMine.isEmpty() & Util.isOre(Util.toItem(blockState))) {
                 // get the small ore drops, if a small ore
                 getSmallOreBlockDrops(blockDrops, world, blocksToMine.getFirst(), blockState);
                 // get the block's drops.
@@ -345,7 +345,7 @@ public class MinerLogic {
         LinkedList<BlockPos> blocks = new LinkedList<>();
 
         // determine how many blocks to retrieve this time
-        double quotient = getQuotient(GTUtility.getMeanTickTime(metaTileEntity.getWorld()));
+        double quotient = getQuotient(Util.getMeanTickTime(metaTileEntity.getWorld()));
         int calcAmount = quotient < 1 ? 1 : (int) (Math.min(quotient, Short.MAX_VALUE));
         int calculated = 0;
 
@@ -359,7 +359,7 @@ public class MinerLogic {
                     if (x.get() <= startX.get() + currentRadius * 2) {
                         BlockPos blockPos = new BlockPos(x.get(), y.get(), z.get());
                         BlockState state = metaTileEntity.getWorld().getBlockState(blockPos);
-                        if (state.getBlock().blockHardness >= 0 && metaTileEntity.getWorld().getTileEntity(blockPos) == null && GTUtility.isOre(GTUtility.toItem(state))) {
+                        if (state.getBlock().blockHardness >= 0 && metaTileEntity.getWorld().getTileEntity(blockPos) == null && Util.isOre(Util.toItem(state))) {
                             blocks.addLast(blockPos);
                         }
                         // move to the next x position
@@ -402,11 +402,11 @@ public class MinerLogic {
      * @param tier the tier at which the operation is performed, used for calculating the chanced output boost
      */
     protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeType<?> map, int tier) {
-        ItemStack itemStack = GTUtility.toItem(blockState);
+        ItemStack itemStack = Util.toItem(blockState);
         Recipe recipe = map.findRecipe(Long.MAX_VALUE, Collections.singletonList(itemStack), Collections.emptyList(), 0);
         if (recipe != null && !recipe.getOutputs().isEmpty()) {
             drops.clear();
-            for (ItemStack outputStack : recipe.getResultItemOutputs(GTUtility.getTierByVoltage(recipe.getEUt()), tier, map)) {
+            for (ItemStack outputStack : recipe.getResultItemOutputs(Util.getTierByVoltage(recipe.getEUt()), tier, map)) {
                 outputStack = outputStack.copy();
                 if (TagUnifier.getPrefix(outputStack) == OrePrefix.crushed) {
                     if (fortuneLevel > 0) {

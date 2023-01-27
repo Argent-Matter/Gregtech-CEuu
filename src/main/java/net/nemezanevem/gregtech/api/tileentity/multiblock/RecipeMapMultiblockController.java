@@ -18,7 +18,7 @@ import gregtech.api.pattern.PatternMatchContext;
 import gregtech.api.pattern.TraceabilityPredicate;
 import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeType;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.common.ConfigHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -152,7 +152,7 @@ public abstract class RecipeTypeMultiblockController extends MultiblockWithDispl
             IEnergyContainer energyContainer = recipeMapWorkable.getEnergyContainer();
             if (energyContainer != null && energyContainer.getEnergyCapacity() > 0) {
                 long maxVoltage = Math.max(energyContainer.getInputVoltage(), energyContainer.getOutputVoltage());
-                String voltageName = GTValues.VNF[GTUtility.getFloorTierByVoltage(maxVoltage)];
+                String voltageName = GTValues.VNF[Util.getFloorTierByVoltage(maxVoltage)];
                 textList.add(Component.translatable("gregtech.multiblock.max_energy_per_tick", maxVoltage, voltageName));
             }
 
@@ -309,37 +309,37 @@ public abstract class RecipeTypeMultiblockController extends MultiblockWithDispl
         List<ITextComponent> list = new ArrayList<>();
         if (recipeMapWorkable.getMaxProgress() > 0) {
             list.add(Component.translatable("behavior.tricorder.workable_progress",
-                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
-                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
+                    Component.translatable(Util.formatNumbers(recipeMapWorkable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
+                    Component.translatable(Util.formatNumbers(recipeMapWorkable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
             ));
         }
 
         list.add(Component.translatable("behavior.tricorder.energy_container_storage",
-                Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
-                Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
+                Component.translatable(Util.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
+                Component.translatable(Util.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
         ));
 
         if (recipeMapWorkable.getRecipeEUt() > 0) {
             list.add(Component.translatable("behavior.tricorder.workable_consumption",
-                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt())).withStyle(ChatFormatting.RED),
-                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
+                    Component.translatable(Util.formatNumbers(recipeMapWorkable.getRecipeEUt())).withStyle(ChatFormatting.RED),
+                    Component.translatable(Util.formatNumbers(recipeMapWorkable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
             ));
         }
 
         list.add(Component.translatable("behavior.tricorder.multiblock_energy_input",
-                Component.translatable(GTUtility.formatNumbers(energyContainer.getInputVoltage())).withStyle(ChatFormatting.YELLOW),
-                Component.translatable(GTValues.VN[GTUtility.getTierByVoltage(energyContainer.getInputVoltage())]).withStyle(ChatFormatting.YELLOW)
+                Component.translatable(Util.formatNumbers(energyContainer.getInputVoltage())).withStyle(ChatFormatting.YELLOW),
+                Component.translatable(GTValues.VN[Util.getTierByVoltage(energyContainer.getInputVoltage())]).withStyle(ChatFormatting.YELLOW)
         ));
 
         if (ConfigHolder.machines.enableMaintenance && hasMaintenanceMechanics()) {
             list.add(Component.translatable("behavior.tricorder.multiblock_maintenance",
-                    Component.translatable(GTUtility.formatNumbers(getNumMaintenanceProblems())).withStyle(ChatFormatting.RED)
+                    Component.translatable(Util.formatNumbers(getNumMaintenanceProblems())).withStyle(ChatFormatting.RED)
             ));
         }
 
         if (recipeMapWorkable.getParallelLimit() > 1) {
             list.add(Component.translatable("behavior.tricorder.multiblock_parallel",
-                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getParallelLimit())).withStyle(ChatFormatting.GREEN)
+                    Component.translatable(Util.formatNumbers(recipeMapWorkable.getParallelLimit())).withStyle(ChatFormatting.GREEN)
             ));
         }
 

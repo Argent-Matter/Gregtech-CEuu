@@ -72,7 +72,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public void update() {
+    public void tick() {
 
         // Fixes an annoying GTCE bug in AbstractRecipeLogic
         RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
@@ -82,7 +82,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
         }
 
         combineSteamTanks();
-        super.update();
+        super.tick();
     }
 
     @Override

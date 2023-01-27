@@ -5,7 +5,7 @@ import gregtech.api.gui.IRenderContext;
 import gregtech.api.gui.Widget;
 import gregtech.api.gui.resources.SizedTextureArea;
 import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
 import gregtech.api.util.function.BooleanConsumer;
@@ -45,7 +45,7 @@ public class CycleButtonWidget extends Widget {
         super(new Position(xPosition, yPosition), new Size(width, height));
         T[] enumConstantPool = enumClass.getEnumConstants();
         //noinspection RedundantCast
-        this.optionNames = GTUtility.mapToString(enumConstantPool, it -> ((IStringSerializable) it).getName());
+        this.optionNames = Util.mapToString(enumConstantPool, it -> ((IStringSerializable) it).getName());
         this.currentOptionSupplier = () -> supplier.get().ordinal();
         this.setOptionExecutor = (newIndex) -> updater.accept(enumConstantPool[newIndex]);
     }

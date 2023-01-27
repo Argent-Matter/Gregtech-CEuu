@@ -87,4 +87,11 @@ public class GTValues {
         if (isClient == null) isClient = FMLLoader.getDist().isClient();
         return isClient;
     }
+
+    private static Boolean isDeobf;
+
+    public static boolean isDeobfEnvironment() {
+        if (isDeobf == null) isDeobf = !FMLLoader.isProduction();
+        return isDeobf;
+    }
 }

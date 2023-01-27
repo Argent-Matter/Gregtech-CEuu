@@ -38,7 +38,7 @@ public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
             if (selfTile.getPipeBlock().canConnect(selfTile, side.getOpposite())) {
                 selfTile.setConnection(side.getOpposite(), true, false);
             }
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 TileEntity te = world.getTileEntity(pos.offset(facing));
                 if (te instanceof IPipeTile) {
                     IPipeTile otherPipe = ((IPipeTile) te);

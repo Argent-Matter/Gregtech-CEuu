@@ -8,7 +8,7 @@ import gregtech.api.unification.material.Material;
 import gregtech.api.unification.material.Materials;
 import gregtech.api.unification.material.info.MaterialIconType;
 import gregtech.api.unification.material.properties.PropertyKey;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.client.model.IModelSupplier;
 import gregtech.client.model.SimpleStateMapper;
 import gregtech.common.blocks.properties.PropertyMaterial;
@@ -96,7 +96,7 @@ public final class BlockCompressed extends DelayedStateBlock implements IModelSu
     }
 
     public ItemStack getItem(BlockState blockState) {
-        return GTUtility.toItem(blockState);
+        return Util.toItem(blockState);
     }
 
     public ItemStack getItem(Material material) {

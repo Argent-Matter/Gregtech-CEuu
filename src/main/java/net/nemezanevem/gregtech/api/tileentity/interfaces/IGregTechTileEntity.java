@@ -1,13 +1,15 @@
 package net.nemezanevem.gregtech.api.tileentity.interfaces;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
 import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 
 import java.util.function.Consumer;
 
 /**
- * A simple compound Interface for all my TileEntities.
+ * A simple compound Interface for all GregTech TileEntities.
  * <p/>
  * Also delivers most of the Informations about TileEntities.
  * <p/>

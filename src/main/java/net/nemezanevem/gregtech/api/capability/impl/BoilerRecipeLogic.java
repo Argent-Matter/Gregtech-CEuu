@@ -41,12 +41,12 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public void update() {
+    public void tick() {
         if ((!isActive() || !canProgressRecipe() || !isWorkingEnabled()) && currentHeat > 0) {
             setHeat(currentHeat - 1);
             setLastTickSteam(0);
         }
-        super.update();
+        super.tick();
     }
 
     @Override
@@ -268,31 +268,31 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
 
     @Override
     protected long getEnergyInputPerSecond() {
-        GTLog.logger.error("Large Boiler called getEnergyInputPerSecond(), this should not be possible!");
+        GregTech.LOGGER.error("Large Boiler called getEnergyInputPerSecond(), this should not be possible!");
         return 0;
     }
 
     @Override
     protected long getEnergyStored() {
-        GTLog.logger.error("Large Boiler called getEnergyStored(), this should not be possible!");
+        GregTech.LOGGER.error("Large Boiler called getEnergyStored(), this should not be possible!");
         return 0;
     }
 
     @Override
     protected long getEnergyCapacity() {
-        GTLog.logger.error("Large Boiler called getEnergyCapacity(), this should not be possible!");
+        GregTech.LOGGER.error("Large Boiler called getEnergyCapacity(), this should not be possible!");
         return 0;
     }
 
     @Override
     protected boolean drawEnergy(int recipeEUt, boolean simulate) {
-        GTLog.logger.error("Large Boiler called drawEnergy(), this should not be possible!");
+        GregTech.LOGGER.error("Large Boiler called drawEnergy(), this should not be possible!");
         return false;
     }
 
     @Override
     protected long getMaxVoltage() {
-        GTLog.logger.error("Large Boiler called getMaxVoltage(), this should not be possible!");
+        GregTech.LOGGER.error("Large Boiler called getMaxVoltage(), this should not be possible!");
         return 0;
     }
 }
