@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -43,7 +44,7 @@ public class VariantBlock<T extends Enum<T> & StringRepresentable> extends Block
     }
 
     public ItemStack getItemVariant(T variant, int amount) {
-        return new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation()), amount);
+        return new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(Util.getId(this) + "_" + variant.getSerializedName())), amount);
     }
 
     @Override
