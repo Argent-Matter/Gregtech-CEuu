@@ -17,12 +17,12 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 
 public class NetworkUtils {
 
-    public static void writePacketBuffer(FriendlyByteBuf writeTo, FriendlyByteBuf writeFrom) {
+    public static void writeFriendlyByteBuf(FriendlyByteBuf writeTo, FriendlyByteBuf writeFrom) {
         writeTo.writeVarInt(writeFrom.readableBytes());
         writeTo.writeBytes(writeFrom);
     }
 
-    public static FriendlyByteBuf readPacketBuffer(FriendlyByteBuf buf) {
+    public static FriendlyByteBuf readFriendlyByteBuf(FriendlyByteBuf buf) {
         ByteBuf directSliceBuffer = buf.readBytes(buf.readVarInt());
         ByteBuf copiedDataBuffer = Unpooled.copiedBuffer(directSliceBuffer);
         directSliceBuffer.release();

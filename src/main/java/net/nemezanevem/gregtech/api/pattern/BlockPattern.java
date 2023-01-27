@@ -186,7 +186,7 @@ public class BlockPattern {
         return matchContext;
     }
 
-    public void autoBuild(EntityPlayer player, MultiblockControllerBase controllerBase) {
+    public void autoBuild(Player player, MultiblockControllerBase controllerBase) {
         World world = player.world;
         BlockWorldState worldState = new BlockWorldState();
         int minZ = -centerOffset[4];
@@ -282,7 +282,7 @@ public class BlockPattern {
                             }
 
                             List<ItemStack> candidates = Arrays.stream(infos).filter(info -> info.getBlockState().getBlock() != Blocks.AIR).map(info -> {
-                                IBlockState blockState = info.getBlockState();
+                                BlockState blockState = info.getBlockState();
                                 MetaTileEntity metaTileEntity = info.getTileEntity() instanceof IGregTechTileEntity ? ((IGregTechTileEntity) info.getTileEntity()).getMetaTileEntity() : null;
                                 if (metaTileEntity != null) {
                                     return metaTileEntity.getStackForm();
@@ -313,7 +313,7 @@ public class BlockPattern {
                                 if (found == null) continue;
                             }
                             ItemBlock itemBlock = (ItemBlock) found.getItem();
-                            IBlockState state = itemBlock.getBlock().getStateFromMeta(itemBlock.getMetadata(found.getMetadata()));
+                            BlockState state = itemBlock.getBlock().getStateFromMeta(itemBlock.getMetadata(found.getMetadata()));
                             blocks.put(pos, state);
                             world.setBlockState(pos, state);
                             TileEntity holder = world.getTileEntity(pos);

@@ -2,9 +2,9 @@ package net.nemezanevem.gregtech.api.capability.impl;
 
 import gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
-import gregtech.api.metatileentity.multiblock.RecipeMapSteamMultiblockController;
+import gregtech.api.metatileentity.multiblock.RecipeTypeSteamMultiblockController;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.common.ConfigHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSnow;
@@ -30,7 +30,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
     // EU per mB
     private final double conversionRate;
 
-    public SteamMultiblockRecipeLogic(RecipeMapSteamMultiblockController tileEntity, RecipeMap<?> recipeMap, IMultipleTankHandler steamFluidTank, double conversionRate) {
+    public SteamMultiblockRecipeLogic(RecipeTypeSteamMultiblockController tileEntity, RecipeType<?> recipeMap, IMultipleTankHandler steamFluidTank, double conversionRate) {
         super(tileEntity, recipeMap);
         this.steamFluidTank = steamFluidTank;
         this.conversionRate = conversionRate;
@@ -45,18 +45,18 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
 
     @Override
     protected IItemHandlerModifiable getInputInventory() {
-        RecipeMapSteamMultiblockController controller = (RecipeMapSteamMultiblockController) metaTileEntity;
+        RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
         return controller.getInputInventory();
     }
 
     @Override
     protected IItemHandlerModifiable getOutputInventory() {
-        RecipeMapSteamMultiblockController controller = (RecipeMapSteamMultiblockController) metaTileEntity;
+        RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
         return controller.getOutputInventory();
     }
 
     protected IMultipleTankHandler getSteamFluidTank() {
-        RecipeMapSteamMultiblockController controller = (RecipeMapSteamMultiblockController) metaTileEntity;
+        RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
         return controller.getSteamFluidTank();
     }
 
@@ -75,7 +75,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
     public void update() {
 
         // Fixes an annoying GTCE bug in AbstractRecipeLogic
-        RecipeMapSteamMultiblockController controller = (RecipeMapSteamMultiblockController) metaTileEntity;
+        RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
         if (isActive && !controller.isStructureFormed()) {
             progressTime = 0;
             wasActiveAndNeedsUpdate = true;
@@ -122,7 +122,7 @@ public class SteamMultiblockRecipeLogic extends AbstractRecipeLogic {
 
     @Override
     protected boolean setupAndConsumeRecipeInputs(@Nonnull Recipe recipe, @Nonnull IItemHandlerModifiable importInventory) {
-        RecipeMapSteamMultiblockController controller = (RecipeMapSteamMultiblockController) metaTileEntity;
+        RecipeTypeSteamMultiblockController controller = (RecipeTypeSteamMultiblockController) metaTileEntity;
         if (controller.checkRecipe(recipe, false) &&
                 super.setupAndConsumeRecipeInputs(recipe, importInventory)) {
             controller.checkRecipe(recipe, true);

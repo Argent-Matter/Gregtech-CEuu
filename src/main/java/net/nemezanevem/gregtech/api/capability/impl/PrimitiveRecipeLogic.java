@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import gregtech.api.GTValues;
-import gregtech.api.metatileentity.multiblock.RecipeMapPrimitiveMultiblockController;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.metatileentity.multiblock.RecipeTypePrimitiveMultiblockController;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 
 import javax.annotation.Nonnull;
@@ -14,7 +14,7 @@ import static gregtech.api.recipes.logic.OverclockingLogic.standardOverclockingL
  */
 public class PrimitiveRecipeLogic extends AbstractRecipeLogic {
 
-    public PrimitiveRecipeLogic(RecipeMapPrimitiveMultiblockController tileEntity, RecipeMap<?> recipeMap) {
+    public PrimitiveRecipeLogic(RecipeTypePrimitiveMultiblockController tileEntity, RecipeType<?> recipeMap) {
         super(tileEntity, recipeMap);
     }
 

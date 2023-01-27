@@ -1,10 +1,9 @@
 package net.nemezanevem.gregtech.api.cover;
 
-import codechicken.lib.raytracer.CuboidRayTraceResult;
+import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
 import codechicken.lib.raytracer.IndexedVoxelShape;
 import codechicken.lib.raytracer.RayTracer;
-import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
@@ -16,10 +15,9 @@ import gregtech.client.utils.RenderUtil;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -29,15 +27,21 @@ import net.minecraft.world.World;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.util.RenderUtil;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public interface ICoverable {
@@ -55,7 +59,7 @@ public interface ICoverable {
 
     boolean isValid();
 
-    <T> T getCapability(Capability<T> capability, Direction side);
+    <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side);
 
     boolean placeCoverOnSide(Direction side, ItemStack itemStack, CoverDefinition definition, Player player);
 
@@ -121,29 +125,36 @@ public interface ICoverable {
         }
     }
 
-    default void addCoverCollisionBoundingBox(List<? super Cuboid6> collisionList) {
+    default void addCoverCollisionBoundingBox(List<? super IndexedVoxelShape> collisionList) {
         double plateThickness = getCoverPlateThickness();
         if (plateThickness > 0.0) {
             for (Direction side : Direction.values()) {
                 if (getCoverAtSide(side) != null) {
-                    Cuboid6 coverBox = getCoverPlateBox(side, plateThickness);
+                    VoxelShape coverBox = getCoverPlateBox(side, plateThickness);
                     CoverSideData coverSideData = new CoverSideData(side);
-                    collisionList.add(new Cuboid6(coverSideData, coverBox));
+                    collisionList.add(new IndexedVoxelShape(coverBox, coverSideData));
                 }
             }
         }
     }
 
-    static boolean doesCoverCollide(Direction side, List<Cuboid6> collisionBox, double plateThickness) {
+    static boolean doesCoverCollide(Direction side, List<IndexedVoxelShape> collisionBox, double plateThickness) {
         if (side == null) {
             return false;
         }
         if (plateThickness > 0.0) {
-            Cuboid6 coverPlateBox = getCoverPlateBox(side, plateThickness);
-            for (Cuboid6 collisionCuboid : collisionBox) {
-                if (collisionCuboid.intersects(coverPlateBox)) {
+            VoxelShape coverPlateBox = getCoverPlateBox(side, plateThickness);
+            for (VoxelShape collisionCuboid : collisionBox) {
+                AtomicBoolean returnValue = new AtomicBoolean(false);
+                collisionCuboid.forAllBoxes((double pMinX, double pMinY, double pMinZ, double pMaxX, double pMaxY, double pMaxZ) -> {
+                    AABB aabb = new AABB(pMinX, pMinY, pMinZ, pMaxX, pMaxY, pMaxZ);
                     //collision box intersects with machine bounding box -
                     //cover cannot be placed on this side
+                    if(aabb.intersects(coverPlateBox.bounds())) {
+                        returnValue.set(true);
+                    }
+                });
+                if(returnValue.get()) {
                     return true;
                 }
             }
@@ -184,7 +195,7 @@ public interface ICoverable {
             } else if (rayTraceResult.shape.getData() instanceof CoverSideData) {
                 return ((CoverSideData) rayTraceResult.shape.getData()).side;
             } else if (rayTraceResult.shape.getData() instanceof BlockPipe.PipeConnectionData) {
-                return ((PipeConnectionData) rayTraceResult.shape.getData()).side;
+                return ((BlockPipe.PipeConnectionData) rayTraceResult.shape.getData()).side;
             } else if (rayTraceResult.shape.getData() instanceof PrimaryBoxData) {
                 PrimaryBoxData primaryBoxData = (PrimaryBoxData) rayTraceResult.shape.getData();
                 return primaryBoxData.usePlacementGrid ? determineGridSideHit(result) : result.getDirection();
@@ -201,20 +212,20 @@ public interface ICoverable {
                 (float) (result.getLocation().z - result.getBlockPos().getZ()));
     }
 
-    static Cuboid6 getCoverPlateBox(Direction side, double plateThickness) {
+    static VoxelShape getCoverPlateBox(Direction side, double plateThickness) {
         switch (side) {
             case UP:
-                return new Cuboid6(0.0, 1.0 - plateThickness, 0.0, 1.0, 1.0, 1.0);
+                return Shapes.box(0.0, 1.0 - plateThickness, 0.0, 1.0, 1.0, 1.0);
             case DOWN:
-                return new Cuboid6(0.0, 0.0, 0.0, 1.0, plateThickness, 1.0);
+                return Shapes.box(0.0, 0.0, 0.0, 1.0, plateThickness, 1.0);
             case NORTH:
-                return new Cuboid6(0.0, 0.0, 0.0, 1.0, 1.0, plateThickness);
+                return Shapes.box(0.0, 0.0, 0.0, 1.0, 1.0, plateThickness);
             case SOUTH:
-                return new Cuboid6(0.0, 0.0, 1.0 - plateThickness, 1.0, 1.0, 1.0);
+                return Shapes.box(0.0, 0.0, 1.0 - plateThickness, 1.0, 1.0, 1.0);
             case WEST:
-                return new Cuboid6(0.0, 0.0, 0.0, plateThickness, 1.0, 1.0);
+                return Shapes.box(0.0, 0.0, 0.0, plateThickness, 1.0, 1.0);
             case EAST:
-                return new Cuboid6(1.0 - plateThickness, 0.0, 0.0, 1.0, 1.0, 1.0);
+                return Shapes.box(1.0 - plateThickness, 0.0, 0.0, 1.0, 1.0, 1.0);
             default:
                 throw new UnsupportedOperationException("Cannot get cover plate box at side " + side);
         }

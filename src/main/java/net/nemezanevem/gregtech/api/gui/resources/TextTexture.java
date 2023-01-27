@@ -24,7 +24,7 @@ public class TextTexture implements IGuiTexture{
         this.color = color;
         this.type = TextType.NORMAL;
         if (FMLCommonHandler.instance().getSide().isClient()) {
-            this.text = I18n.format(text);
+            this.text = Component.translatable(text);
             texts = Collections.singletonList(this.text);
         }
     }

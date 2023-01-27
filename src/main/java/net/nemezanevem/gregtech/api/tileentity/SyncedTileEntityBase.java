@@ -1,90 +1,81 @@
 package net.nemezanevem.gregtech.api.tileentity;
 
-import gregtech.api.block.BlockStateTileEntity;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public abstract class SyncedTileEntityBase extends BlockStateTileEntity {
+public abstract class SyncedTileEntityBase extends BlockEntity {
 
-    public abstract void writeInitialSyncData(PacketBuffer buf);
+    public SyncedTileEntityBase(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
+        super(pType, pPos, pBlockState);
+    }
 
-    public abstract void receiveInitialSyncData(PacketBuffer buf);
+    public abstract void writeInitialSyncData(FriendlyByteBuf buf);
 
-    public abstract void receiveCustomData(int discriminator, PacketBuffer buf);
+    public abstract void receiveInitialSyncData(FriendlyByteBuf buf);
+
+    public abstract void receiveCustomData(int discriminator, FriendlyByteBuf buf);
 
     protected final Int2ObjectMap<byte[]> updates = new Int2ObjectArrayMap<>(5);
 
-    public void writeCustomData(int discriminator, Consumer<PacketBuffer> dataWriter) {
+    public void writeCustomData(int discriminator, Consumer<FriendlyByteBuf> dataWriter) {
         ByteBuf backedBuffer = Unpooled.buffer();
-        dataWriter.accept(new PacketBuffer(backedBuffer));
+        dataWriter.accept(new FriendlyByteBuf(backedBuffer));
         byte[] updateData = Arrays.copyOfRange(backedBuffer.array(), 0, backedBuffer.writerIndex());
         updates.put(discriminator, updateData);
-        @SuppressWarnings("deprecation")
-        BlockState blockState = getBlockType().getStateFromMeta(getBlockMetadata());
-        world.notifyBlockUpdate(getPos(), blockState, blockState, 0);
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 0);
     }
 
     @Override
-    public SPacketUpdateTileEntity getUpdatePacket() {
-        if (this.updates.isEmpty()) {
-            return null;
-        }
-        NBTTagCompound updateTag = new NBTTagCompound();
-        NBTTagList listTag = new NBTTagList();
-        for (Int2ObjectMap.Entry<byte[]> entry : updates.int2ObjectEntrySet()) {
-            NBTTagCompound entryTag = new NBTTagCompound();
-            entryTag.setByteArray(Integer.toString(entry.getIntKey()), entry.getValue());
-            listTag.appendTag(entryTag);
-        }
-        updateTag.setTag("d", listTag);
-        this.updates.clear();
-        return new SPacketUpdateTileEntity(getPos(), 0, updateTag);
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public void onDataPacket(@Nonnull NetworkManager net, SPacketUpdateTileEntity pkt) {
-        NBTTagCompound updateTag = pkt.getNbtCompound();
-        NBTTagList listTag = updateTag.getTagList("d", Constants.NBT.TAG_COMPOUND);
-        for (NBTBase entryBase : listTag) {
-            NBTTagCompound entryTag = (NBTTagCompound) entryBase;
-            for (String discriminatorKey : entryTag.getKeySet()) {
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        CompoundTag updateTag = pkt.getTag();
+        ListTag listTag = updateTag.getList("d", Tag.TAG_COMPOUND);
+        for (Tag entryBase : listTag) {
+            CompoundTag entryTag = (CompoundTag) entryBase;
+            for (String discriminatorKey : entryTag.getAllKeys()) {
                 ByteBuf backedBuffer = Unpooled.copiedBuffer(entryTag.getByteArray(discriminatorKey));
-                receiveCustomData(Integer.parseInt(discriminatorKey), new PacketBuffer(backedBuffer));
+                receiveCustomData(Integer.parseInt(discriminatorKey), new FriendlyByteBuf(backedBuffer));
             }
         }
     }
 
     @Nonnull
     @Override
-    public NBTTagCompound getUpdateTag() {
-        NBTTagCompound updateTag = super.getUpdateTag();
+    public CompoundTag getUpdateTag() {
+        CompoundTag updateTag = super.getUpdateTag();
         ByteBuf backedBuffer = Unpooled.buffer();
-        writeInitialSyncData(new PacketBuffer(backedBuffer));
+        writeInitialSyncData(new FriendlyByteBuf(backedBuffer));
         byte[] updateData = Arrays.copyOfRange(backedBuffer.array(), 0, backedBuffer.writerIndex());
-        updateTag.setByteArray("d", updateData);
+        updateTag.putByteArray("d", updateData);
         return updateTag;
     }
 
     @Override
-    public void handleUpdateTag(@Nonnull NBTTagCompound tag) {
-        super.readFromNBT(tag); // deserializes Forge data and capabilities
+    public void handleUpdateTag(@Nonnull CompoundTag tag) {
+        super.handleUpdateTag(tag); // deserializes Forge data and capabilities
         byte[] updateData = tag.getByteArray("d");
         ByteBuf backedBuffer = Unpooled.copiedBuffer(updateData);
-        receiveInitialSyncData(new PacketBuffer(backedBuffer));
+        receiveInitialSyncData(new FriendlyByteBuf(backedBuffer));
     }
 
 }

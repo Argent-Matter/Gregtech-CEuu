@@ -5,8 +5,8 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.multiblock.ICleanroomProvider;
 import gregtech.api.metatileentity.multiblock.IMaintenance;
 import gregtech.common.ConfigHolder;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -107,7 +107,7 @@ public class CleanroomLogic {
             this.isActive = active;
             this.metaTileEntity.markDirty();
             World world = this.metaTileEntity.getWorld();
-            if (world != null && !world.isRemote) {
+            if (world != null && !world.isClientSide) {
                 this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKABLE_ACTIVE, buf -> buf.writeBoolean(active));
             }
         }
@@ -120,7 +120,7 @@ public class CleanroomLogic {
         this.isWorkingEnabled = workingEnabled;
         this.metaTileEntity.markDirty();
         World world = this.metaTileEntity.getWorld();
-        if (world != null && !world.isRemote) {
+        if (world != null && !world.isClientSide) {
             this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
         }
     }
@@ -164,9 +164,9 @@ public class CleanroomLogic {
 
     /**
      * writes all needed values to NBT
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(NBTTagCompound)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(CompoundTag)} method
      */
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound data) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
         data.setBoolean("isActive", this.isActive);
         data.setBoolean("isWorkingEnabled", this.isWorkingEnabled);
         data.setBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
@@ -177,9 +177,9 @@ public class CleanroomLogic {
 
     /**
      * reads all needed values from NBT
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#readFromNBT(NBTTagCompound)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#readFromNBT(CompoundTag)} method
      */
-    public void readFromNBT(@Nonnull NBTTagCompound data) {
+    public void readFromNBT(@Nonnull CompoundTag data) {
         this.isActive = data.getBoolean("isActive");
         this.isWorkingEnabled = data.getBoolean("isWorkingEnabled");
         this.wasActiveAndNeedsUpdate = data.getBoolean("wasActiveAndNeedsUpdate");
@@ -189,9 +189,9 @@ public class CleanroomLogic {
 
     /**
      * writes all needed values to InitialSyncData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeInitialSyncData(PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeInitialSyncData(FriendlyByteBuf)} method
      */
-    public void writeInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void writeInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         buf.writeBoolean(this.isActive);
         buf.writeBoolean(this.isWorkingEnabled);
         buf.writeBoolean(this.wasActiveAndNeedsUpdate);
@@ -201,9 +201,9 @@ public class CleanroomLogic {
 
     /**
      * reads all needed values from InitialSyncData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveInitialSyncData(PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveInitialSyncData(FriendlyByteBuf)} method
      */
-    public void receiveInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void receiveInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         setActive(buf.readBoolean());
         setWorkingEnabled(buf.readBoolean());
         setWasActiveAndNeedsUpdate(buf.readBoolean());
@@ -213,9 +213,9 @@ public class CleanroomLogic {
 
     /**
      * reads all needed values from CustomData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveCustomData(int, PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveCustomData(int, FriendlyByteBuf)} method
      */
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
+    public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         if (dataId == GregtechDataCodes.IS_WORKING) {
             setActive(buf.readBoolean());
             metaTileEntity.scheduleRenderUpdate();

@@ -1,12 +1,12 @@
 package net.nemezanevem.gregtech.api.capability.impl.miner;
 
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.client.renderer.ICubeRenderer;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -19,7 +19,7 @@ public class MultiblockMinerLogic extends MinerLogic {
 
     private static final int CHUNK_LENGTH = 16;
 
-    private final RecipeMap<?> blockDropRecipeMap;
+    private final RecipeType<?> blockDropRecipeType;
 
     private int voltageTier;
     private int overclockAmount = 0;
@@ -35,9 +35,9 @@ public class MultiblockMinerLogic extends MinerLogic {
      * @param speed          the speed in ticks per block mined
      * @param maximumRadius  the maximum radius (square shaped) the miner can mine in
      */
-    public MultiblockMinerLogic(MetaTileEntity metaTileEntity, int fortune, int speed, int maximumRadius, ICubeRenderer pipeTexture, RecipeMap<?> blockDropRecipeMap) {
+    public MultiblockMinerLogic(MetaTileEntity metaTileEntity, int fortune, int speed, int maximumRadius, ICubeRenderer pipeTexture, RecipeType<?> blockDropRecipeType) {
         super(metaTileEntity, fortune, speed, maximumRadius, pipeTexture);
-        this.blockDropRecipeMap = blockDropRecipeMap;
+        this.blockDropRecipeType = blockDropRecipeType;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class MultiblockMinerLogic extends MinerLogic {
     @Override
     protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull BlockState blockState) {
         if (!isSilkTouchMode) // 3X the ore compared to the single blocks
-            applyTieredHammerNoRandomDrops(blockState, blockDrops, 3, this.blockDropRecipeMap, this.voltageTier);
+            applyTieredHammerNoRandomDrops(blockState, blockDrops, 3, this.blockDropRecipeType, this.voltageTier);
         else
             super.getRegularBlockDrops(blockDrops, world, blockToMine, blockState);
     }
@@ -115,28 +115,28 @@ public class MultiblockMinerLogic extends MinerLogic {
     }
 
     @Override
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound data) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
         data.setBoolean("isChunkMode", isChunkMode);
         data.setBoolean("isSilkTouchMode", isSilkTouchMode);
         return super.writeToNBT(data);
     }
 
     @Override
-    public void readFromNBT(@Nonnull NBTTagCompound data) {
+    public void readFromNBT(@Nonnull CompoundTag data) {
         this.isChunkMode = data.getBoolean("isChunkMode");
         this.isSilkTouchMode = data.getBoolean("isSilkTouchMode");
         super.readFromNBT(data);
     }
 
     @Override
-    public void writeInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void writeInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
         buf.writeBoolean(this.isChunkMode);
         buf.writeBoolean(this.isSilkTouchMode);
     }
 
     @Override
-    public void receiveInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void receiveInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
         this.isChunkMode = buf.readBoolean();
         this.isSilkTouchMode = buf.readBoolean();

@@ -1,9 +1,10 @@
 package net.nemezanevem.gregtech.api.tileentity;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.function.Consumer;
 
@@ -24,7 +25,7 @@ public abstract class MTETrait {
 
     public abstract int getNetworkID();
 
-    public abstract <T> T getCapability(Capability<T> capability);
+    public abstract <T> LazyOptional<T> getCapability(Capability<T> capability);
 
     public void onFrontFacingSet(Direction newFrontFacing) {
     }
@@ -32,23 +33,23 @@ public abstract class MTETrait {
     public void update() {
     }
 
-    public NBTTagCompound serializeNBT() {
-        return new NBTTagCompound();
+    public CompoundTag serializeNBT() {
+        return new CompoundTag();
     }
 
-    public void deserializeNBT(NBTTagCompound compound) {
+    public void deserializeNBT(CompoundTag compound) {
     }
 
-    public void writeInitialData(PacketBuffer buffer) {
+    public void writeInitialData(FriendlyByteBuf buffer) {
     }
 
-    public void receiveInitialData(PacketBuffer buffer) {
+    public void receiveInitialData(FriendlyByteBuf buffer) {
     }
 
-    public void receiveCustomData(int id, PacketBuffer buffer) {
+    public void receiveCustomData(int id, FriendlyByteBuf buffer) {
     }
 
-    public final void writeCustomData(int id, Consumer<PacketBuffer> writer) {
+    public final void writeCustomData(int id, Consumer<FriendlyByteBuf> writer) {
         metaTileEntity.writeTraitData(this, id, writer);
     }
 

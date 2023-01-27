@@ -30,6 +30,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -41,6 +42,7 @@ import net.nemezanevem.gregtech.api.capability.impl.CombinedCapabilityProvider;
 import net.nemezanevem.gregtech.api.capability.impl.ElectricItem;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
+import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
 import net.nemezanevem.gregtech.api.item.materialitem.PrefixItem;
 import net.nemezanevem.gregtech.api.item.metaitem.stats.*;
 import net.nemezanevem.gregtech.api.unification.material.Material;
@@ -153,17 +155,17 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Override
     public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt) {
         Item item = stack.getItem();
-        if (item == null || !(item instanceof MetaItem metaItem)) {
-            return null;
-        }
-        ArrayList<ICapabilityProvider> providers = new ArrayList<>();
-        for (IItemComponent itemComponent : metaItem.getAllStats()) {
-            if (itemComponent instanceof IItemCapabilityProvider) {
-                IItemCapabilityProvider provider = (IItemCapabilityProvider) itemComponent;
-                providers.add(provider.createProvider(stack));
+        if (item instanceof MetaItem metaItem) {
+            ArrayList<ICapabilityProvider> providers = new ArrayList<>();
+            for (IItemComponent itemComponent : metaItem.getAllStats()) {
+                if (itemComponent instanceof IItemCapabilityProvider) {
+                    IItemCapabilityProvider provider = (IItemCapabilityProvider) itemComponent;
+                    providers.add(provider.createProvider(stack));
+                }
             }
+            return new CombinedCapabilityProvider(providers);
         }
-        return new CombinedCapabilityProvider(providers);
+        return null;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -171,10 +173,10 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Override
     public int getBurnTime(@Nonnull ItemStack itemStack, RecipeType<?> recipeType) {
         Item item = itemStack.getItem();
-        if (item == null || !(item instanceof MetaItem metaItem)) {
-            return super.getBurnTime(itemStack);
+        if (item instanceof MetaItem metaItem) {
+            return metaItem.getBurnValue();
         }
-        return metaItem.getBurnValue();
+        return super.getBurnTime(itemStack, recipeType);
     }
 
     //////////////////////////////////////////////////////////////////
@@ -182,28 +184,28 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     //////////////////////////////////////////////////////////////////
 
     private IItemUseManager getUseManager(ItemStack itemStack) {
-        MetaItem metaValueItem = getItem(itemStack);
-        if (metaValueItem == null) {
-            return null;
+        Item item = itemStack.getItem();
+        if (item instanceof MetaItem metaItem) {
+            return metaItem.getUseManager();
         }
-        return metaValueItem.getUseManager();
+        return null;
     }
 
     public List<IItemBehaviour> getBehaviours(ItemStack itemStack) {
-        MetaItem metaValueItem = getItem(itemStack);
-        if (metaValueItem == null) {
-            return ImmutableList.<IItemBehaviour>of();
+        Item item = itemStack.getItem();
+        if (item instanceof MetaItem metaItem) {
+            metaItem.getBehaviours();
         }
-        return metaValueItem.getBehaviours();
+        return ImmutableList.<IItemBehaviour>of();
     }
 
     @Override
-    public int getItemStackLimit(@Nonnull ItemStack stack) {
-        MetaItem metaValueItem = getItem(stack);
-        if (metaValueItem == null) {
-            return 64;
-        }
-        return metaValueItem.getMaxStackSize(stack);
+    public int getMaxStackSize(@Nonnull ItemStack stack) {
+        /*Item item = stack.getItem();
+        if (item instanceof MetaItem metaItem) {
+            return item.getMaxStackSize(stack);
+        }*/
+        return super.getMaxStackSize(stack);
     }
 
     @Nonnull
@@ -217,7 +219,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public int getMaxItemUseDuration(@Nonnull ItemStack stack) {
+    public int getUseDuration(@Nonnull ItemStack stack) {
         IItemUseManager useManager = getUseManager(stack);
         if (useManager != null) {
             return useManager.getMaxItemUseDuration(stack);
@@ -236,18 +238,18 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public void onPlayerStoppedUsing(@Nonnull ItemStack stack, @Nonnull Level world, @Nonnull LivingEntity player, int timeLeft) {
-        if (player instanceof Player) {
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
+        if (user instanceof Player player) {
             IItemUseManager useManager = getUseManager(stack);
             if (useManager != null) {
-                useManager.onPlayerStoppedItemUsing(stack, (Player) player, timeLeft);
+                useManager.onPlayerStoppedItemUsing(stack, player, timeLeft);
             }
         }
     }
 
     @Nullable
     @Override
-    public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull Level world, @Nonnull LivingEntity player) {
+    public ItemStack finishUsingItem(@Nonnull ItemStack stack, @Nonnull Level world, @Nonnull LivingEntity player) {
         if (player instanceof Player) {
             IItemUseManager useManager = getUseManager(stack);
             if (useManager != null) {
@@ -269,11 +271,11 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public boolean itemInteractionForEntity(@Nonnull ItemStack stack, @Nonnull Player playerIn, @Nonnull LivingEntity target, @Nonnull InteractionHand hand) {
-        boolean returnValue = false;
+    public InteractionResult interactLivingEntity(@Nonnull ItemStack stack, @Nonnull Player playerIn, @Nonnull LivingEntity target, @Nonnull InteractionHand hand) {
+        InteractionResult returnValue = InteractionResult.PASS;
         for (IItemBehaviour behaviour : getBehaviours(stack)) {
             if (behaviour.itemInteractionForEntity(stack, playerIn, target, hand)) {
-                returnValue = true;
+                returnValue = InteractionResult.SUCCESS;
             }
         }
         return returnValue;
@@ -281,7 +283,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
     @Nonnull
     @Override
-    public InteractionResultHolder<ItemStack> onItemRightClick(@Nonnull Level world, Player player, @Nonnull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@Nonnull Level world, Player player, @Nonnull InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
         for (IItemBehaviour behaviour : getBehaviours(itemStack)) {
             InteractionResultHolder<ItemStack> behaviourResult = behaviour.onItemRightClick(world, player, hand);
@@ -452,7 +454,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
                 .getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null);
         if (fluidHandler.isPresent()) {
             var realFluidHandler = fluidHandler.resolve().get();
-            IFluidTankProperties fluidTankProperties = realFluidHandler.getTankProperties()[0];
+            IFluidTank fluidTankProperties = realFluidHandler.getTankProperties()[0];
             FluidStack fluid = fluidTankProperties.getContents();
 
             lines.add(Component.translatable("metaitem.generic.fluid_container.tooltip",
@@ -541,8 +543,11 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Override
     public ModularUI createUI(PlayerInventoryHolder holder, Player Player) {
         ItemStack itemStack = holder.getCurrentItem();
-        MetaItem metaValueItem = getItem(itemStack);
-        ItemUIFactory uiFactory = metaValueItem == null ? null : metaValueItem.getUIManager();
+        Item item = itemStack.getItem();
+        ItemUIFactory uiFactory = null;
+        if(item instanceof MetaItem metaItem) {
+            uiFactory = metaItem.getUIManager();
+        }
         return uiFactory == null ? null : uiFactory.createUI(holder, Player);
     }
 

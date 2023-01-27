@@ -174,7 +174,7 @@
  - 42.0.9 Remove calls to getStepHeight in Player#maybeBackOffFromEdge (#8927)
  - 42.0.8 Add forge tags for tools and armors, these DO NOT replace ToolActions, and are designed just for Recipes. (#8914)
  - 42.0.7 Add Biomes.BEACH to Tags (#8892)
- - 42.0.6 Let NetworkInstance.isRemotePresent check minecraft:register for channel IDs.  (#8921)
+ - 42.0.6 Let NetworkInstance.isClientSidePresent check minecraft:register for channel IDs.  (#8921)
  - 42.0.5 Add an event for when the chunk ticket level is updated (#8909)
  - 42.0.4 Re-add PotentialSpawns event (#8712)
  - 42.0.3 Fix misplaced patch in ItemEntityRenderer breaking ItemEntityRenderer#shouldBob() (#8919)

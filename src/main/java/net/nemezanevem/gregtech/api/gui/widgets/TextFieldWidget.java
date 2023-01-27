@@ -108,7 +108,7 @@ public class TextFieldWidget extends Widget {
     }
 
     public String getCurrentString() {
-        if (isRemote()) {
+        if (isClientSide()) {
             return this.textField.getValue();
         }
         return this.currentString;

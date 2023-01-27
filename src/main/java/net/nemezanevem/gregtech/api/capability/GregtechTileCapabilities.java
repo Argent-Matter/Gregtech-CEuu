@@ -4,6 +4,8 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.nemezanevem.gregtech.api.capability.impl.AbstractRecipeLogic;
 import net.minecraftforge.common.capabilities.Capability;
+import net.nemezanevem.gregtech.api.cover.ICoverable;
+import net.nemezanevem.gregtech.api.tileentity.multiblock.IMaintenance;
 
 public class GregtechTileCapabilities {
 
@@ -17,7 +19,7 @@ public class GregtechTileCapabilities {
 
     public static Capability<AbstractRecipeLogic> CAPABILITY_RECIPE_LOGIC = CapabilityManager.get(new CapabilityToken<>(){});
 
-    public static Capability<IMultipleRecipeMaps> CAPABILITY_MULTIPLE_RECIPEMAPS = CapabilityManager.get(new CapabilityToken<>(){});
+    public static Capability<IMultipleRecipeTypes> CAPABILITY_MULTIPLE_RECIPEMAPS = CapabilityManager.get(new CapabilityToken<>(){});
 
     public static Capability<IMaintenance> CAPABILITY_MAINTENANCE = CapabilityManager.get(new CapabilityToken<>(){});
 

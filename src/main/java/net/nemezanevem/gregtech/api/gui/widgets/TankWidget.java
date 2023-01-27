@@ -12,8 +12,8 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fluids.*;
@@ -227,7 +227,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
         } else if (fluidStack != null) {
             if (!fluidStack.isFluidEqual(lastFluidInTank)) {
                 this.lastFluidInTank = fluidStack.copy();
-                NBTTagCompound fluidStackTag = fluidStack.writeToNBT(new NBTTagCompound());
+                CompoundTag fluidStackTag = fluidStack.writeToNBT(new CompoundTag());
                 writeUpdateInfo(2, buffer -> buffer.writeCompoundTag(fluidStackTag));
             } else if (fluidStack.amount != lastFluidInTank.amount) {
                 this.lastFluidInTank.amount = fluidStack.amount;
@@ -237,13 +237,13 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 0) {
             this.lastTankCapacity = buffer.readVarInt();
         } else if (id == 1) {
             this.lastFluidInTank = null;
         } else if (id == 2) {
-            NBTTagCompound fluidStackTag;
+            CompoundTag fluidStackTag;
             try {
                 fluidStackTag = buffer.readCompoundTag();
             } catch (IOException ignored) {
@@ -263,7 +263,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             boolean isShiftKeyDown = buffer.readBoolean();

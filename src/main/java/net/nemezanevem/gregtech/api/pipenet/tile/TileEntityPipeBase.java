@@ -1,34 +1,26 @@
 package net.nemezanevem.gregtech.api.pipenet.tile;
 
-import gregtech.api.GregTechAPI;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.metatileentity.SyncedTileEntityBase;
-import gregtech.api.pipenet.PipeNet;
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.pipenet.block.BlockPipe;
-import gregtech.api.pipenet.block.IPipeType;
-import gregtech.api.unification.material.Material;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.nemezanevem.gregtech.api.pipenet.PipeNet;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
+import net.nemezanevem.gregtech.api.tileentity.SyncedTileEntityBase;
+import net.nemezanevem.gregtech.api.unification.material.Material;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-import static gregtech.api.capability.GregtechDataCodes.*;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
 
 public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> extends SyncedTileEntityBase implements IPipeTile<PipeType, NodeDataType> {
 
@@ -48,7 +40,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     public void setPipeData(BlockPipe<PipeType, NodeDataType, ?> pipeBlock, PipeType pipeType) {
         this.pipeBlock = pipeBlock;
         this.pipeType = pipeType;
-        if (!getWorld().isRemote) {
+        if (!getLevel().isClientSide) {
             writeCustomData(UPDATE_PIPE_TYPE, this::writePipeProperties);
         }
     }
@@ -75,8 +67,8 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     public void setFrameMaterial(@Nullable Material frameMaterial) {
         this.frameMaterial = frameMaterial;
-        if (world != null && world.isRemote) {
-            writeCustomData(UPDATE_FRAME_MATERIAL, buf -> buf.writeVarInt(frameMaterial == null ? -1 : GregTechAPI.MATERIAL_REGISTRY.getIDForObject(frameMaterial)));
+        if (level != null && level.isClientSide) {
+            writeCustomData(UPDATE_FRAME_MATERIAL, buf -> buf.writeRegistryId(MaterialRegistry.MATERIALS_BUILTIN.get(), frameMaterial));
         }
     }
 
@@ -86,13 +78,13 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public World getPipeWorld() {
-        return getWorld();
+    public Level getPipeWorld() {
+        return getLevel();
     }
 
     @Override
     public BlockPos getPipePos() {
-        return getPos();
+        return getBlockPos();
     }
 
     @Override
@@ -113,7 +105,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         //create new tickable tile entity, transfer data, and replace it
         IPipeTile<PipeType, NodeDataType> newTile = getPipeBlock().createNewTileEntity(true);
         newTile.transferDataFrom(this);
-        getWorld().setTileEntity(getPos(), (TileEntity) newTile);
+        getLevel().setBlockEntity((BlockEntity) newTile);
         return newTile;
     }
 
@@ -145,10 +137,10 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     @Override
     public void setPaintingColor(int paintingColor) {
         this.paintingColor = paintingColor;
-        if (!getWorld().isRemote) {
-            getPipeBlock().getWorldPipeNet(getWorld()).updateMark(getPos(), getCableMark());
+        if (!getLevel().isClientSide) {
+            getPipeBlock().getWorldPipeNet(getLevel()).updateMark(getBlockPos(), getCableMark());
             writeCustomData(UPDATE_INSULATION_COLOR, buffer -> buffer.writeInt(paintingColor));
-            markDirty();
+            setChanged();
         }
     }
 
@@ -170,11 +162,11 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     @Override
     public void setConnection(Direction side, boolean connected, boolean fromNeighbor) {
         // fix desync between two connections. Can happen if a pipe side is blocked, and a new pipe is placed next to it.
-        if (!getWorld().isRemote) {
+        if (!getLevel().isClientSide) {
             if (isConnected(side) == connected) {
                 return;
             }
-            TileEntity tile = getWorld().getTileEntity(getPos().offset(side));
+            BlockEntity tile = getLevel().getBlockEntity(getBlockPos().offset(side.getNormal()));
             // block connections if Pipe Types do not match
             if (connected && tile instanceof IPipeTile && ((IPipeTile<?, ?>) tile).getPipeType().getClass() != this.getPipeType().getClass()) {
                 return;
@@ -185,7 +177,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
             writeCustomData(UPDATE_CONNECTIONS, buffer -> {
                 buffer.writeVarInt(connections);
             });
-            markDirty();
+            setChanged();
 
             if (!fromNeighbor && tile instanceof IPipeTile) {
                 syncPipeConnections(side, (IPipeTile<?, ?>) tile);
@@ -205,12 +197,12 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     private void updateNetworkConnection(Direction side, boolean connected) {
-        WorldPipeNet<?, ?> worldPipeNet = getPipeBlock().getWorldPipeNet(getWorld());
-        worldPipeNet.updateBlockedConnections(getPos(), side, !connected);
+        WorldPipeNet<?, ?> worldPipeNet = getPipeBlock().getWorldPipeNet(getLevel());
+        worldPipeNet.updateBlockedConnections(getBlockPos(), side, !connected);
     }
 
     protected int withSideConnection(int blockedConnections, Direction side, boolean connected) {
-        int index = 1 << side.getIndex();
+        int index = 1 << side.ordinal();
         if (connected) {
             return blockedConnections | index;
         } else {
@@ -220,14 +212,14 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public void setFaceBlocked(Direction side, boolean blocked) {
-        if (!world.isRemote && canHaveBlockedFaces()) {
+        if (!level.isClientSide && canHaveBlockedFaces()) {
             blockedConnections = withSideConnection(blockedConnections, side, blocked);
             writeCustomData(UPDATE_BLOCKED_CONNECTIONS, buf -> {
                 buf.writeVarInt(blockedConnections);
             });
-            markDirty();
-            WorldPipeNet<?, ?> worldPipeNet = getPipeBlock().getWorldPipeNet(getWorld());
-            PipeNet<?> net = worldPipeNet.getNetFromPos(pos);
+            setChanged();
+            WorldPipeNet<?, ?> worldPipeNet = getPipeBlock().getWorldPipeNet(getLevel());
+            PipeNet<?> net = worldPipeNet.getNetFromPos(worldPosition);
             if (net != null) {
                 net.onPipeConnectionsUpdate();
             }
@@ -318,7 +310,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Nonnull
     @Override
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
         super.writeToNBT(compound);
         BlockPipe<PipeType, NodeDataType, ?> pipeBlock = getPipeBlock();
         if (pipeBlock != null) {
@@ -337,7 +329,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public void readFromNBT(@Nonnull NBTTagCompound compound) {
+    public void readFromNBT(@Nonnull CompoundTag compound) {
         super.readFromNBT(compound);
         if (compound.hasKey("PipeBlock", NBT.TAG_STRING)) {
             Block block = Block.REGISTRY.getObject(new ResourceLocation(compound.getString("PipeBlock")));
@@ -350,7 +342,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
             connections = compound.getInteger("Connections");
         } else if (compound.hasKey("BlockedConnectionsMap")) {
             connections = 0;
-            NBTTagCompound blockedConnectionsTag = compound.getCompoundTag("BlockedConnectionsMap");
+            CompoundTag blockedConnectionsTag = compound.getCompoundTag("BlockedConnectionsMap");
             for (String attachmentTypeKey : blockedConnectionsTag.getKeySet()) {
                 int blockedConnections = blockedConnectionsTag.getInteger(attachmentTypeKey);
                 connections |= blockedConnections;
@@ -374,16 +366,16 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         this.coverableImplementation.onLoad();
     }
 
-    protected void writePipeProperties(PacketBuffer buf) {
+    protected void writePipeProperties(FriendlyByteBuf buf) {
         buf.writeVarInt(pipeType.ordinal());
     }
 
-    protected void readPipeProperties(PacketBuffer buf) {
+    protected void readPipeProperties(FriendlyByteBuf buf) {
         this.pipeType = getPipeTypeClass().getEnumConstants()[buf.readVarInt()];
     }
 
     @Override
-    public void writeInitialSyncData(PacketBuffer buf) {
+    public void writeInitialSyncData(FriendlyByteBuf buf) {
         writePipeProperties(buf);
         buf.writeVarInt(connections);
         buf.writeVarInt(blockedConnections);
@@ -393,7 +385,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public void receiveInitialSyncData(PacketBuffer buf) {
+    public void receiveInitialSyncData(FriendlyByteBuf buf) {
         readPipeProperties(buf);
         this.connections = buf.readVarInt();
         this.blockedConnections = buf.readVarInt();
@@ -404,7 +396,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public void receiveCustomData(int discriminator, PacketBuffer buf) {
+    public void receiveCustomData(int discriminator, FriendlyByteBuf buf) {
         if (discriminator == UPDATE_INSULATION_COLOR) {
             this.paintingColor = buf.readInt();
             scheduleChunkForRenderUpdate();
@@ -427,7 +419,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public void writeCoverCustomData(int id, Consumer<PacketBuffer> writer) {
+    public void writeCoverCustomData(int id, Consumer<FriendlyByteBuf> writer) {
         writeCustomData(SYNC_COVER_IMPLEMENTATION, buffer -> {
             buffer.writeVarInt(id);
             writer.accept(buffer);
@@ -450,7 +442,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public void markAsDirty() {
-        markDirty();
+        setChanged();
     }
 
     @Override
@@ -459,13 +451,13 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
     }
 
     @Override
-    public boolean shouldRefresh(@Nonnull World world, @Nonnull BlockPos pos, IBlockState oldState, IBlockState newSate) {
+    public boolean shouldRefresh(@Nonnull World world, @Nonnull BlockPos pos, BlockState oldState, BlockState newSate) {
         return oldState.getBlock() != newSate.getBlock();
     }
 
     public void doExplosion(float explosionPower) {
         getWorld().setBlockToAir(getPos());
-        if (!getWorld().isRemote) {
+        if (!getWorld().isClientSide) {
             ((WorldServer) getWorld()).spawnParticle(EnumParticleTypes.SMOKE_LARGE, getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5,
                     10, 0.2, 0.2, 0.2, 0.0);
         }

@@ -3,17 +3,17 @@ package net.nemezanevem.gregtech.api.capability;
 
 import net.minecraft.world.item.crafting.RecipeType;
 
-public interface IMultipleRecipeMaps {
+public interface IMultipleRecipeTypes {
 
     /**
-     * Used to get all possible RecipeMaps a Multiblock can run
-     * @return array of RecipeMaps
+     * Used to get all possible RecipeTypes a Multiblock can run
+     * @return array of RecipeTypes
      */
-    RecipeType<?>[] getAvailableRecipeMaps();
+    RecipeType<?>[] getAvailableRecipeTypes();
 
     /**
      *
-     * @return the currently selected RecipeMap
+     * @return the currently selected RecipeType
      */
-    RecipeType<?> getCurrentRecipeMap();
+    RecipeType<?> getCurrentRecipeType();
 }

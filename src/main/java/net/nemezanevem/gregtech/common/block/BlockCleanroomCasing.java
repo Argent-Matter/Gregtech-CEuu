@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;

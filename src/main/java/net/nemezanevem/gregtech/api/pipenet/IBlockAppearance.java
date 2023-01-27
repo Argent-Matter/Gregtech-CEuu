@@ -1,9 +1,9 @@
 package net.nemezanevem.gregtech.api.pipenet;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 
 import javax.annotation.Nonnull;
 
@@ -24,7 +24,7 @@ public interface IBlockAppearance {
      * @param side  The side of the block.
      */
     @Nonnull
-    IBlockState getVisualState(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull Direction side);
+    BlockState getVisualState(@Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull Direction side);
 
     /**
      * This function returns whether the block's renderer will visually connect to other blocks implementing IBlockAppearance.

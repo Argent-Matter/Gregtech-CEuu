@@ -1,44 +1,46 @@
 package net.nemezanevem.gregtech.api.pipenet;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.nemezanevem.gregtech.api.pipenet.tickable.TickableWorldPipeNet;
 
 import javax.annotation.Nonnull;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>> extends WorldSavedData {
+public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>> extends SavedData {
 
-    private WeakReference<World> worldRef = new WeakReference<>(null);
+    private WeakReference<Level> worldRef = new WeakReference<>(null);
     protected List<T> pipeNets = new ArrayList<>();
     protected final Map<ChunkPos, List<T>> pipeNetsByChunk = new HashMap<>();
 
-    public WorldPipeNet(String name) {
-        super(name);
+    public WorldPipeNet() {
+        super();
     }
 
-    public World getWorld() {
+    public Level getWorld() {
         return this.worldRef.get();
     }
 
-    protected void setWorldAndInit(World world) {
+    protected void setWorldAndInit(Level world) {
         if (world != this.worldRef.get()) {
             this.worldRef = new WeakReference<>(world);
             onWorldSet();
         }
     }
 
-    public static String getDataID(final String baseID, final World world) {
-        if (world == null || world.isRemote)
+    public static String getDataID(final String baseID, final Level world) {
+        if (world == null || world.isClientSide)
             throw new RuntimeException("WorldPipeNet should only be created on the server!");
-        int dimension = world.provider.getDimension();
-        return dimension == 0 ? baseID : baseID + '.' + dimension;
+        ResourceKey<Level> dimension = world.dimension();
+        return dimension == Level.OVERWORLD ? baseID : baseID + '.' + dimension.location();
     }
 
     protected void onWorldSet() {
@@ -48,8 +50,8 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
     public void addNode(BlockPos nodePos, NodeDataType nodeData, int mark, int openConnections, boolean isActive) {
         T myPipeNet = null;
         Node<NodeDataType> node = new Node<>(nodeData, openConnections, mark, isActive);
-        for (Direction facing : Direction.VALUES) {
-            BlockPos offsetPos = nodePos.offset(facing);
+        for (Direction facing : Direction.values()) {
+            BlockPos offsetPos = nodePos.offset(facing.getNormal());
             T pipeNet = getNetFromPos(offsetPos);
             Node<NodeDataType> secondNode = pipeNet == null ? null : pipeNet.getAllNodes().get(offsetPos);
             if (pipeNet != null && pipeNet.canAttachNode(nodeData) &&
@@ -67,7 +69,7 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
             myPipeNet = createNetInstance();
             myPipeNet.addNode(nodePos, node);
             addPipeNet(myPipeNet);
-            markDirty();
+            setDirty();
         }
     }
 
@@ -130,12 +132,11 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
 
     protected abstract T createNetInstance();
 
-    @Override
-    public void readFromNBT(NBTTagCompound nbt) {
+    public void readFromNBT(CompoundTag nbt) {
         this.pipeNets = new ArrayList<>();
-        NBTTagList allEnergyNets = nbt.getTagList("PipeNets", NBT.TAG_COMPOUND);
-        for (int i = 0; i < allEnergyNets.tagCount(); i++) {
-            NBTTagCompound pNetTag = allEnergyNets.getCompoundTagAt(i);
+        ListTag allEnergyNets = nbt.getList("PipeNets", Tag.TAG_COMPOUND);
+        for (int i = 0; i < allEnergyNets.size(); i++) {
+            CompoundTag pNetTag = allEnergyNets.getCompound(i);
             T pipeNet = createNetInstance();
             pipeNet.deserializeNBT(pNetTag);
             addPipeNetSilently(pipeNet);
@@ -144,13 +145,13 @@ public abstract class WorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
 
     @Nonnull
     @Override
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-        NBTTagList allPipeNets = new NBTTagList();
+    public CompoundTag save(@Nonnull CompoundTag compound) {
+        ListTag allPipeNets = new ListTag();
         for (T pipeNet : pipeNets) {
-            NBTTagCompound pNetTag = pipeNet.serializeNBT();
-            allPipeNets.appendTag(pNetTag);
+            CompoundTag pNetTag = pipeNet.serializeNBT();
+            allPipeNets.add(pNetTag);
         }
-        compound.setTag("PipeNets", allPipeNets);
+        compound.put("PipeNets", allPipeNets);
         return compound;
     }
 }

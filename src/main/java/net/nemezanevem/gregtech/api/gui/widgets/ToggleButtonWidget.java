@@ -12,7 +12,7 @@ import gregtech.api.util.function.BooleanConsumer;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -93,7 +93,7 @@ public class ToggleButtonWidget extends Widget {
         if (isMouseOverElement(mouseX, mouseY) && tooltipText != null) {
             String postfix = isPressed ? ".enabled" : ".disabled";
             String tooltipHoverString = tooltipText + postfix;
-            List<String> hoverList = Arrays.asList(I18n.format(tooltipHoverString, tooltipArgs).split("/n"));
+            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString, tooltipArgs).split("/n"));
             drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
@@ -112,7 +112,7 @@ public class ToggleButtonWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 1) {
             this.isPressed = buffer.readBoolean();
@@ -135,7 +135,7 @@ public class ToggleButtonWidget extends Widget {
 
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             this.isPressed = buffer.readBoolean();

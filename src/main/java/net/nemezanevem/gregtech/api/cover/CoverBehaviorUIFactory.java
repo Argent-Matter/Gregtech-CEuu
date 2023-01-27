@@ -6,8 +6,8 @@ import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.UIFactory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.entity.player.Player;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
@@ -25,12 +25,12 @@ public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
     }
 
     @Override
-    protected ModularUI createUITemplate(CoverBehavior holder, EntityPlayer entityPlayer) {
+    protected ModularUI createUITemplate(CoverBehavior holder, Player entityPlayer) {
         return ((CoverWithUI) holder).createUI(entityPlayer);
     }
 
     @Override
-    protected CoverBehavior readHolderFromSyncData(PacketBuffer syncData) {
+    protected CoverBehavior readHolderFromSyncData(FriendlyByteBuf syncData) {
         BlockPos blockPos = syncData.readBlockPos();
         Direction attachedSide = Direction.VALUES[syncData.readByte()];
         TileEntity tileEntity = Minecraft.getMinecraft().world.getTileEntity(blockPos);
@@ -42,7 +42,7 @@ public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
     }
 
     @Override
-    protected void writeHolderToSyncData(PacketBuffer syncData, CoverBehavior holder) {
+    protected void writeHolderToSyncData(FriendlyByteBuf syncData, CoverBehavior holder) {
         syncData.writeBlockPos(holder.coverHolder.getPos());
         syncData.writeByte(holder.attachedSide.ordinal());
     }

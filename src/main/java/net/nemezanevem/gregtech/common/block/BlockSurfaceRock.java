@@ -16,9 +16,15 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -34,6 +40,9 @@ import net.nemezanevem.gregtech.common.block.properties.PropertyMaterial;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class BlockSurfaceRock extends DelayedStateBlock {
@@ -42,11 +51,10 @@ public class BlockSurfaceRock extends DelayedStateBlock {
     public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GregTech.MODID, "surface_rock"), "normal");
     public final PropertyMaterial variantProperty;
 
-    public BlockSurfaceRock(Material[] materials) {
+    public BlockSurfaceRock(List<Material> validMaterials) {
         super(BlockBehaviour.Properties.of(net.minecraft.world.level.material.Material.VEGETABLE).strength(0.25f, 0.0f));
-        this.variantProperty = PropertyMaterial.create("variant", materials);
+        this.variantProperty = PropertyMaterial.create("variant", validMaterials);
         initBlockState();
-        this.registerDefaultState(this.stateDefinition.any().setValue(variantProperty, materials));
     }
 
     public BlockState getBlock(Material material) {
@@ -98,19 +106,16 @@ public class BlockSurfaceRock extends DelayedStateBlock {
     }
 
     @Override
-    public void getDrops(NonNullList<ItemStack> drops, @Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull BlockState state, int fortune) {
-        int amount = 3 + GTValues.RNG.nextInt((int) (2 + fortune * 1.5));
-        drops.add(getDropStack(state, amount));
-    }
-
-    @Override
-    public boolean isFullCube(@Nonnull BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isOpaqueCube(@Nonnull BlockState state) {
-        return false;
+    public List<ItemStack> getDrops(BlockState pState, LootContext.Builder pBuilder) {
+        ResourceLocation resourcelocation = this.getLootTable();
+        if (resourcelocation == BuiltInLootTables.EMPTY) {
+            return Collections.emptyList();
+        } else {
+            LootContext lootcontext = pBuilder.withParameter(LootContextParams.BLOCK_STATE, pState).create(LootContextParamSets.BLOCK);
+            ServerLevel serverlevel = lootcontext.getLevel();
+            LootTable loottable = serverlevel.getServer().getLootTables().get(resourcelocation);
+            return loottable.getRandomItems(lootcontext);
+        }
     }
 
     @Override

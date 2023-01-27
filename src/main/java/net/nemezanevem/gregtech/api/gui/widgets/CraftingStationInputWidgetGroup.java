@@ -5,7 +5,7 @@ import gregtech.api.gui.IRenderContext;
 import gregtech.api.gui.Widget;
 import gregtech.api.util.Position;
 import gregtech.common.metatileentities.storage.CraftingRecipeLogic;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class CraftingStationInputWidgetGroup extends AbstractWidgetGroup {
@@ -53,7 +53,7 @@ public class CraftingStationInputWidgetGroup extends AbstractWidgetGroup {
         }
     }
 
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 2) {
             tintLocations = buffer.readShort();

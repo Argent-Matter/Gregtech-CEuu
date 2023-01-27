@@ -1,25 +1,25 @@
 package net.nemezanevem.gregtech.api.pipenet.tile;
 
-import gregtech.api.pipenet.block.BlockPipe;
-import gregtech.api.pipenet.block.IPipeType;
-import gregtech.api.unification.material.Material;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.unification.material.Material;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public interface IPipeTile<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> {
 
-    World getPipeWorld();
+    Level getPipeWorld();
 
     BlockPos getPipePos();
 
     default long getTickTimer() {
-        return getPipeWorld().getTotalWorldTime();
+        return getPipeWorld().getGameTime();
     }
 
     BlockPipe<PipeType, NodeDataType, ?> getPipeBlock();
@@ -74,7 +74,7 @@ public interface IPipeTile<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     void notifyBlockUpdate();
 
-    void writeCoverCustomData(int id, Consumer<PacketBuffer> writer);
+    void writeCoverCustomData(int id, Consumer<FriendlyByteBuf> writer);
 
     void markAsDirty();
 

@@ -1,23 +1,23 @@
 package net.nemezanevem.gregtech.api.pipenet;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants.NBT;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import io.netty.util.collection.IntObjectHashMap;
+import io.netty.util.collection.IntObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.*;
 import java.util.Map.Entry;
 
-public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCompound> {
+public abstract class PipeNet<NodeDataType> implements INBTSerializable<CompoundTag> {
 
     protected final WorldPipeNet<NodeDataType, PipeNet<NodeDataType>> worldData;
     private final Map<BlockPos, Node<NodeDataType>> nodeByBlockPos = new HashMap<>();
@@ -35,7 +35,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
         return Collections.unmodifiableSet(ownedChunks.keySet());
     }
 
-    public World getWorldData() {
+    public Level getWorldData() {
         return worldData.getWorld();
     }
 
@@ -83,13 +83,13 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
     protected void addNode(BlockPos nodePos, Node<NodeDataType> node) {
         addNodeSilently(nodePos, node);
         onNodeConnectionsUpdate();
-        worldData.markDirty();
+        worldData.setDirty();
     }
 
     protected Node<NodeDataType> removeNodeWithoutRebuilding(BlockPos nodePos) {
         Node<NodeDataType> removedNode = this.nodeByBlockPos.remove(nodePos);
         ensureRemovedFromChunk(nodePos);
-        worldData.markDirty();
+        worldData.setDirty();
         return removedNode;
     }
 
@@ -128,7 +128,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
             return;
 
         setBlocked(selfNode, facing, isBlocked);
-        BlockPos offsetPos = nodePos.offset(facing);
+        BlockPos offsetPos = nodePos.offset(facing.getNormal());
         PipeNet<NodeDataType> pipeNetAtOffset = worldData.getNetFromPos(offsetPos);
         if (pipeNetAtOffset == null) {
             //if there is no any pipe net at this side,
@@ -171,7 +171,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
             }
         }
         onNodeConnectionsUpdate();
-        worldData.markDirty();
+        worldData.setDirty();
     }
 
     protected void updateMark(BlockPos nodePos, int newMark) {
@@ -182,8 +182,8 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
         Node<NodeDataType> selfNode = getNodeAt(nodePos);
         int oldMark = selfNode.mark;
         selfNode.mark = newMark;
-        for (Direction facing : Direction.VALUES) {
-            BlockPos offsetPos = nodePos.offset(facing);
+        for (Direction facing : Direction.values()) {
+            BlockPos offsetPos = nodePos.offset(facing.getNormal());
             PipeNet<NodeDataType> otherPipeNet = worldData.getNetFromPos(offsetPos);
             Node<NodeDataType> secondNode = otherPipeNet == null ? null : otherPipeNet.getNodeAt(offsetPos);
             if (secondNode == null)
@@ -222,21 +222,21 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
             }
         }
         onNodeConnectionsUpdate();
-        worldData.markDirty();
+        worldData.setDirty();
     }
 
     private void setBlocked(Node<NodeDataType> selfNode, Direction facing, boolean isBlocked) {
         if (!isBlocked) {
-            selfNode.openConnections |= 1 << facing.getIndex();
+            selfNode.openConnections |= 1 << facing.ordinal();
         } else {
-            selfNode.openConnections &= ~(1 << facing.getIndex());
+            selfNode.openConnections &= ~(1 << facing.ordinal());
         }
     }
 
     public boolean markNodeAsActive(BlockPos nodePos, boolean isActive) {
         if (containsNode(nodePos) && getNodeAt(nodePos).isActive != isActive) {
             getNodeAt(nodePos).isActive = isActive;
-            worldData.markDirty();
+            worldData.setDirty();
             onNodeConnectionsUpdate();
             return true;
         }
@@ -274,16 +274,16 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
         HashMap<BlockPos, Node<NodeDataType>> observedSet = new HashMap<>();
         observedSet.put(startPos, getNodeAt(startPos));
         Node<NodeDataType> firstNode = getNodeAt(startPos);
-        MutableBlockPos currentPos = new MutableBlockPos(startPos);
+        BlockPos.MutableBlockPos currentPos = startPos.mutable();
         Stack<Direction> moveStack = new Stack<>();
         main:
         while (true) {
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 currentPos.move(facing);
                 Node<NodeDataType> secondNode = getNodeAt(currentPos);
                 //if there is node, and it can connect with previous node, add it to list, and set previous node as current
                 if (secondNode != null && canNodesConnect(firstNode, facing, secondNode, this) && !observedSet.containsKey(currentPos)) {
-                    observedSet.put(currentPos.toImmutable(), getNodeAt(currentPos));
+                    observedSet.put(currentPos.immutable(), getNodeAt(currentPos));
                     firstNode = secondNode;
                     moveStack.push(facing.getOpposite());
                     continue main;
@@ -301,7 +301,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
     protected void rebuildNetworkOnNodeRemoval(BlockPos nodePos, Node<NodeDataType> selfNode) {
         int amountOfConnectedSides = 0;
         for (Direction facing : Direction.values()) {
-            BlockPos offsetPos = nodePos.offset(facing);
+            BlockPos offsetPos = nodePos.offset(facing.getNormal());
             if (containsNode(offsetPos))
                 amountOfConnectedSides++;
         }
@@ -309,8 +309,8 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
         //because they are only on on side or doesn't exist at all
         //this saves a lot of performance in big networks, which are quite big to depth-first them fastly
         if (amountOfConnectedSides >= 2) {
-            for (Direction facing : Direction.VALUES) {
-                BlockPos offsetPos = nodePos.offset(facing);
+            for (Direction facing : Direction.values()) {
+                BlockPos offsetPos = nodePos.offset(facing.getNormal());
                 Node<NodeDataType> secondNode = getNodeAt(offsetPos);
                 if (secondNode == null || !canNodesConnect(selfNode, facing, secondNode, this)) {
                     //if there isn't any neighbour node, or it wasn't connected with us, just skip it
@@ -336,7 +336,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
             worldData.removePipeNet(this);
         }
         onNodeConnectionsUpdate();
-        worldData.markDirty();
+        worldData.setDirty();
     }
 
     protected boolean areNodesCustomContactable(NodeDataType first, NodeDataType second, PipeNet<NodeDataType> secondNodePipeNet) {
@@ -357,105 +357,105 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<NBTTagCo
     protected void transferNodeData(Map<BlockPos, Node<NodeDataType>> transferredNodes, PipeNet<NodeDataType> parentNet) {
         transferredNodes.forEach(this::addNodeSilently);
         onNodeConnectionsUpdate();
-        worldData.markDirty();
+        worldData.setDirty();
     }
 
     /**
      * Serializes node data into specified tag compound
      * Used for writing persistent node data
      */
-    protected abstract void writeNodeData(NodeDataType nodeData, NBTTagCompound tagCompound);
+    protected abstract void writeNodeData(NodeDataType nodeData, CompoundTag tagCompound);
 
     /**
      * Deserializes node data from specified tag compound
      * Used for reading persistent node data
      */
-    protected abstract NodeDataType readNodeData(NBTTagCompound tagCompound);
+    protected abstract NodeDataType readNodeData(CompoundTag tagCompound);
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setTag("Nodes", serializeAllNodeList(nodeByBlockPos));
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = new CompoundTag();
+        compound.put("Nodes", serializeAllNodeList(nodeByBlockPos));
         return compound;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.nodeByBlockPos.clear();
         this.ownedChunks.clear();
-        deserializeAllNodeList(nbt.getCompoundTag("Nodes"));
+        deserializeAllNodeList(nbt.getCompound("Nodes"));
     }
 
-    protected void deserializeAllNodeList(NBTTagCompound compound) {
-        NBTTagList allNodesList = compound.getTagList("NodeIndexes", NBT.TAG_COMPOUND);
-        NBTTagList wirePropertiesList = compound.getTagList("WireProperties", NBT.TAG_COMPOUND);
-        TIntObjectMap<NodeDataType> readProperties = new TIntObjectHashMap<>();
+    protected void deserializeAllNodeList(CompoundTag compound) {
+        ListTag allNodesList = compound.getList("NodeIndexes", Tag.TAG_COMPOUND);
+        ListTag wirePropertiesList = compound.getList("WireProperties", Tag.TAG_COMPOUND);
+        BiMap<Integer, NodeDataType> readProperties = HashBiMap.create(10);
 
-        for (int i = 0; i < wirePropertiesList.tagCount(); i++) {
-            NBTTagCompound propertiesTag = wirePropertiesList.getCompoundTagAt(i);
-            int wirePropertiesIndex = propertiesTag.getInteger("index");
+        for (int i = 0; i < wirePropertiesList.size(); i++) {
+            CompoundTag propertiesTag = wirePropertiesList.getCompound(i);
+            int wirePropertiesIndex = propertiesTag.getInt("index");
             NodeDataType nodeData = readNodeData(propertiesTag);
             readProperties.put(wirePropertiesIndex, nodeData);
         }
 
-        for (int i = 0; i < allNodesList.tagCount(); i++) {
-            NBTTagCompound nodeTag = allNodesList.getCompoundTagAt(i);
-            int x = nodeTag.getInteger("x");
-            int y = nodeTag.getInteger("y");
-            int z = nodeTag.getInteger("z");
-            int wirePropertiesIndex = nodeTag.getInteger("index");
+        for (int i = 0; i < allNodesList.size(); i++) {
+            CompoundTag nodeTag = allNodesList.getCompound(i);
+            int x = nodeTag.getInt("x");
+            int y = nodeTag.getInt("y");
+            int z = nodeTag.getInt("z");
+            int wirePropertiesIndex = nodeTag.getInt("index");
             BlockPos blockPos = new BlockPos(x, y, z);
             NodeDataType nodeData = readProperties.get(wirePropertiesIndex);
-            int openConnections = nodeTag.getInteger("open");
-            int mark = nodeTag.getInteger("mark");
+            int openConnections = nodeTag.getInt("open");
+            int mark = nodeTag.getInt("mark");
             boolean isNodeActive = nodeTag.getBoolean("active");
             addNodeSilently(blockPos, new Node<>(nodeData, openConnections, mark, isNodeActive));
         }
     }
 
-    protected NBTTagCompound serializeAllNodeList(Map<BlockPos, Node<NodeDataType>> allNodes) {
-        NBTTagCompound compound = new NBTTagCompound();
-        NBTTagList allNodesList = new NBTTagList();
-        NBTTagList wirePropertiesList = new NBTTagList();
-        TObjectIntMap<NodeDataType> alreadyWritten = new TObjectIntHashMap<>(10, 0.5f, -1);
+    protected CompoundTag serializeAllNodeList(Map<BlockPos, Node<NodeDataType>> allNodes) {
+        CompoundTag compound = new CompoundTag();
+        ListTag allNodesList = new ListTag();
+        ListTag wirePropertiesList = new ListTag();
+        BiMap<NodeDataType, Integer> alreadyWritten = HashBiMap.create(10);
         int currentIndex = 0;
 
         for (Entry<BlockPos, Node<NodeDataType>> entry : allNodes.entrySet()) {
             BlockPos nodePos = entry.getKey();
             Node<NodeDataType> node = entry.getValue();
-            NBTTagCompound nodeTag = new NBTTagCompound();
-            nodeTag.setInteger("x", nodePos.getX());
-            nodeTag.setInteger("y", nodePos.getY());
-            nodeTag.setInteger("z", nodePos.getZ());
-            int wirePropertiesIndex = alreadyWritten.get(node.data);
+            CompoundTag nodeTag = new CompoundTag();
+            nodeTag.putInt("x", nodePos.getX());
+            nodeTag.putInt("y", nodePos.getY());
+            nodeTag.putInt("z", nodePos.getZ());
+            int wirePropertiesIndex = alreadyWritten.getOrDefault(node.data, -1);
             if (wirePropertiesIndex == -1) {
                 wirePropertiesIndex = currentIndex;
                 alreadyWritten.put(node.data, wirePropertiesIndex);
                 currentIndex++;
             }
-            nodeTag.setInteger("index", wirePropertiesIndex);
+            nodeTag.putInt("index", wirePropertiesIndex);
             if (node.mark != Node.DEFAULT_MARK) {
-                nodeTag.setInteger("mark", node.mark);
+                nodeTag.putInt("mark", node.mark);
             }
             if (node.openConnections > 0) {
-                nodeTag.setInteger("open", node.openConnections);
+                nodeTag.putInt("open", node.openConnections);
             }
             if (node.isActive) {
-                nodeTag.setBoolean("active", true);
+                nodeTag.putBoolean("active", true);
             }
-            allNodesList.appendTag(nodeTag);
+            allNodesList.add(nodeTag);
         }
 
         for (NodeDataType nodeData : alreadyWritten.keySet()) {
-            int wirePropertiesIndex = alreadyWritten.get(nodeData);
-            NBTTagCompound propertiesTag = new NBTTagCompound();
-            propertiesTag.setInteger("index", wirePropertiesIndex);
+            int wirePropertiesIndex = alreadyWritten.getOrDefault(nodeData, -1);
+            CompoundTag propertiesTag = new CompoundTag();
+            propertiesTag.putInt("index", wirePropertiesIndex);
             writeNodeData(nodeData, propertiesTag);
-            wirePropertiesList.appendTag(propertiesTag);
+            wirePropertiesList.add(propertiesTag);
         }
 
-        compound.setTag("NodeIndexes", allNodesList);
-        compound.setTag("WireProperties", wirePropertiesList);
+        compound.put("NodeIndexes", allNodesList);
+        compound.put("WireProperties", wirePropertiesList);
         return compound;
     }
 

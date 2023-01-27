@@ -15,7 +15,7 @@ public class SimpleCapabilityManager {
         event.register(IFuelable.class);
         event.register(IMultiblockController.class);
         event.register(IMaintenance.class);
-        event.register(IMultipleRecipeMaps.class);
+        event.register(IMultipleRecipeTypes.class);
         event.register(AbstractRecipeLogic.class);
         event.register(HardwareProvider.class);
         event.register(ConverterTrait.class);

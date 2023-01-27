@@ -10,6 +10,7 @@ import net.nemezanevem.gregtech.api.unification.material.Material;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public class PropertyMaterial extends Property<Material> {
@@ -36,12 +37,12 @@ public class PropertyMaterial extends Property<Material> {
         if (this.allowedValues.contains(material)) {
             return Optional.of(material);
         }
-        return Optional.of(GtMaterials.NULL);
+        return Optional.of(GtMaterials.NULL.get());
     }
 
     @Nonnull
     @Override
-    public Collection<Material> getPossibleValues() {
+    public List<Material> getPossibleValues() {
         return allowedValues;
     }
 
@@ -55,8 +56,7 @@ public class PropertyMaterial extends Property<Material> {
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof PropertyMaterial) {
-            PropertyMaterial propertyMaterial = (PropertyMaterial) obj;
+        } else if (obj instanceof PropertyMaterial propertyMaterial) {
             return this.allowedValues.equals(propertyMaterial.allowedValues);
         } else {
             return false;

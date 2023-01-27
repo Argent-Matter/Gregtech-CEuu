@@ -7,8 +7,8 @@ import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.TileEntityPipeBase;
 import gregtech.api.unification.material.Material;
 import gregtech.api.unification.material.Materials;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 
 import javax.annotation.Nonnull;
 
@@ -26,7 +26,7 @@ public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType>
     public void setPipeData(BlockPipe<PipeType, NodeDataType, ?> pipeBlock, PipeType pipeType, Material pipeMaterial) {
         super.setPipeData(pipeBlock, pipeType);
         this.pipeMaterial = pipeMaterial;
-        if (!getWorld().isRemote) {
+        if (!getWorld().isClientSide) {
             writeCustomData(UPDATE_PIPE_MATERIAL, this::writePipeMaterial);
         }
     }
@@ -49,14 +49,14 @@ public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType>
 
     @Nonnull
     @Override
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
         super.writeToNBT(compound);
         compound.setString("PipeMaterial", pipeMaterial.toString());
         return compound;
     }
 
     @Override
-    public void readFromNBT(@Nonnull NBTTagCompound compound) {
+    public void readFromNBT(@Nonnull CompoundTag compound) {
         super.readFromNBT(compound);
         this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObject(compound.getString("PipeMaterial"));
         if (this.pipeMaterial == null) {
@@ -64,28 +64,28 @@ public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType>
         }
     }
 
-    private void writePipeMaterial(PacketBuffer buf) {
+    private void writePipeMaterial(FriendlyByteBuf buf) {
         buf.writeVarInt(GregTechAPI.MATERIAL_REGISTRY.getIDForObject(pipeMaterial));
     }
 
-    private void readPipeMaterial(PacketBuffer buf) {
+    private void readPipeMaterial(FriendlyByteBuf buf) {
         this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObjectById(buf.readVarInt());
     }
 
     @Override
-    public void writeInitialSyncData(PacketBuffer buf) {
+    public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
         buf.writeVarInt(GregTechAPI.MATERIAL_REGISTRY.getIDForObject(pipeMaterial));
     }
 
     @Override
-    public void receiveInitialSyncData(PacketBuffer buf) {
+    public void receiveInitialSyncData(FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
         this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObjectById(buf.readVarInt());
     }
 
     @Override
-    public void receiveCustomData(int discriminator, PacketBuffer buf) {
+    public void receiveCustomData(int discriminator, FriendlyByteBuf buf) {
         super.receiveCustomData(discriminator, buf);
         if (discriminator == UPDATE_PIPE_MATERIAL) {
             readPipeMaterial(buf);

@@ -7,7 +7,7 @@ import gregtech.api.util.Size;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +89,7 @@ public class SimpleTextWidget extends Widget {
 
     @Override
     public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        String text = formatLocale.isEmpty() ? (I18n.hasKey(lastText) ? I18n.format(lastText) : lastText) : I18n.format(formatLocale, lastText);
+        String text = formatLocale.isEmpty() ? (I18n.hasKey(lastText) ? Component.translatable(lastText) : lastText) : Component.translatable(formatLocale, lastText);
         List<String> texts;
         if (this.width > 0) {
             texts = Minecraft.getMinecraft().fontRenderer.listFormattedStringToWidth(text, (int) (width * (1 / scale)));
@@ -117,7 +117,7 @@ public class SimpleTextWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             this.lastText = buffer.readString(Short.MAX_VALUE);
             updateSize();

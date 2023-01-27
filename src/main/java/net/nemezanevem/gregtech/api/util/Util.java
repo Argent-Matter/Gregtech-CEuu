@@ -1,13 +1,26 @@
 package net.nemezanevem.gregtech.api.util;
 
+import com.google.common.collect.Lists;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagManager;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
@@ -17,6 +30,8 @@ import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
 
+import java.text.NumberFormat;
+import java.util.AbstractList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -24,6 +39,8 @@ import java.util.TreeMap;
 import static net.nemezanevem.gregtech.api.GTValues.V;
 
 public class Util {
+
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
 
     private static final NavigableMap<Long, Byte> tierByVoltage = new TreeMap<>();
 
@@ -150,6 +167,149 @@ public class Util {
                 return true; //if we inserted all items, return
         }
         return merged;
+    }
+
+
+    public static int getRedstonePower(Level world, BlockPos blockPos, Direction side) {
+        BlockPos offsetPos = blockPos.offset(side.getNormal());
+        int worldPower = world.getSignal(offsetPos, side);
+        if (worldPower < 15) {
+            BlockState offsetState = world.getBlockState(offsetPos);
+            if (offsetState.getBlock() instanceof RedStoneWireBlock) {
+                int wirePower = offsetState.getValue(RedStoneWireBlock.POWER);
+                return Math.max(worldPower, wirePower);
+            }
+        }
+        return worldPower;
+    }
+
+    /**
+     * If pos of this world loaded
+     */
+    public static boolean isPosChunkLoaded(Level world, BlockPos pos) {
+        return !world.getChunkAt(pos).isEmpty();
+    }
+
+
+    /**
+     * @return a list of itemstack linked with given item handler
+     * modifications in list will reflect on item handler and wise-versa
+     */
+    public static List<ItemStack> itemHandlerToList(IItemHandlerModifiable inputs) {
+        return new AbstractList<ItemStack>() {
+            @Override
+            public ItemStack set(int index, ItemStack element) {
+                ItemStack oldStack = inputs.getStackInSlot(index);
+                inputs.setStackInSlot(index, element == null ? ItemStack.EMPTY : element);
+                return oldStack;
+            }
+
+            @Override
+            public ItemStack get(int index) {
+                return inputs.getStackInSlot(index);
+            }
+
+            @Override
+            public int size() {
+                return inputs.getSlots();
+            }
+        };
+    }
+
+    /**
+     * @return a list of fluidstack linked with given fluid handler
+     * modifications in list will reflect on fluid handler and wise-versa
+     */
+    public static List<FluidStack> fluidHandlerToList(IMultipleTankHandler fluidInputs) {
+        List<IFluidTank> backedList = fluidInputs.getFluidTanks();
+        return new AbstractList<FluidStack>() {
+            @Override
+            public FluidStack set(int index, FluidStack element) {
+                IFluidTank fluidTank = backedList.get(index);
+                FluidStack oldStack = fluidTank.getFluid();
+                if (!(fluidTank instanceof FluidTank))
+                    return oldStack;
+                ((FluidTank) backedList.get(index)).setFluid(element);
+                return oldStack;
+            }
+
+            @Override
+            public FluidStack get(int index) {
+                return backedList.get(index).getFluid();
+            }
+
+            @Override
+            public int size() {
+                return backedList.size();
+            }
+        };
+    }
+
+    public static NonNullList<ItemStack> copyStackList(List<ItemStack> itemStacks) {
+        ItemStack[] stacks = new ItemStack[itemStacks.size()];
+        for (int i = 0; i < itemStacks.size(); i++) {
+            stacks[i] = copy(itemStacks.get(i));
+        }
+        return NonNullList.of(ItemStack.EMPTY, stacks);
+    }
+
+    public static List<FluidStack> copyFluidList(List<FluidStack> fluidStacks) {
+        FluidStack[] stacks = new FluidStack[fluidStacks.size()];
+        for (int i = 0; i < fluidStacks.size(); i++) stacks[i] = fluidStacks.get(i).copy();
+        return Lists.newArrayList(stacks);
+    }
+
+    public static ItemStack copy(ItemStack... stacks) {
+        for (ItemStack stack : stacks)
+            if (!stack.isEmpty()) return stack.copy();
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Attempts to merge given ItemStack with ItemStacks in list supplied
+     * growing up to their max stack size
+     *
+     * @param stackToAdd item stack to merge.
+     * @return a list of stacks, with optimized stack sizes
+     */
+
+    public static List<ItemStack> addStackToItemStackList(ItemStack stackToAdd, List<ItemStack> itemStackList) {
+        if (!itemStackList.isEmpty()) {
+            for (int i = 0; i < itemStackList.size(); i++) {
+                ItemStack stackInList = itemStackList.get(i);
+                if (ItemStackHashStrategy.comparingAllButCount().equals(stackInList, stackToAdd)) {
+                    if (stackInList.getCount() < stackInList.getMaxStackSize()) {
+                        int insertable = stackInList.getMaxStackSize() - stackInList.getCount();
+                        if (insertable >= stackToAdd.getCount()) {
+                            stackInList.grow(stackToAdd.getCount());
+                            stackToAdd = ItemStack.EMPTY;
+                        } else {
+                            stackInList.grow(insertable);
+                            stackToAdd = stackToAdd.copy();
+                            stackToAdd.setCount(stackToAdd.getCount() - insertable);
+                        }
+                        if (stackToAdd.isEmpty()) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!stackToAdd.isEmpty()) {
+                itemStackList.add(stackToAdd);
+            }
+        } else {
+            itemStackList.add(stackToAdd.copy());
+        }
+        return itemStackList;
+    }
+
+
+    public static String formatNumbers(long number) {
+        return NUMBER_FORMAT.format(number);
+    }
+
+    public static String formatNumbers(double number) {
+        return NUMBER_FORMAT.format(number);
     }
 
     //just because CCL uses a different color format

@@ -14,7 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -71,7 +71,7 @@ public class BlockRubberLeaves extends BlockLeaves {
 
     @Nonnull
     @Override
-    public List<ItemStack> onSheared(@Nonnull ItemStack item, IBlockAccess world, BlockPos pos, int fortune) {
+    public List<ItemStack> onSheared(@Nonnull ItemStack item, BlockGetter world, BlockPos pos, int fortune) {
         return Lists.newArrayList(new ItemStack(this, 1, 0));
     }
 
@@ -95,7 +95,7 @@ public class BlockRubberLeaves extends BlockLeaves {
 
     @Override
     @SuppressWarnings("deprecation")
-    public boolean shouldSideBeRendered(@Nonnull BlockState blockState, @Nonnull IBlockAccess blockAccess, @Nonnull BlockPos pos, @Nonnull Direction side) {
+    public boolean shouldSideBeRendered(@Nonnull BlockState blockState, @Nonnull BlockGetter blockAccess, @Nonnull BlockPos pos, @Nonnull Direction side) {
         if (!fancyLeaves()) {
             return super.shouldSideBeRendered(blockState, blockAccess, pos, side);
         }

@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.cover;
 
-import net.minecraft.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 
 public interface IFacadeCover {
 

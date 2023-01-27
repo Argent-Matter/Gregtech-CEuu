@@ -11,7 +11,7 @@ import gregtech.api.gui.widgets.tab.VerticalTabListRenderer;
 import gregtech.api.gui.widgets.tab.VerticalTabListRenderer.HorizontalLocation;
 import gregtech.api.gui.widgets.tab.VerticalTabListRenderer.VerticalStartCorner;
 import gregtech.api.util.Position;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Tuple;
 
 import java.util.ArrayList;
@@ -154,7 +154,7 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 2) {
             int tabIndex = buffer.readVarInt();

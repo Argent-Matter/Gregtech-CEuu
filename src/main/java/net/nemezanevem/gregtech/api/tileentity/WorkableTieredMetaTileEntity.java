@@ -8,7 +8,7 @@ import gregtech.api.capability.impl.*;
 import gregtech.api.metatileentity.multiblock.ICleanroomProvider;
 import gregtech.api.metatileentity.multiblock.ICleanroomReceiver;
 import gregtech.api.recipes.FluidKey;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.util.GTUtility;
 import gregtech.client.renderer.ICubeRenderer;
 import net.minecraft.client.resources.I18n;
@@ -34,7 +34,7 @@ import java.util.function.Function;
 public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity implements IDataInfoProvider, ICleanroomReceiver {
 
     protected final RecipeLogicEnergy workable;
-    protected final RecipeMap<?> recipeMap;
+    protected final RecipeType<?> recipeMap;
     protected final ICubeRenderer renderer;
 
     private final Function<Integer, Integer> tankScalingFunction;
@@ -43,12 +43,12 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
 
     private ICleanroomProvider cleanroom;
 
-    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, ICubeRenderer renderer, int tier,
+    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                         Function<Integer, Integer> tankScalingFunction) {
         this(metaTileEntityId, recipeMap, renderer, tier, tankScalingFunction, true);
     }
 
-    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, ICubeRenderer renderer, int tier,
+    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                         Function<Integer, Integer> tankScalingFunction, boolean handlesRecipeOutputs) {
         super(metaTileEntityId, tier);
         this.renderer = renderer;
@@ -60,7 +60,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         reinitializeEnergyContainer();
     }
 
-    protected RecipeLogicEnergy createWorkable(RecipeMap<?> recipeMap) {
+    protected RecipeLogicEnergy createWorkable(RecipeType<?> recipeMap) {
         return new RecipeLogicEnergy(this, recipeMap, () -> energyContainer);
     }
 
@@ -95,19 +95,19 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     @Override
     protected IItemHandlerModifiable createImportItemHandler() {
         if (workable == null) return new ItemStackHandler(0);
-        return new NotifiableItemStackHandler(workable.getRecipeMap().getMaxInputs(), this, false);
+        return new NotifiableItemStackHandler(workable.getRecipeType().getMaxInputs(), this, false);
     }
 
     @Override
     protected IItemHandlerModifiable createExportItemHandler() {
         if (workable == null) return new ItemStackHandler(0);
-        return new NotifiableItemStackHandler(workable.getRecipeMap().getMaxOutputs(), this, true);
+        return new NotifiableItemStackHandler(workable.getRecipeType().getMaxOutputs(), this, true);
     }
 
     @Override
     protected FluidTankList createImportFluidHandler() {
         if (workable == null) return new FluidTankList(false);
-        NotifiableFluidTank[] fluidImports = new NotifiableFluidTank[workable.getRecipeMap().getMaxFluidInputs()];
+        NotifiableFluidTank[] fluidImports = new NotifiableFluidTank[workable.getRecipeType().getMaxFluidInputs()];
         for (int i = 0; i < fluidImports.length; i++) {
             NotifiableFluidTank filteredFluidHandler = new NotifiableFluidTank(this.tankScalingFunction.apply(this.getTier()), this, false);
             fluidImports[i] = filteredFluidHandler;
@@ -118,7 +118,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     @Override
     protected FluidTankList createExportFluidHandler() {
         if (workable == null) return new FluidTankList(false);
-        FluidTank[] fluidExports = new FluidTank[workable.getRecipeMap().getMaxFluidOutputs()];
+        FluidTank[] fluidExports = new FluidTank[workable.getRecipeType().getMaxFluidOutputs()];
         for (int i = 0; i < fluidExports.length; i++) {
             fluidExports[i] = new NotifiableFluidTank(this.tankScalingFunction.apply(this.getTier()), this, true);
         }
@@ -128,10 +128,10 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
     @Override
     public void addInformation(ItemStack stack, @Nullable World player, List<String> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
-        tooltip.add(I18n.format("gregtech.universal.tooltip.voltage_in", energyContainer.getInputVoltage(), GTValues.VNF[getTier()]));
-        tooltip.add(I18n.format("gregtech.universal.tooltip.energy_storage_capacity", energyContainer.getEnergyCapacity()));
-        if (workable.getRecipeMap().getMaxFluidInputs() != 0)
-            tooltip.add(I18n.format("gregtech.universal.tooltip.fluid_storage_capacity", this.tankScalingFunction.apply(getTier())));
+        tooltip.add(Component.translatable("gregtech.universal.tooltip.voltage_in", energyContainer.getInputVoltage(), GTValues.VNF[getTier()]));
+        tooltip.add(Component.translatable("gregtech.universal.tooltip.energy_storage_capacity", energyContainer.getEnergyCapacity()));
+        if (workable.getRecipeType().getMaxFluidInputs() != 0)
+            tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity", this.tankScalingFunction.apply(getTier())));
     }
 
     public Function<Integer, Integer> getTankScalingFunction() {
@@ -144,7 +144,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
 
     @Override
     public SoundEvent getSound() {
-        return workable.getRecipeMap().getSound();
+        return workable.getRecipeType().getSound();
     }
 
     @Nonnull
@@ -153,27 +153,27 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         List<ITextComponent> list = new ArrayList<>();
 
         if (workable != null) {
-            list.add(new TextComponentTranslation("behavior.tricorder.workable_progress",
-                    new TextComponentTranslation(GTUtility.formatNumbers(workable.getProgress() / 20)).setStyle(new Style().setColor(TextFormatting.GREEN)),
-                    new TextComponentTranslation(GTUtility.formatNumbers(workable.getMaxProgress() / 20)).setStyle(new Style().setColor(TextFormatting.YELLOW))
+            list.add(Component.translatable("behavior.tricorder.workable_progress",
+                    Component.translatable(GTUtility.formatNumbers(workable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
+                    Component.translatable(GTUtility.formatNumbers(workable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
             ));
 
             if (energyContainer != null) {
-                list.add(new TextComponentTranslation("behavior.tricorder.workable_stored_energy",
-                        new TextComponentTranslation(GTUtility.formatNumbers(energyContainer.getEnergyStored())).setStyle(new Style().setColor(TextFormatting.GREEN)),
-                        new TextComponentTranslation(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).setStyle(new Style().setColor(TextFormatting.YELLOW))
+                list.add(Component.translatable("behavior.tricorder.workable_stored_energy",
+                        Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
+                        Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
                 ));
             }
             // multi amp recipes: change 0 ? 0 : 1 to 0 ? 0 : amperage
             if (workable.getRecipeEUt() > 0) {
-                list.add(new TextComponentTranslation("behavior.tricorder.workable_consumption",
-                        new TextComponentTranslation(GTUtility.formatNumbers(workable.getRecipeEUt())).setStyle(new Style().setColor(TextFormatting.RED)),
-                        new TextComponentTranslation(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).setStyle(new Style().setColor(TextFormatting.RED))
+                list.add(Component.translatable("behavior.tricorder.workable_consumption",
+                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt())).withStyle(ChatFormatting.RED),
+                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
                 ));
             } else {
-                list.add(new TextComponentTranslation("behavior.tricorder.workable_production",
-                        new TextComponentTranslation(GTUtility.formatNumbers(workable.getRecipeEUt() * -1)).setStyle(new Style().setColor(TextFormatting.RED)),
-                        new TextComponentTranslation(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).setStyle(new Style().setColor(TextFormatting.RED))
+                list.add(Component.translatable("behavior.tricorder.workable_production",
+                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() * -1)).withStyle(ChatFormatting.RED),
+                        Component.translatable(GTUtility.formatNumbers(workable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
                 ));
             }
         }

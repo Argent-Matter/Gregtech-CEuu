@@ -58,7 +58,7 @@ public class PlayerInventoryHolder implements IUIHolder {
     }
 
     @Override
-    public boolean isRemote() {
+    public boolean isClientSide() {
         return player.getLevel().isClientSide;
     }
 

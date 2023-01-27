@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import gregtech.api.metatileentity.multiblock.ParallelLogicType;
-import gregtech.api.metatileentity.multiblock.RecipeMapSteamMultiblockController;
+import gregtech.api.metatileentity.multiblock.RecipeTypeSteamMultiblockController;
 import gregtech.api.recipes.RecipeBuilder;
 
 import javax.annotation.Nonnull;
@@ -15,7 +15,7 @@ import javax.annotation.Nonnull;
  */
 public class SteamMultiWorkable extends SteamMultiblockRecipeLogic {
 
-    public SteamMultiWorkable(RecipeMapSteamMultiblockController tileEntity, double conversionRate) {
+    public SteamMultiWorkable(RecipeTypeSteamMultiblockController tileEntity, double conversionRate) {
         super(tileEntity, tileEntity.recipeMap, tileEntity.getSteamFluidTank(), conversionRate);
     }
 

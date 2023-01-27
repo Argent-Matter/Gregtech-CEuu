@@ -1,12 +1,26 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import gregtech.api.GTValues;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IVentable;
 import gregtech.api.damagesources.DamageSources;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import gregtech.core.advancement.AdvancementTriggers;
@@ -15,8 +29,8 @@ import net.minecraft.block.state.BlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.PlayerMP;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.Direction;
 import net.minecraft.util.EnumParticleTypes;
@@ -25,6 +39,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fluids.IFluidTank;
+import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 
@@ -38,7 +56,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     private boolean ventingStuck;
     private Direction ventingSide;
 
-    public RecipeLogicSteam(MetaTileEntity tileEntity, RecipeMap<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
+    public RecipeLogicSteam(MetaTileEntity tileEntity, RecipeType<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
         super(tileEntity, recipeMap);
         this.steamFluidTank = steamFluidTank;
         this.conversionRate = conversionRate;
@@ -68,7 +86,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
 
     public void setVentingStuck(boolean ventingStuck) {
         this.ventingStuck = ventingStuck;
-        if (!metaTileEntity.getWorld().isRemote) {
+        if (!metaTileEntity.getWorld().isClientSide) {
             metaTileEntity.markDirty();
             writeCustomData(GregtechDataCodes.VENTING_STUCK, buf -> buf.writeBoolean(ventingStuck));
         }
@@ -79,7 +97,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
         this.needsVenting = needsVenting;
         if (!needsVenting && ventingStuck)
             setVentingStuck(false);
-        if (!metaTileEntity.getWorld().isRemote) {
+        if (!metaTileEntity.getWorld().isClientSide) {
             metaTileEntity.markDirty();
             writeCustomData(GregtechDataCodes.NEEDS_VENTING, buf -> buf.writeBoolean(needsVenting));
         }
@@ -87,19 +105,19 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
 
     public void setVentingSide(Direction ventingSide) {
         this.ventingSide = ventingSide;
-        if (!metaTileEntity.getWorld().isRemote) {
+        if (!metaTileEntity.getWorld().isClientSide) {
             metaTileEntity.markDirty();
-            writeCustomData(GregtechDataCodes.VENTING_SIDE, buf -> buf.writeByte(ventingSide.getIndex()));
+            writeCustomData(GregtechDataCodes.VENTING_SIDE, buf -> buf.writeByte(ventingSide.ordinal()));
         }
     }
 
     @Override
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
+    public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         super.receiveCustomData(dataId, buf);
         if (dataId == GregtechDataCodes.NEEDS_VENTING) {
             this.needsVenting = buf.readBoolean();
         } else if (dataId == GregtechDataCodes.VENTING_SIDE) {
-            this.ventingSide = Direction.VALUES[buf.readByte()];
+            this.ventingSide = Direction.values()[buf.readByte()];
             getMetaTileEntity().scheduleRenderUpdate();
         } else if (dataId == GregtechDataCodes.VENTING_STUCK) {
             this.ventingStuck = buf.readBoolean();
@@ -107,17 +125,17 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    public void writeInitialData(@Nonnull PacketBuffer buf) {
+    public void writeInitialData(@Nonnull FriendlyByteBuf buf) {
         super.writeInitialData(buf);
-        buf.writeByte(getVentingSide().getIndex());
+        buf.writeByte(getVentingSide().ordinal());
         buf.writeBoolean(needsVenting);
         buf.writeBoolean(ventingStuck);
     }
 
     @Override
-    public void receiveInitialData(@Nonnull PacketBuffer buf) {
+    public void receiveInitialData(@Nonnull FriendlyByteBuf buf) {
         super.receiveInitialData(buf);
-        this.ventingSide = Direction.VALUES[buf.readByte()];
+        this.ventingSide = Direction.values()[buf.readByte()];
         this.needsVenting = buf.readBoolean();
         this.ventingStuck = buf.readBoolean();
     }
@@ -126,11 +144,11 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     public void tryDoVenting() {
         BlockPos machinePos = metaTileEntity.getPos();
         Direction ventingSide = getVentingSide();
-        BlockPos ventingBlockPos = machinePos.offset(ventingSide);
+        BlockPos ventingBlockPos = machinePos.offset(ventingSide.getNormal());
         BlockState blockOnPos = metaTileEntity.getWorld().getBlockState(ventingBlockPos);
-        if (blockOnPos.getCollisionBoundingBox(metaTileEntity.getWorld(), ventingBlockPos) == Block.NULL_AABB) {
+        if (blockOnPos.getCollisionShape(metaTileEntity.getWorld(), ventingBlockPos) == Shapes.empty()) {
             performVentingAnimation(ventingBlockPos, machinePos);
-        } else if (GTUtility.tryBreakSnowLayer(metaTileEntity.getWorld(), ventingBlockPos, blockOnPos, false)) {
+        } else if (Util.tryBreakSnowLayer(metaTileEntity.getWorld(), ventingBlockPos, blockOnPos, false)) {
             performVentingAnimation(ventingBlockPos, machinePos);
         } else if (!ventingStuck) {
             setVentingStuck(true);
@@ -139,25 +157,25 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
 
     private void performVentingAnimation(BlockPos ventingBlockPos, BlockPos machinePos) {
         metaTileEntity.getWorld()
-                .getEntitiesWithinAABB(EntityLivingBase.class, new AxisAlignedBB(ventingBlockPos), EntitySelectors.CAN_AI_TARGET)
+                .getEntities(EntityTypeTest.forClass(LivingEntity.class), new AABB(ventingBlockPos), EntitySelector.LIVING_ENTITY_STILL_ALIVE)
                 .forEach(entity -> {
-                    entity.attackEntityFrom(DamageSources.getHeatDamage(), this.isHighPressure ? 12.0f : 6.0f);
-                    if (entity instanceof PlayerMP) {
-                        AdvancementTriggers.STEAM_VENT_DEATH.trigger((PlayerMP) entity);
+                    entity.hurt(DamageSources.getHeatDamage(), this.isHighPressure ? 12.0f : 6.0f);
+                    if (entity instanceof ServerPlayer serverPlayer) {
+                        AdvancementTriggers.STEAM_VENT_DEATH.trigger(serverPlayer);
                     }
                 });
-        WorldServer world = (WorldServer) metaTileEntity.getWorld();
-        double posX = machinePos.getX() + 0.5 + ventingSide.getXOffset() * 0.6;
-        double posY = machinePos.getY() + 0.5 + ventingSide.getYOffset() * 0.6;
-        double posZ = machinePos.getZ() + 0.5 + ventingSide.getZOffset() * 0.6;
+        ServerLevel world = (ServerLevel) metaTileEntity.getWorld();
+        double posX = machinePos.getX() + 0.5 + ventingSide.getStepX() * 0.6;
+        double posY = machinePos.getY() + 0.5 + ventingSide.getStepY() * 0.6;
+        double posZ = machinePos.getZ() + 0.5 + ventingSide.getStepZ() * 0.6;
 
-        world.spawnParticle(EnumParticleTypes.CLOUD, posX, posY, posZ,
-                7 + world.rand.nextInt(3),
-                ventingSide.getXOffset() / 2.0,
-                ventingSide.getYOffset() / 2.0,
-                ventingSide.getZOffset() / 2.0, 0.1);
+        world.sendParticles(ParticleTypes.CLOUD, posX, posY, posZ,
+                7 + world.random.nextInt(3),
+                ventingSide.getStepX() / 2.0,
+                ventingSide.getStepY() / 2.0,
+                ventingSide.getStepZ() / 2.0, 0.1);
         if (ConfigHolder.machines.machineSounds && !metaTileEntity.isMuffled()){
-            world.playSound(null, posX, posY, posZ, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0f, 1.0f);
+            world.playSound(null, posX, posY, posZ, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
         }
         setNeedsVenting(false);
 
@@ -165,7 +183,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
 
     @Override
     public void update() {
-        if (getMetaTileEntity().getWorld().isRemote)
+        if (getMetaTileEntity().getWorld().isClientSide)
             return;
         if (this.needsVenting && metaTileEntity.getOffsetTimer() % 10 == 0) {
             tryDoVenting();
@@ -174,7 +192,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    protected boolean checkRecipe(@Nonnull Recipe recipe) {
+    protected boolean checkRecipe(@Nonnull GTRecipe<?> recipe) {
         return super.checkRecipe(recipe) && !this.needsVenting;
     }
 
@@ -225,8 +243,8 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = super.serializeNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = super.serializeNBT();
         compound.setInteger("VentingSide", getVentingSide().getIndex());
         compound.setBoolean("NeedsVenting", needsVenting);
         compound.setBoolean("VentingStuck", ventingStuck);
@@ -234,7 +252,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    public void deserializeNBT(@Nonnull NBTTagCompound compound) {
+    public void deserializeNBT(@Nonnull CompoundTag compound) {
         super.deserializeNBT(compound);
         this.ventingSide = Direction.VALUES[compound.getInteger("VentingSide")];
         this.needsVenting = compound.getBoolean("NeedsVenting");

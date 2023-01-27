@@ -28,7 +28,7 @@ public class PacketUIOpen {
     }
 
     public static void encode(PacketUIOpen packet, FriendlyByteBuf buf) {
-        NetworkUtils.writePacketBuffer(buf, packet.serializedHolder);
+        NetworkUtils.writeFriendlyByteBuf(buf, packet.serializedHolder);
         buf.writeRegistryId(UIFactoryRegistry.UI_FACTORIES_BUILTIN.get(), packet.uiFactory);
         buf.writeVarInt(packet.windowId);
         buf.writeVarInt(packet.initialWidgetUpdates.size());
@@ -38,7 +38,7 @@ public class PacketUIOpen {
     }
 
     public static PacketUIOpen decode(FriendlyByteBuf buf) {
-        var serializedHolder = NetworkUtils.readPacketBuffer(buf);
+        var serializedHolder = NetworkUtils.readFriendlyByteBuf(buf);
         UIFactory<?> uiFactory = buf.readRegistryId();
         var windowId = buf.readVarInt();
         var initialWidgetUpdates = new ArrayList<>();

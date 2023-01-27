@@ -16,7 +16,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.client.particle.GTParticleManager;
 import net.nemezanevem.gregtech.client.util.TooltipHelper;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.Map;
 import java.util.UUID;
@@ -63,7 +65,7 @@ public class ClientEventHandler {
     public static void onRenderGameOverlayPre(RenderGuiOverlayEvent.Pre event) {
         TerminalARRenderer.renderGameOverlayEvent(event);
         if (ConfigHolder.misc.debug && event.getOverlay().id().equals(VanillaGuiOverlay.DEBUG_TEXT.id())) {
-            GTParticleManager.debugOverlay((RenderGameOverlayEvent.Text) event);
+            //GTParticleManager.debugOverlay((RenderGameOverlayEvent.Text) event);
         }
     }
 

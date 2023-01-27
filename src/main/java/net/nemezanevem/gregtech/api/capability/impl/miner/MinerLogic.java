@@ -7,7 +7,7 @@ import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IMiner;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.unification.TagUnifier;
 import gregtech.api.unification.ore.OrePrefix;
 import gregtech.api.util.GTLog;
@@ -20,9 +20,9 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
@@ -122,7 +122,7 @@ public class MinerLogic {
      */
     public void performMining() {
         // Needs to be server side
-        if (metaTileEntity.getWorld().isRemote)
+        if (metaTileEntity.getWorld().isClientSide)
             return;
 
         // Inactive miners do nothing
@@ -401,7 +401,7 @@ public class MinerLogic {
      * @param map the recipemap from which to get the drops
      * @param tier the tier at which the operation is performed, used for calculating the chanced output boost
      */
-    protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeMap<?> map, int tier) {
+    protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeType<?> map, int tier) {
         ItemStack itemStack = GTUtility.toItem(blockState);
         Recipe recipe = map.findRecipe(Long.MAX_VALUE, Collections.singletonList(itemStack), Collections.emptyList(), 0);
         if (recipe != null && !recipe.getOutputs().isEmpty()) {
@@ -440,9 +440,9 @@ public class MinerLogic {
 
     /**
      * writes all needed values to NBT
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(NBTTagCompound)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(CompoundTag)} method
      */
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound data) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
         data.setTag("xPos", new NBTTagInt(x.get()));
         data.setTag("yPos", new NBTTagInt(y.get()));
         data.setTag("zPos", new NBTTagInt(z.get()));
@@ -464,9 +464,9 @@ public class MinerLogic {
 
     /**
      * reads all needed values from NBT
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#readFromNBT(NBTTagCompound)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#readFromNBT(CompoundTag)} method
      */
-    public void readFromNBT(@Nonnull NBTTagCompound data) {
+    public void readFromNBT(@Nonnull CompoundTag data) {
         x.set(data.getInteger("xPos"));
         y.set(data.getInteger("yPos"));
         z.set(data.getInteger("zPos"));
@@ -487,9 +487,9 @@ public class MinerLogic {
 
     /**
      * writes all needed values to InitialSyncData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeInitialSyncData(PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeInitialSyncData(FriendlyByteBuf)} method
      */
-    public void writeInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void writeInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         buf.writeInt(pipeLength);
         buf.writeBoolean(this.isActive);
         buf.writeBoolean(this.isWorkingEnabled);
@@ -498,9 +498,9 @@ public class MinerLogic {
 
     /**
      * reads all needed values from InitialSyncData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveInitialSyncData(PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveInitialSyncData(FriendlyByteBuf)} method
      */
-    public void receiveInitialSyncData(@Nonnull PacketBuffer buf) {
+    public void receiveInitialSyncData(@Nonnull FriendlyByteBuf buf) {
         this.pipeLength = buf.readInt();
         setActive(buf.readBoolean());
         setWorkingEnabled(buf.readBoolean());
@@ -509,9 +509,9 @@ public class MinerLogic {
 
     /**
      * reads all needed values from CustomData
-     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveCustomData(int, PacketBuffer)} method
+     * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#receiveCustomData(int, FriendlyByteBuf)} method
      */
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
+    public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         if (dataId == GregtechDataCodes.PUMP_HEAD_LEVEL) {
             this.pipeLength = buf.readInt();
             metaTileEntity.scheduleRenderUpdate();
@@ -652,7 +652,7 @@ public class MinerLogic {
         if (this.isActive != isActive) {
             this.isActive = isActive;
             this.metaTileEntity.markDirty();
-            if (metaTileEntity.getWorld() != null && !metaTileEntity.getWorld().isRemote) {
+            if (metaTileEntity.getWorld() != null && !metaTileEntity.getWorld().isClientSide) {
                 this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKABLE_ACTIVE, buf -> buf.writeBoolean(isActive));
             }
         }
@@ -666,7 +666,7 @@ public class MinerLogic {
         if (this.isWorkingEnabled != isWorkingEnabled) {
             this.isWorkingEnabled = isWorkingEnabled;
             metaTileEntity.markDirty();
-            if (metaTileEntity.getWorld() != null && !metaTileEntity.getWorld().isRemote) {
+            if (metaTileEntity.getWorld() != null && !metaTileEntity.getWorld().isClientSide) {
                 this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(isWorkingEnabled));
             }
         }

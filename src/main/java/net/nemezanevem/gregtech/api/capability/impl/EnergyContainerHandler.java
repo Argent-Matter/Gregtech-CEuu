@@ -1,6 +1,12 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import gregtech.api.GTValues;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.FeCompat;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IElectricItem;
@@ -10,13 +16,17 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.tileentity.MTETrait;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.function.Predicate;
 
@@ -95,14 +105,14 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
     }
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setLong("EnergyStored", energyStored);
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = new CompoundTag();
+        compound.putLong("EnergyStored", energyStored);
         return compound;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound compound) {
+    public void deserializeNBT(CompoundTag compound) {
         this.energyStored = compound.getLong("EnergyStored");
         notifyEnergyListener(true);
     }
@@ -119,7 +129,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
             energyOutputPerSec += this.energyStored - energyStored;
         }
         this.energyStored = energyStored;
-        if (!metaTileEntity.getWorld().isRemote) {
+        if (!metaTileEntity.getWorld().isClientSide) {
             metaTileEntity.markDirty();
             notifyEnergyListener(false);
         }
@@ -137,20 +147,20 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
             return false;
         }
 
-        IElectricItem electricItem = stackInSlot.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-        if (electricItem != null) {
-            return handleElectricItem(electricItem);
-        } else if (ConfigHolder.compat.energy.nativeEUToFE) {
-            IEnergyStorage energyStorage = stackInSlot.getCapability(CapabilityEnergy.ENERGY, null);
-            if (energyStorage != null) {
-                return handleForgeEnergyItem(energyStorage);
+        LazyOptional<IElectricItem> electricItem = stackInSlot.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (electricItem.isPresent()) {
+            return handleElectricItem(electricItem.resolve().get());
+        } else if (ConfigHolder.Compatibility.energy.nativeEUToFE) {
+            LazyOptional<IEnergyStorage> energyStorage = stackInSlot.getCapability(ForgeCapabilities.ENERGY, null);
+            if (energyStorage.isPresent()) {
+                return handleForgeEnergyItem(energyStorage.resolve().get());
             }
         }
         return false;
     }
 
     private boolean handleElectricItem(IElectricItem electricItem) {
-        int machineTier = GTUtility.getTierByVoltage(Math.max(getInputVoltage(), getOutputVoltage()));
+        int machineTier = Util.getTierByVoltage(Math.max(getInputVoltage(), getOutputVoltage()));
         int chargeTier = Math.min(machineTier, electricItem.getTier());
         double chargePercent = getEnergyStored() / (getEnergyCapacity() * 1.0);
 
@@ -175,7 +185,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
     }
 
     private boolean handleForgeEnergyItem(IEnergyStorage energyStorage) {
-        int machineTier = GTUtility.getTierByVoltage(Math.max(getInputVoltage(), getOutputVoltage()));
+        int machineTier = Util.getTierByVoltage(Math.max(getInputVoltage(), getOutputVoltage()));
         double chargePercent = getEnergyStored() / (getEnergyCapacity() * 1.0);
 
         if (chargePercent > 0.5) {
@@ -189,7 +199,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
     @Override
     public void update() {
         amps = 0;
-        if (getMetaTileEntity().getWorld().isRemote)
+        if (getMetaTileEntity().getWorld().isClientSide)
             return;
         if (metaTileEntity.getOffsetTimer() % 20 == 0) {
             lastEnergyOutputPerSec = energyOutputPerSec;
@@ -202,13 +212,13 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
             long outputAmperes = Math.min(getEnergyStored() / outputVoltage, getOutputAmperage());
             if (outputAmperes == 0) return;
             long amperesUsed = 0;
-            for (Direction side : Direction.VALUES) {
+            for (Direction side : Direction.values()) {
                 if (!outputsEnergy(side)) continue;
-                TileEntity tileEntity = metaTileEntity.getWorld().getTileEntity(metaTileEntity.getPos().offset(side));
+                BlockEntity tileEntity = metaTileEntity.getWorld().getBlockEntity(metaTileEntity.getPos().offset(side.getNormal()));
                 Direction oppositeSide = side.getOpposite();
-                if (tileEntity != null && tileEntity.hasCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, oppositeSide)) {
-                    IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, oppositeSide);
-                    if (energyContainer == null || !energyContainer.inputsEnergy(oppositeSide)) continue;
+                if (tileEntity != null && tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, oppositeSide).isPresent()) {
+                    IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, oppositeSide).resolve().get();
+                    if (!energyContainer.inputsEnergy(oppositeSide)) continue;
                     amperesUsed += energyContainer.acceptEnergyFromNetwork(oppositeSide, outputVoltage, outputAmperes - amperesUsed);
                     if (amperesUsed == outputAmperes) break;
                 }
@@ -225,7 +235,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
         long canAccept = getEnergyCapacity() - getEnergyStored();
         if (voltage > 0L && (side == null || inputsEnergy(side))) {
             if (voltage > getInputVoltage()) {
-                metaTileEntity.doExplosion(GTUtility.getExplosionPower(voltage));
+                metaTileEntity.doExplosion(Util.getExplosionPower(voltage));
                 return Math.min(amperage, getInputAmperage() - amps);
             }
             if (canAccept >= voltage) {

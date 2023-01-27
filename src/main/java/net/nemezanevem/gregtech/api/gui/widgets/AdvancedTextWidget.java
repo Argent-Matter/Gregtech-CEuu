@@ -158,7 +158,7 @@ public class AdvancedTextWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             this.displayText.clear();
             int count = buffer.readVarInt();
@@ -172,7 +172,7 @@ public class AdvancedTextWidget extends Widget {
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             ClickData clickData = ClickData.readFromBuf(buffer);
@@ -190,7 +190,7 @@ public class AdvancedTextWidget extends Widget {
             String componentText = clickEvent.getValue();
             if (clickEvent.getAction() == Action.OPEN_URL && componentText.startsWith("@!")) {
                 String rawText = componentText.substring(2);
-                ClickData clickData = new ClickData(Mouse.getEventButton(), isShiftDown(), isCtrlDown());
+                ClickData clickData = new ClickData(MouseButtonHelper.button, isShiftDown(), isCtrlDown());
                 writeClientAction(1, buf -> {
                     clickData.writeToBuf(buf);
                     buf.writeString(rawText);

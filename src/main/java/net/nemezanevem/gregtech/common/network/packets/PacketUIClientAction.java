@@ -25,13 +25,13 @@ public class PacketUIClientAction {
     }
 
     public void encode(FriendlyByteBuf buf) {
-        NetworkUtils.writePacketBuffer(buf, updateData);
+        NetworkUtils.writeFriendlyByteBuf(buf, updateData);
         buf.writeVarInt(windowId);
         buf.writeVarInt(widgetId);
     }
 
     public void decode(FriendlyByteBuf buf) {
-        this.updateData = NetworkUtils.readPacketBuffer(buf);
+        this.updateData = NetworkUtils.readFriendlyByteBuf(buf);
         this.windowId = buf.readVarInt();
         this.widgetId = buf.readVarInt();
     }

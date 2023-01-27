@@ -9,7 +9,7 @@ import gregtech.api.util.Size;
 import gregtech.api.util.function.BooleanConsumer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -76,7 +76,7 @@ public class ImageCycleButtonWidget extends Widget {
     @Override
     public void drawInForeground(int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY) && tooltipHoverString != null) {
-            List<String> hoverList = Arrays.asList(I18n.format(tooltipHoverString.apply(currentOption)).split("/n"));
+            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString.apply(currentOption)).split("/n"));
             drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
@@ -91,7 +91,7 @@ public class ImageCycleButtonWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 1) {
             this.currentOption = buffer.readVarInt();
@@ -121,7 +121,7 @@ public class ImageCycleButtonWidget extends Widget {
 
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             this.currentOption = MathHelper.clamp(buffer.readVarInt(), 0, optionCount);

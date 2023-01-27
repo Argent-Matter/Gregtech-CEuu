@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.pipenet;
 
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 
 /**
  * Represents a single node in network of pipes
@@ -33,6 +33,6 @@ public final class Node<NodeDataType> {
     }
 
     public boolean isBlocked(Direction facing) {
-        return (openConnections & 1 << facing.getIndex()) == 0;
+        return (openConnections & 1 << facing.ordinal()) == 0;
     }
 }

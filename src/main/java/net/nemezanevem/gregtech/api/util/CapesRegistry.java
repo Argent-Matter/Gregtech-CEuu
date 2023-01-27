@@ -22,13 +22,13 @@ public class CapesRegistry {
     }
 
     public static void save() {
-        NBTTagCompound comp = new NBTTagCompound();
-        NBTTagList unlockedCapesTag = new NBTTagList();
+        CompoundTag comp = new CompoundTag();
+        ListTag unlockedCapesTag = new ListTag();
         for (Map.Entry<UUID, List<ResourceLocation>> entry : UNLOCKED_CAPES.entrySet()) {
             for (ResourceLocation cape : entry.getValue()) {
                 String capeLocation = cape.toString();
 
-                NBTTagCompound tag = new NBTTagCompound();
+                CompoundTag tag = new CompoundTag();
 
                 tag.setString("Cape", capeLocation);
                 tag.setUniqueId("UUID", entry.getKey());
@@ -39,13 +39,13 @@ public class CapesRegistry {
         }
         comp.setTag("UnlockedCapesValList", unlockedCapesTag);
 
-        NBTTagList wornCapesTag = new NBTTagList();
+        ListTag wornCapesTag = new ListTag();
         for (Map.Entry<UUID, ResourceLocation> entry : WORN_CAPES.entrySet()) {
             if (entry.getValue() == null)
                 continue;
             String capeLocation = entry.getValue().toString();
 
-            NBTTagCompound tag = new NBTTagCompound();
+            CompoundTag tag = new CompoundTag();
 
             tag.setString("Cape", capeLocation);
             tag.setUniqueId("UUID", entry.getKey());
@@ -61,7 +61,7 @@ public class CapesRegistry {
     }
 
     public static void load() {
-        NBTTagCompound comp = null;
+        CompoundTag comp = null;
         try {
             comp = CompressedStreamTools.read(new File(FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0).getSaveHandler().getWorldDirectory(), "gregtech_cape.dat"));
         } catch (IOException exception) {
@@ -72,9 +72,9 @@ public class CapesRegistry {
             registerDevCapes();
             return;
         }
-        NBTTagList unlockedCapesTag = comp.getTagList("UnlockedCapesValList", Constants.NBT.TAG_COMPOUND);
+        ListTag unlockedCapesTag = comp.getTagList("UnlockedCapesValList", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < unlockedCapesTag.tagCount(); i++) {
-            NBTTagCompound tag = unlockedCapesTag.getCompoundTagAt(i);
+            CompoundTag tag = unlockedCapesTag.getCompoundTagAt(i);
             String capeLocation = tag.getString("Cape");
             if (capeLocation.isEmpty())
                 continue;
@@ -88,9 +88,9 @@ public class CapesRegistry {
             UNLOCKED_CAPES.put(uuid, capes);
         }
 
-        NBTTagList wornCapesTag = comp.getTagList("WornCapesValList", Constants.NBT.TAG_COMPOUND);
+        ListTag wornCapesTag = comp.getTagList("WornCapesValList", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < wornCapesTag.tagCount(); i++) {
-            NBTTagCompound tag = wornCapesTag.getCompoundTagAt(i);
+            CompoundTag tag = wornCapesTag.getCompoundTagAt(i);
             String capeLocation = tag.getString("Cape");
             if (capeLocation.isEmpty())
                 continue;
@@ -128,7 +128,7 @@ public class CapesRegistry {
      * @param world       The world that may contain the advancement used for getting a cape.
      */
     public static void registerCape(ResourceLocation advancement, ResourceLocation cape, World world) {
-        if (!world.isRemote) {
+        if (!world.isClientSide) {
             AdvancementManager advManager = ObfuscationReflectionHelper.getPrivateValue(World.class, world, "field_191951_C");
             Advancement advObject = advManager.getAdvancement(advancement);
             if (advObject != null) {
@@ -161,10 +161,10 @@ public class CapesRegistry {
         UNLOCKED_CAPES.put(uuid, capes);
     }
 
-    public static void unlockCapeOnAdvancement(EntityPlayer player, Advancement advancement) {
+    public static void unlockCapeOnAdvancement(Player player, Advancement advancement) {
         if (CAPE_ADVANCEMENTS.containsKey(advancement)) {
             unlockCape(player.getPersistentID(), CAPE_ADVANCEMENTS.get(advancement));
-            player.sendMessage(new TextComponentTranslation("gregtech.chat.cape"));
+            player.sendMessage(Component.translatable("gregtech.chat.cape"));
             save();
         }
     }
@@ -186,23 +186,23 @@ public class CapesRegistry {
     }
 
     // For loading capes when the player logs in, so that it's synced to the clients.
-    public static void loadWornCapeOnLogin(EntityPlayer player) {
-        if (player instanceof EntityPlayerMP) {
+    public static void loadWornCapeOnLogin(Player player) {
+        if (player instanceof PlayerMP) {
             UUID uuid = player.getPersistentID();
             GregTechAPI.networkHandler.sendToAll(new PacketNotifyCapeChange(uuid, WORN_CAPES.get(uuid))); // sync to others
-            for (EntityPlayerMP otherPlayer : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) { // sync to login
+            for (PlayerMP otherPlayer : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) { // sync to login
                 uuid = otherPlayer.getPersistentID();
-                GregTechAPI.networkHandler.sendTo(new PacketNotifyCapeChange(uuid, WORN_CAPES.get(uuid)), (EntityPlayerMP) player);
+                GregTechAPI.networkHandler.sendTo(new PacketNotifyCapeChange(uuid, WORN_CAPES.get(uuid)), (PlayerMP) player);
             }
         }
     }
 
     // Runs on login, and looks for any advancements that give the player a cape that the player doesn't already have.
-    public static void detectNewCapes(EntityPlayer player) {
-        if (player instanceof EntityPlayerMP) {
+    public static void detectNewCapes(Player player) {
+        if (player instanceof PlayerMP) {
             for (Map.Entry<Advancement, ResourceLocation> capeEntry : CAPE_ADVANCEMENTS.entrySet()) {
                 if ((UNLOCKED_CAPES.get(player.getPersistentID()) == null || !UNLOCKED_CAPES.get(player.getPersistentID()).contains(capeEntry.getValue())) &&
-                        ((EntityPlayerMP) player).getAdvancements().getProgress(capeEntry.getKey()).isDone()) {
+                        ((PlayerMP) player).getAdvancements().getProgress(capeEntry.getKey()).isDone()) {
                     unlockCapeOnAdvancement(player, capeEntry.getKey());
                 }
             }

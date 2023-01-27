@@ -562,8 +562,8 @@ public abstract class Widget {
         return Screen.hasControlDown();
     }
 
-    public boolean isRemote() {
-        return gui.holder.isRemote();
+    public boolean isClientSide() {
+        return gui.holder.isClientSide();
     }
 
     protected static boolean isClientSide() {

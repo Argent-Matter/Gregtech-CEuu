@@ -12,7 +12,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -33,7 +33,7 @@ public class BlockSteamCasing extends VariantBlock<BlockSteamCasing.SteamCasingT
     }
 
     @Override
-    public boolean canCreatureSpawn(BlockState state, IBlockAccess world, BlockPos pos, EntityLiving.SpawnPlacementType type) {
+    public boolean canCreatureSpawn(BlockState state, BlockGetter world, BlockPos pos, EntityLiving.SpawnPlacementType type) {
         return false;
     }
 
@@ -41,9 +41,9 @@ public class BlockSteamCasing extends VariantBlock<BlockSteamCasing.SteamCasingT
     public void addInformation(ItemStack stack, @Nullable World player, List<String> tooltip, ITooltipFlag advanced) {
         int ordinal = getState(stack).ordinal();
         if (ordinal < 2) {
-            tooltip.add(I18n.format("tile.steam_casing.bronze.tooltip"));
+            tooltip.add(Component.translatable("tile.steam_casing.bronze.tooltip"));
         } else if (ordinal < 4) {
-            tooltip.add(I18n.format("tile.steam_casing.steel.tooltip"));
+            tooltip.add(Component.translatable("tile.steam_casing.steel.tooltip"));
         } else {
             super.addInformation(stack, player, tooltip, advanced);
         }

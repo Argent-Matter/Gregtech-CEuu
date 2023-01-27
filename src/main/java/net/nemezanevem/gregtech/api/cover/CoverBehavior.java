@@ -1,36 +1,26 @@
 package net.nemezanevem.gregtech.api.cover;
 
 
-import codechicken.lib.raytracer.CuboidRayTraceResult;
+import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import com.google.common.collect.Lists;
-import gregtech.api.GTValues;
-import gregtech.api.gui.IUIHolder;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.renderer.texture.cube.SimpleSidedCubeRenderer.RenderSide;
-import gregtech.client.utils.BloomEffectUtil;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.Direction;
-import net.minecraft.util.EnumHand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.client.renderer.texture.cube.SimpleSidedCubeRenderer;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -39,7 +29,7 @@ import java.util.function.Consumer;
  * Represents cover instance attached on the specific side of meta tile entity
  * Cover filters out interaction and logic of meta tile entity
  * <p>
- * Can implement {@link net.minecraft.util.ITickable} to listen to meta tile entity updates
+ * Can implement {@link net.minecraft.world.level.block.entity} to listen to meta tile entity updates
  */
 @SuppressWarnings("unused")
 public abstract class CoverBehavior implements IUIHolder {
@@ -117,14 +107,14 @@ public abstract class CoverBehavior implements IUIHolder {
 
     /**
      * Will be called on server side after the cover attachment to the meta tile entity
-     * Cover can change it's internal state here and it will be synced to client with {@link #writeInitialSyncData(PacketBuffer)}
+     * Cover can change it's internal state here and it will be synced to client with {@link #writeInitialSyncData(FriendlyByteBuf)}
      *
      * @param itemStack the item cover was attached from
      */
     public void onAttached(ItemStack itemStack) {
     }
 
-    public void onAttached(ItemStack itemStack, EntityPlayer player) {
+    public void onAttached(ItemStack itemStack, Player player) {
         onAttached(itemStack);
     }
 
@@ -165,20 +155,20 @@ public abstract class CoverBehavior implements IUIHolder {
         return true;
     }
 
-    public boolean onLeftClick(EntityPlayer entityPlayer, CuboidRayTraceResult hitResult) {
+    public boolean onLeftClick(Player entityPlayer, VoxelShapeBlockHitResult hitResult) {
         return false;
     }
 
-    public EnumActionResult onRightClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
-        return EnumActionResult.PASS;
+    public InteractionResult onRightClick(Player playerIn, InteractionHand hand, VoxelShapeBlockHitResult hitResult) {
+        return InteractionResult.PASS;
     }
 
-    public EnumActionResult onScrewdriverClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
-        return EnumActionResult.PASS;
+    public InteractionResult onScrewdriverClick(Player playerIn, InteractionHand hand, VoxelShapeBlockHitResult hitResult) {
+        return InteractionResult.PASS;
     }
 
-    public EnumActionResult onSoftMalletClick(EntityPlayer playerIn, EnumHand hand, CuboidRayTraceResult hitResult) {
-        return EnumActionResult.PASS;
+    public InteractionResult onSoftMalletClick(Player playerIn, InteractionHand hand, VoxelShapeBlockHitResult hitResult) {
+        return InteractionResult.PASS;
     }
 
     /**
@@ -196,15 +186,15 @@ public abstract class CoverBehavior implements IUIHolder {
      * Called on client side to render this cover on the machine's face
      * It will be automatically translated to prevent Z-fighting with machine faces
      */
-    public abstract void renderCover(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, BlockRenderLayer layer);
+    public abstract void renderCover(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, RenderType layer);
 
     public boolean canRenderInLayer(RenderType renderLayer) {
         return renderLayer == RenderType.cutoutMipped() || renderLayer == BloomEffectUtil.getRealBloomLayer();
     }
 
-    public void renderCoverPlate(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, BlockRenderLayer layer) {
+    public void renderCoverPlate(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, RenderType layer) {
         TextureAtlasSprite casingSide = getPlateSprite();
-        for (Direction coverPlateSide : Direction.VALUES) {
+        for (Direction coverPlateSide : Direction.values()) {
             boolean isAttachedSide = attachedSide.getAxis() == coverPlateSide.getAxis();
             if (isAttachedSide || coverHolder.getCoverAtSide(coverPlateSide) == null) {
                 Textures.renderFace(renderState, translation, pipeline, coverPlateSide, plateBox, casingSide, RenderType.cutoutMipped());
@@ -213,7 +203,7 @@ public abstract class CoverBehavior implements IUIHolder {
     }
 
     protected TextureAtlasSprite getPlateSprite() {
-        return Textures.VOLTAGE_CASINGS[GTValues.LV].getSpriteOnSide(RenderSide.SIDE);
+        return Textures.VOLTAGE_CASINGS[GTValues.LV].getSpriteOnSide(SimpleSidedCubeRenderer.RenderSide.SIDE);
     }
 
     @Override
@@ -222,8 +212,8 @@ public abstract class CoverBehavior implements IUIHolder {
     }
 
     @Override
-    public boolean isRemote() {
-        return coverHolder.getWorld().isRemote;
+    public boolean isClientSide() {
+        return coverHolder.getWorld().isClientSide;
     }
 
     @Override

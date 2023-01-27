@@ -14,9 +14,9 @@ import gregtech.api.metatileentity.MTETrait;
 import gregtech.api.pattern.PatternMatchContext;
 import gregtech.api.pattern.TraceabilityPredicate;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.common.ConfigHolder;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.Player;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
@@ -29,18 +29,18 @@ import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.List;
 
-public abstract class RecipeMapSteamMultiblockController extends MultiblockWithDisplayBase {
+public abstract class RecipeTypeSteamMultiblockController extends MultiblockWithDisplayBase {
 
     protected static final double CONVERSION_RATE = ConfigHolder.machines.multiblockSteamToEU;
 
-    public final RecipeMap<?> recipeMap;
+    public final RecipeType<?> recipeMap;
     protected SteamMultiblockRecipeLogic recipeMapWorkable;
 
     protected IItemHandlerModifiable inputInventory;
     protected IItemHandlerModifiable outputInventory;
     protected IMultipleTankHandler steamFluidTank;
 
-    public RecipeMapSteamMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, double conversionRate) {
+    public RecipeTypeSteamMultiblockController(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, double conversionRate) {
         super(metaTileEntityId);
         this.recipeMap = recipeMap;
         this.recipeMapWorkable = new SteamMultiblockRecipeLogic(this, recipeMap, steamFluidTank, conversionRate);
@@ -103,25 +103,25 @@ public abstract class RecipeMapSteamMultiblockController extends MultiblockWithD
             IFluidTank steamFluidTank = recipeMapWorkable.getSteamFluidTankCombined();
             if (steamFluidTank != null && steamFluidTank.getCapacity() > 0) {
                 int steamStored = steamFluidTank.getFluidAmount();
-                textList.add(new TextComponentTranslation("gregtech.multiblock.steam.steam_stored", steamStored, steamFluidTank.getCapacity()));
+                textList.add(Component.translatable("gregtech.multiblock.steam.steam_stored", steamStored, steamFluidTank.getCapacity()));
             }
 
             if (!recipeMapWorkable.isWorkingEnabled()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.work_paused"));
+                textList.add(Component.translatable("gregtech.multiblock.work_paused"));
 
             } else if (recipeMapWorkable.isActive()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.running"));
+                textList.add(Component.translatable("gregtech.multiblock.running"));
                 int currentProgress = (int) (recipeMapWorkable.getProgressPercent() * 100);
                 if (this.recipeMapWorkable.getParallelLimit() != 1) {
-                    textList.add(new TextComponentTranslation("gregtech.multiblock.parallel", this.recipeMapWorkable.getParallelLimit()));
+                    textList.add(Component.translatable("gregtech.multiblock.parallel", this.recipeMapWorkable.getParallelLimit()));
                 }
-                textList.add(new TextComponentTranslation("gregtech.multiblock.progress", currentProgress));
+                textList.add(Component.translatable("gregtech.multiblock.progress", currentProgress));
             } else {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.idling"));
+                textList.add(Component.translatable("gregtech.multiblock.idling"));
             }
 
             if (recipeMapWorkable.isHasNotEnoughEnergy()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.steam.low_steam").setStyle(new Style().setColor(TextFormatting.RED)));
+                textList.add(Component.translatable("gregtech.multiblock.steam.low_steam").withStyle(ChatFormatting.RED));
             }
         }
     }
@@ -179,7 +179,7 @@ public abstract class RecipeMapSteamMultiblockController extends MultiblockWithD
     }
 
     @Override
-    protected ModularUI.Builder createUITemplate(EntityPlayer entityPlayer) {
+    protected ModularUI.Builder createUITemplate(Player entityPlayer) {
         ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND_STEAM.get(ConfigHolder.machines.steelSteamMultiblocks), 176, 216);
         builder.shouldColor(false);
         builder.image(7, 4, 162, 121, GuiTextures.DISPLAY_STEAM.get(ConfigHolder.machines.steelSteamMultiblocks));

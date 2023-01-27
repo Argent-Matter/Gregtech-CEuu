@@ -1,33 +1,32 @@
 package net.nemezanevem.gregtech.api.pipenet.tile;
 
 import com.google.common.base.Preconditions;
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.cover.CoverDefinition;
-import gregtech.api.cover.ICoverable;
-import gregtech.api.pipenet.block.BlockPipe;
-import gregtech.api.util.GTUtility;
-import gregtech.common.ConfigHolder;
-import gregtech.core.advancement.AdvancementTriggers;
-import net.minecraft.block.Block;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.cover.CoverDefinition;
+import net.nemezanevem.gregtech.api.cover.ICoverable;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static gregtech.api.capability.GregtechDataCodes.*;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
+
 
 public class PipeCoverableImplementation implements ICoverable {
 
@@ -40,18 +39,18 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     public void transferDataTo(PipeCoverableImplementation destImpl) {
-        for (Direction coverSide : Direction.VALUES) {
-            CoverBehavior behavior = coverBehaviors[coverSide.getIndex()];
+        for (Direction coverSide : Direction.values()) {
+            CoverBehavior behavior = coverBehaviors[coverSide.ordinal()];
             if (behavior == null) continue;
-            NBTTagCompound tagCompound = new NBTTagCompound();
+            CompoundTag tagCompound = new CompoundTag();
             behavior.writeToNBT(tagCompound);
             CoverBehavior newBehavior = behavior.getCoverDefinition().createCoverBehavior(destImpl, coverSide);
             newBehavior.readFromNBT(tagCompound);
-            destImpl.coverBehaviors[coverSide.getIndex()] = newBehavior;
+            destImpl.coverBehaviors[coverSide.ordinal()] = newBehavior;
         }
     }
 
-    public final boolean placeCoverOnSide(Direction side, ItemStack itemStack, CoverDefinition coverDefinition, EntityPlayer player) {
+    public final boolean placeCoverOnSide(Direction side, ItemStack itemStack, CoverDefinition coverDefinition, Player player) {
         if (side == null || coverDefinition == null) {
             return false;
         }
@@ -65,13 +64,13 @@ public class PipeCoverableImplementation implements ICoverable {
             IPipeTile<?, ?> newHolderTile = holder.setSupportsTicking();
             return newHolderTile.getCoverableImplementation().placeCoverOnSide(side, itemStack, coverDefinition, player);
         }
-        if (coverBehaviors[side.getIndex()] != null) {
+        if (coverBehaviors[side.ordinal()] != null) {
             removeCover(side);
         }
-        this.coverBehaviors[side.getIndex()] = coverBehavior;
+        this.coverBehaviors[side.ordinal()] = coverBehavior;
         coverBehavior.onAttached(itemStack, player);
         writeCustomData(COVER_ATTACHED_PIPE, buffer -> {
-            buffer.writeByte(side.getIndex());
+            buffer.writeByte(side.ordinal());
             buffer.writeVarInt(CoverDefinition.getNetworkIdForCover(coverDefinition));
             coverBehavior.writeInitialSyncData(buffer);
         });
@@ -80,7 +79,7 @@ public class PipeCoverableImplementation implements ICoverable {
         }
         holder.notifyBlockUpdate();
         holder.markAsDirty();
-        AdvancementTriggers.FIRST_COVER_PLACE.trigger((EntityPlayerMP) player);
+        AdvancementTriggers.FIRST_COVER_PLACE.trigger((ServerPlayer) player);
         return true;
     }
 
@@ -92,11 +91,11 @@ public class PipeCoverableImplementation implements ICoverable {
         }
         List<ItemStack> drops = coverBehavior.getDrops();
         coverBehavior.onRemoved();
-        this.coverBehaviors[side.getIndex()] = null;
+        this.coverBehaviors[side.ordinal()] = null;
         for (ItemStack dropStack : drops) {
-            Block.spawnAsEntity(getWorld(), getPos(), dropStack);
+            Block.popResource(getWorld(), getPos(), dropStack);
         }
-        writeCustomData(COVER_REMOVED_PIPE, buffer -> buffer.writeByte(side.getIndex()));
+        writeCustomData(COVER_REMOVED_PIPE, buffer -> buffer.writeByte(side.ordinal()));
         if (coverBehavior.shouldAutoConnect()) {
             holder.setConnection(side, false, false);
         }
@@ -125,8 +124,8 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     public void onLoad() {
-        for (Direction side : Direction.VALUES) {
-            this.sidedRedstoneInput[side.getIndex()] = GTUtility.getRedstonePower(getWorld(), getPos(), side);
+        for (Direction side : Direction.values()) {
+            this.sidedRedstoneInput[side.ordinal()] = GTUtility.getRedstonePower(getWorld(), getPos(), side);
         }
     }
 
@@ -135,15 +134,15 @@ public class PipeCoverableImplementation implements ICoverable {
         if (!ignoreCover && getCoverAtSide(side) != null) {
             return 0; //covers block input redstone signal for machine
         }
-        return sidedRedstoneInput[side.getIndex()];
+        return sidedRedstoneInput[side.ordinal()];
     }
 
     public void updateInputRedstoneSignals() {
-        for (Direction side : Direction.VALUES) {
+        for (Direction side : Direction.values()) {
             int redstoneValue = GTUtility.getRedstonePower(getWorld(), getPos(), side);
-            int currentValue = sidedRedstoneInput[side.getIndex()];
+            int currentValue = sidedRedstoneInput[side.ordinal()];
             if (redstoneValue != currentValue) {
-                this.sidedRedstoneInput[side.getIndex()] = redstoneValue;
+                this.sidedRedstoneInput[side.ordinal()] = redstoneValue;
                 CoverBehavior coverBehavior = getCoverAtSide(side);
                 if (coverBehavior != null) {
                     coverBehavior.onRedstoneInputSignalChange(redstoneValue);
@@ -160,7 +159,7 @@ public class PipeCoverableImplementation implements ICoverable {
     @Override
     public void scheduleRenderUpdate() {
         BlockPos pos = getPos();
-        getWorld().markBlockRangeForRenderUpdate(
+        Minecraft.getInstance().levelRenderer.setBlocksDirty(
                 pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1,
                 pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
     }
@@ -179,7 +178,7 @@ public class PipeCoverableImplementation implements ICoverable {
 
     @Override
     public int getPaintingColorForRendering() {
-        return ConfigHolder.client.defaultPaintingColor;
+        return ConfigHolder.ClientConfig.defaultPaintingColor;
     }
 
     @Override
@@ -189,7 +188,7 @@ public class PipeCoverableImplementation implements ICoverable {
 
     @Override
     public CoverBehavior getCoverAtSide(Direction side) {
-        return side == null ? null : coverBehaviors[side.getIndex()];
+        return side == null ? null : coverBehaviors[side.ordinal()];
     }
 
     @Override
@@ -218,7 +217,7 @@ public class PipeCoverableImplementation implements ICoverable {
 
     public int getHighestOutputRedstoneSignal() {
         int highestSignal = 0;
-        for (Direction side : Direction.VALUES) {
+        for (Direction side : Direction.values()) {
             CoverBehavior behavior = getCoverAtSide(side);
             highestSignal = Math.max(highestSignal, behavior.getRedstoneSignalOutput());
         }
@@ -226,7 +225,7 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     public void update() {
-        if (!getWorld().isRemote) {
+        if (!getWorld().isClientSide) {
             for (CoverBehavior coverBehavior : coverBehaviors) {
                 if (coverBehavior instanceof ITickable) {
                     ((ITickable) coverBehavior).update();
@@ -236,16 +235,16 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     @Override
-    public void writeCoverData(CoverBehavior behavior, int id, Consumer<PacketBuffer> writer) {
+    public void writeCoverData(CoverBehavior behavior, int id, Consumer<FriendlyByteBuf> writer) {
         writeCustomData(UPDATE_COVER_DATA_PIPE, buffer -> {
-            buffer.writeByte(behavior.attachedSide.getIndex());
+            buffer.writeByte(behavior.attachedSide.ordinal());
             buffer.writeVarInt(id);
             writer.accept(buffer);
         });
     }
 
-    public void writeInitialSyncData(PacketBuffer buf) {
-        for (Direction coverSide : Direction.VALUES) {
+    public void writeInitialSyncData(FriendlyByteBuf buf) {
+        for (Direction coverSide : Direction.values()) {
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             if (coverBehavior != null) {
                 int coverId = CoverDefinition.getNetworkIdForCover(coverBehavior.getCoverDefinition());
@@ -258,40 +257,40 @@ public class PipeCoverableImplementation implements ICoverable {
         }
     }
 
-    public void readInitialSyncData(PacketBuffer buf) {
-        for (Direction coverSide : Direction.VALUES) {
+    public void readInitialSyncData(FriendlyByteBuf buf) {
+        for (Direction coverSide : Direction.values()) {
             int coverId = buf.readVarInt();
             if (coverId != -1) {
                 CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
                 CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
                 coverBehavior.readInitialSyncData(buf);
-                this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
+                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
             }
         }
     }
 
-    public void writeCustomData(int dataId, Consumer<PacketBuffer> writer) {
+    public void writeCustomData(int dataId, Consumer<FriendlyByteBuf> writer) {
         holder.writeCoverCustomData(dataId, writer);
     }
 
-    public void readCustomData(int dataId, PacketBuffer buf) {
+    public void readCustomData(int dataId, FriendlyByteBuf buf) {
         if (dataId == COVER_ATTACHED_PIPE) {
             //cover placement event
-            Direction placementSide = Direction.VALUES[buf.readByte()];
+            Direction placementSide = Direction.values()[buf.readByte()];
             int coverId = buf.readVarInt();
             CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
-            this.coverBehaviors[placementSide.getIndex()] = coverBehavior;
+            this.coverBehaviors[placementSide.ordinal()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);
             holder.scheduleChunkForRenderUpdate();
         } else if (dataId == COVER_REMOVED_PIPE) {
             //cover removed event
-            Direction placementSide = Direction.VALUES[buf.readByte()];
-            this.coverBehaviors[placementSide.getIndex()] = null;
+            Direction placementSide = Direction.values()[buf.readByte()];
+            this.coverBehaviors[placementSide.ordinal()] = null;
             holder.scheduleChunkForRenderUpdate();
         } else if (dataId == UPDATE_COVER_DATA_PIPE) {
             //cover custom data received
-            Direction coverSide = Direction.VALUES[buf.readByte()];
+            Direction coverSide = Direction.values()[buf.readByte()];
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             int internalId = buf.readVarInt();
             if (coverBehavior != null) {
@@ -300,39 +299,39 @@ public class PipeCoverableImplementation implements ICoverable {
         }
     }
 
-    public void writeToNBT(NBTTagCompound data) {
-        NBTTagList coversList = new NBTTagList();
-        for (Direction coverSide : Direction.VALUES) {
-            CoverBehavior coverBehavior = coverBehaviors[coverSide.getIndex()];
+    public void writeToNBT(CompoundTag data) {
+        ListTag coversList = new ListTag();
+        for (Direction coverSide : Direction.values()) {
+            CoverBehavior coverBehavior = coverBehaviors[coverSide.ordinal()];
             if (coverBehavior != null) {
-                NBTTagCompound tagCompound = new NBTTagCompound();
+                CompoundTag tagCompound = new CompoundTag();
                 ResourceLocation coverId = coverBehavior.getCoverDefinition().getCoverId();
-                tagCompound.setString("CoverId", coverId.toString());
-                tagCompound.setByte("Side", (byte) coverSide.getIndex());
+                tagCompound.putString("CoverId", coverId.toString());
+                tagCompound.putByte("Side", (byte) coverSide.ordinal());
                 coverBehavior.writeToNBT(tagCompound);
-                coversList.appendTag(tagCompound);
+                coversList.add(tagCompound);
             }
         }
         data.setTag("Covers", coversList);
     }
 
-    public void readFromNBT(NBTTagCompound data) {
-        NBTTagList coversList = data.getTagList("Covers", NBT.TAG_COMPOUND);
-        for (int index = 0; index < coversList.tagCount(); index++) {
-            NBTTagCompound tagCompound = coversList.getCompoundTagAt(index);
-            if (tagCompound.hasKey("CoverId", NBT.TAG_STRING)) {
-                Direction coverSide = Direction.VALUES[tagCompound.getByte("Side")];
+    public void readFromNBT(CompoundTag data) {
+        ListTag coversList = data.getList("Covers", Tag.TAG_COMPOUND);
+        for (int index = 0; index < coversList.size(); index++) {
+            CompoundTag tagCompound = coversList.getCompound(index);
+            if (tagCompound.contains("CoverId", Tag.TAG_STRING)) {
+                Direction coverSide = Direction.values()[tagCompound.getByte("Side")];
                 ResourceLocation coverId = new ResourceLocation(tagCompound.getString("CoverId"));
                 CoverDefinition coverDefinition = CoverDefinition.getCoverById(coverId);
                 CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
                 coverBehavior.readFromNBT(tagCompound);
-                this.coverBehaviors[coverSide.getIndex()] = coverBehavior;
+                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
             }
         }
     }
 
     @Override
-    public World getWorld() {
+    public Level getWorld() {
         return holder.getPipeWorld();
     }
 

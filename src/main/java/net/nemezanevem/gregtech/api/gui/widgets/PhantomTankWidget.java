@@ -10,8 +10,8 @@ import gregtech.api.util.Size;
 import mezz.jei.api.gui.IGhostIngredientHandler.Target;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.IFluidTank;
@@ -72,7 +72,7 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
                 }
 
                 if (stack != null) {
-                    NBTTagCompound compound = stack.writeToNBT(new NBTTagCompound());
+                    CompoundTag compound = stack.writeToNBT(new CompoundTag());
                     writeClientAction(LOAD_PHANTOM_FLUID_STACK_FROM_NBT, buf -> buf.writeCompoundTag(compound));
                 }
 
@@ -84,7 +84,7 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buf) {
+    public void handleClientAction(int id, FriendlyByteBuf buf) {
         super.handleClientAction(id, buf);
         if (id == VOID_PHANTOM_FLUID) {
             ItemStack stack = gui.Player.inventory.getItemStack().copy();
@@ -193,7 +193,7 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
         } else if (stack != null) {
             if (!stack.isFluidEqual(lastPhantomStack)) {
                 lastPhantomStack = stack.copy();
-                NBTTagCompound stackTag = stack.writeToNBT(new NBTTagCompound());
+                CompoundTag stackTag = stack.writeToNBT(new CompoundTag());
                 writeUpdateInfo(CHANGE_PHANTOM_FLUID, buf -> buf.writeCompoundTag(stackTag));
             } else if (stack.amount != 0) {
                 lastPhantomStack.amount = 0;
@@ -203,12 +203,12 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buf) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buf) {
         super.readUpdateInfo(id, buf);
         if (id == REMOVE_PHANTOM_FLUID_TYPE) {
             lastPhantomStack = null;
         } else if (id == CHANGE_PHANTOM_FLUID) {
-            NBTTagCompound stackTag;
+            CompoundTag stackTag;
             try {
                 stackTag = buf.readCompoundTag();
             } catch (IOException ignored) {

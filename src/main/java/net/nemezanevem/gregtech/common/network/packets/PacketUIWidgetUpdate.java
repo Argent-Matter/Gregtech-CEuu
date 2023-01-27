@@ -25,13 +25,13 @@ public class PacketUIWidgetUpdate {
     }
 
     public static void encode(PacketUIWidgetUpdate packet, FriendlyByteBuf buf) {
-        NetworkUtils.writePacketBuffer(buf, packet.updateData);
+        NetworkUtils.writeFriendlyByteBuf(buf, packet.updateData);
         buf.writeVarInt(packet.windowId);
         buf.writeVarInt(packet.widgetId);
     }
 
     public static PacketUIWidgetUpdate decode(FriendlyByteBuf buf) {
-        var updateData = NetworkUtils.readPacketBuffer(buf);
+        var updateData = NetworkUtils.readFriendlyByteBuf(buf);
         var windowId = buf.readVarInt();
         var widgetId = buf.readVarInt();
         return new PacketUIWidgetUpdate(windowId, widgetId, updateData);

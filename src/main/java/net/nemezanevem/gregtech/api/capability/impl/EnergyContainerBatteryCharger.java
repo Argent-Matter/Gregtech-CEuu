@@ -73,7 +73,7 @@ public class EnergyContainerBatteryCharger extends EnergyContainerHandler {
     @Override
     public void update() {
         amps = 0;
-        if (metaTileEntity.getWorld().isRemote) {
+        if (metaTileEntity.getWorld().isClientSide) {
             return;
         }
         if (metaTileEntity.getOffsetTimer() % 20 == 0) {
@@ -149,7 +149,7 @@ public class EnergyContainerBatteryCharger extends EnergyContainerHandler {
     @Override
     public void setEnergyStored(long energyStored) {
         this.energyStored = energyStored;
-        if (!metaTileEntity.getWorld().isRemote) {
+        if (!metaTileEntity.getWorld().isClientSide) {
             metaTileEntity.markDirty();
             notifyEnergyListener(false);
         }

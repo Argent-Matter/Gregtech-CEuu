@@ -4,7 +4,7 @@ import net.nemezanevem.gregtech.api.capability.IMaintenanceHatch;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
 import gregtech.api.metatileentity.multiblock.ParallelLogicType;
-import gregtech.api.metatileentity.multiblock.RecipeMapMultiblockController;
+import gregtech.api.metatileentity.multiblock.RecipeTypeMultiblockController;
 import gregtech.api.recipes.RecipeBuilder;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 import gregtech.common.ConfigHolder;
@@ -15,7 +15,7 @@ public class MultiblockFuelRecipeLogic extends MultiblockRecipeLogic {
 
     protected long totalContinuousRunningTime;
 
-    public MultiblockFuelRecipeLogic(RecipeMapMultiblockController tileEntity) {
+    public MultiblockFuelRecipeLogic(RecipeTypeMultiblockController tileEntity) {
         super(tileEntity);
     }
 

@@ -2,7 +2,7 @@ package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 
 import java.util.function.Supplier;
 
@@ -10,7 +10,7 @@ public class RecipeLogicEnergy extends AbstractRecipeLogic {
 
     protected final Supplier<IEnergyContainer> energyContainer;
 
-    public RecipeLogicEnergy(MetaTileEntity tileEntity, RecipeMap<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
+    public RecipeLogicEnergy(MetaTileEntity tileEntity, RecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
         super(tileEntity, recipeMap);
         this.energyContainer = energyContainer;
         setMaximumOverclockVoltage(getMaxVoltage());

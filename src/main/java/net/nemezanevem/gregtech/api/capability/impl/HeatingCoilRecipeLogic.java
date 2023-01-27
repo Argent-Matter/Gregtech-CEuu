@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.nemezanevem.gregtech.api.capability.IHeatingCoil;
-import gregtech.api.metatileentity.multiblock.RecipeMapMultiblockController;
+import gregtech.api.metatileentity.multiblock.RecipeTypeMultiblockController;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 import gregtech.api.recipes.recipeproperties.TemperatureProperty;
 import net.minecraft.util.Tuple;
@@ -12,11 +12,11 @@ import static gregtech.api.recipes.logic.OverclockingLogic.heatingCoilOverclocki
 
 /**
  * RecipeLogic for multiblocks that use temperature for raising speed and lowering energy usage
- * Used with RecipeMaps that run recipes using the {@link TemperatureProperty}
+ * Used with RecipeTypes that run recipes using the {@link TemperatureProperty}
  */
 public class HeatingCoilRecipeLogic extends MultiblockRecipeLogic {
 
-    public HeatingCoilRecipeLogic(RecipeMapMultiblockController metaTileEntity) {
+    public HeatingCoilRecipeLogic(RecipeTypeMultiblockController metaTileEntity) {
         super(metaTileEntity);
     }
 

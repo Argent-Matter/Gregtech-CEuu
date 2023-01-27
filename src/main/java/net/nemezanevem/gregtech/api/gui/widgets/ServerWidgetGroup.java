@@ -3,7 +3,7 @@ package net.nemezanevem.gregtech.api.gui.widgets;
 import gregtech.api.gui.Widget;
 import gregtech.api.util.Position;
 import gregtech.api.util.Size;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.function.BooleanSupplier;
 
@@ -36,7 +36,7 @@ public class ServerWidgetGroup extends AbstractWidgetGroup {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 2) {
             setVisible(buffer.readBoolean());

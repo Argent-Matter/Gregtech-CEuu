@@ -1,15 +1,19 @@
 package net.nemezanevem.gregtech.api.pattern;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class TraceabilityPredicate {
 
@@ -20,8 +24,8 @@ public class TraceabilityPredicate {
     // Allow all heating coils, and require them to have the same type.
     public static Supplier<TraceabilityPredicate> HEATING_COILS = () -> new TraceabilityPredicate(blockWorldState -> {
         BlockState blockState = blockWorldState.getBlockState();
-        if (GregTechAPI.HEATING_COILS.containsKey(blockState)) {
-            IHeatingCoilBlockStats stats = GregTechAPI.HEATING_COILS.get(blockState);
+        if (GregTech.HEATING_COILS.containsKey(blockState)) {
+            IHeatingCoilBlockStats stats = GregTech.HEATING_COILS.get(blockState);
             Object currentCoil = blockWorldState.getMatchContext().getOrPut("CoilType", stats);
             if (!currentCoil.equals(stats)) {
                 blockWorldState.setError(new PatternStringError("gregtech.multiblock.pattern.error.coils"));
@@ -115,7 +119,7 @@ public class TraceabilityPredicate {
      */
     public TraceabilityPredicate addTooltip(String langKey, Object... data) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            addTooltips(I18n.format(langKey, data));
+            addTooltips(Component.translatable(langKey, data));
         }
         return this;
     }
@@ -233,8 +237,7 @@ public class TraceabilityPredicate {
 
         public final Predicate<BlockWorldState> predicate;
 
-        @SideOnly(Side.CLIENT)
-        private List<String> toolTips;
+        private List<Component> toolTips;
 
         public int minGlobalCount = -1;
         public int maxGlobalCount = -1;
@@ -248,36 +251,35 @@ public class TraceabilityPredicate {
             this.candidates = candidates;
         }
 
-        @SideOnly(Side.CLIENT)
-        public List<String> getToolTips(TraceabilityPredicate predicates) {
-            List<String> result = new ArrayList<>();
+        public List<Component> getToolTips(TraceabilityPredicate predicates) {
+            List<Component> result = new ArrayList<>();
             if (toolTips != null) {
-                toolTips.forEach(tip -> result.add(I18n.format(tip)));
+                toolTips.forEach(tip -> result.add(Component.translatable(tip)));
             }
             if (minGlobalCount == maxGlobalCount && maxGlobalCount != -1) {
-                result.add(I18n.format("gregtech.multiblock.pattern.error.limited_exact", minGlobalCount));
+                result.add(Component.translatable("gregtech.multiblock.pattern.error.limited_exact", minGlobalCount));
             } else if (minGlobalCount != maxGlobalCount && minGlobalCount != -1 && maxGlobalCount != -1) {
-                result.add(I18n.format("gregtech.multiblock.pattern.error.limited_within", minGlobalCount, maxGlobalCount));
+                result.add(Component.translatable("gregtech.multiblock.pattern.error.limited_within", minGlobalCount, maxGlobalCount));
             } else {
                 if (minGlobalCount != -1) {
-                    result.add(I18n.format("gregtech.multiblock.pattern.error.limited.1", minGlobalCount));
+                    result.add(Component.translatable("gregtech.multiblock.pattern.error.limited.1", minGlobalCount));
                 }
                 if (maxGlobalCount != -1) {
-                    result.add(I18n.format("gregtech.multiblock.pattern.error.limited.0", maxGlobalCount));
+                    result.add(Component.translatable("gregtech.multiblock.pattern.error.limited.0", maxGlobalCount));
                 }
             }
             if (minLayerCount != -1) {
-                result.add(I18n.format("gregtech.multiblock.pattern.error.limited.3", minLayerCount));
+                result.add(Component.translatable("gregtech.multiblock.pattern.error.limited.3", minLayerCount));
             }
             if (maxLayerCount != -1) {
-                result.add(I18n.format("gregtech.multiblock.pattern.error.limited.2", maxLayerCount));
+                result.add(Component.translatable("gregtech.multiblock.pattern.error.limited.2", maxLayerCount));
             }
             if (predicates == null) return result;
             if (predicates.isSingle) {
-                result.add(I18n.format("gregtech.multiblock.pattern.single"));
+                result.add(Component.translatable("gregtech.multiblock.pattern.single"));
             }
             if (predicates.hasAir) {
-                result.add(I18n.format("gregtech.multiblock.pattern.replaceable_air"));
+                result.add(Component.translatable("gregtech.multiblock.pattern.replaceable_air"));
             }
             return result;
         }
@@ -319,7 +321,7 @@ public class TraceabilityPredicate {
                 if (metaTileEntity != null) {
                     return metaTileEntity.getStackForm();
                 } else {
-                    return new ItemStack(Item.getItemFromBlock(blockState.getBlock()), 1, blockState.getBlock().damageDropped(blockState));
+                    return new ItemStack(blockState.getBlock(), 1);
                 }
             }).collect(Collectors.toList());
         }
@@ -339,15 +341,14 @@ public class TraceabilityPredicate {
             return Collections.singletonList(predicate.getCandidates());
         }
 
-        @SideOnly(Side.CLIENT)
         @Override
-        public String getErrorInfo() {
+        public Component getErrorInfo() {
             int number = -1;
             if (type == 0) number = predicate.maxGlobalCount;
             if (type == 1) number = predicate.minGlobalCount;
             if (type == 2) number = predicate.maxLayerCount;
             if (type == 3) number = predicate.minLayerCount;
-            return I18n.format("gregtech.multiblock.pattern.error.limited." + type, number);
+            return Component.translatable("gregtech.multiblock.pattern.error.limited." + type, number);
         }
     }
 

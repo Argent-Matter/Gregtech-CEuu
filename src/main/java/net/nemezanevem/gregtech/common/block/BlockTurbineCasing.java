@@ -9,7 +9,7 @@ import net.minecraft.block.state.BlockState;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -27,7 +27,7 @@ public class BlockTurbineCasing extends VariantBlock<BlockTurbineCasing.TurbineC
     }
 
     @Override
-    public boolean canCreatureSpawn(BlockState state, IBlockAccess world, BlockPos pos, SpawnPlacementType type) {
+    public boolean canCreatureSpawn(BlockState state, BlockGetter world, BlockPos pos, SpawnPlacementType type) {
         return false;
     }
 

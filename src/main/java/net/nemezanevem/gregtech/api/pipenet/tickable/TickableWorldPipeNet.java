@@ -1,37 +1,36 @@
 package net.nemezanevem.gregtech.api.pipenet.tickable;
 
-import gregtech.api.pipenet.PipeNet;
-import gregtech.api.pipenet.WorldPipeNet;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.WorldServer;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.nemezanevem.gregtech.api.pipenet.PipeNet;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class TickableWorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType> & ITickable> extends WorldPipeNet<NodeDataType, T> {
+public abstract class TickableWorldPipeNet<NodeDataType, T extends PipeNet<NodeDataType>> extends WorldPipeNet<NodeDataType, T> {
 
     private final Map<T, List<ChunkPos>> loadedChunksByPipeNet = new HashMap<>();
     private final Set<T> tickingPipeNets = new HashSet<>();
     private final Set<T> removeLater = new HashSet<>();
 
-    public TickableWorldPipeNet(String name) {
-        super(name);
+    public TickableWorldPipeNet() {
+        super();
     }
 
     private boolean isChunkLoaded(ChunkPos chunkPos) {
-        WorldServer worldServer = (WorldServer) getWorld();
+        ServerLevel worldServer = (ServerLevel) getWorld();
         if (worldServer == null) return false;
-        return worldServer.getChunkProvider().chunkExists(chunkPos.x, chunkPos.z);
+        return worldServer.getChunk(chunkPos.x, chunkPos.z).isEmpty();
     }
 
     protected abstract int getUpdateRate();
 
     public void update() {
-        if (getWorld().getTotalWorldTime() % getUpdateRate() == 0L) {
-            tickingPipeNets.forEach(net -> net.update());
+        if (getWorld().getGameTime() % getUpdateRate() == 0L) {
+            tickingPipeNets.forEach(PipeNet::onPipeConnectionsUpdate);
         }
         if(removeLater.size() > 0) {
             removeLater.forEach(tickingPipeNets::remove);
@@ -39,7 +38,7 @@ public abstract class TickableWorldPipeNet<NodeDataType, T extends PipeNet<NodeD
         }
     }
 
-    public void onChunkLoaded(Chunk chunk) {
+    public void onChunkLoaded(ChunkAccess chunk) {
         ChunkPos chunkPos = chunk.getPos();
         List<T> pipeNetsInThisChunk = this.pipeNetsByChunk.get(chunkPos);
         if (pipeNetsInThisChunk == null) return;
@@ -52,7 +51,7 @@ public abstract class TickableWorldPipeNet<NodeDataType, T extends PipeNet<NodeD
         }
     }
 
-    public void onChunkUnloaded(Chunk chunk) {
+    public void onChunkUnloaded(ChunkAccess chunk) {
         ChunkPos chunkPos = chunk.getPos();
         List<T> pipeNetsInThisChunk = this.pipeNetsByChunk.get(chunkPos);
         if (pipeNetsInThisChunk == null) return;

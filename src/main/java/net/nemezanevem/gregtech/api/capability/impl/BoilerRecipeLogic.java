@@ -5,13 +5,13 @@ import net.nemezanevem.gregtech.api.capability.IMultiblockController;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.ModHandler;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMaps;
+import gregtech.api.recipes.RecipeTypes;
 import gregtech.api.util.GTLog;
 import gregtech.common.ConfigHolder;
 import gregtech.common.metatileentities.multi.MetaTileEntityLargeBoiler;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
@@ -71,7 +71,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
             FluidStack fuelStack = fluidTank.drain(Integer.MAX_VALUE, false);
             if (fuelStack == null || ModHandler.isWater(fuelStack)) continue;
 
-            Recipe dieselRecipe = RecipeMaps.COMBUSTION_GENERATOR_FUELS.findRecipe(
+            Recipe dieselRecipe = RecipeTypes.COMBUSTION_GENERATOR_FUELS.findRecipe(
                     GTValues.V[GTValues.MAX], dummyList, Collections.singletonList(fuelStack), Integer.MAX_VALUE);
             // run only if it can apply a certain amount of "parallel", this is to mitigate int division
             if (dieselRecipe != null && fuelStack.amount >= dieselRecipe.getFluidInputs().get(0).getAmount() * FLUID_DRAIN_MULTIPLIER) {
@@ -82,7 +82,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
                 break;
             }
 
-            Recipe denseFuelRecipe = RecipeMaps.SEMI_FLUID_GENERATOR_FUELS.findRecipe(
+            Recipe denseFuelRecipe = RecipeTypes.SEMI_FLUID_GENERATOR_FUELS.findRecipe(
                     GTValues.V[GTValues.MAX], dummyList, Collections.singletonList(fuelStack), Integer.MAX_VALUE);
             // run only if it can apply a certain amount of "parallel", this is to mitigate int division
             if (denseFuelRecipe != null && fuelStack.amount >= denseFuelRecipe.getFluidInputs().get(0).getAmount() * FLUID_DRAIN_MULTIPLIER) {
@@ -183,7 +183,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     public void setHeat(int heat) {
-        if (heat != this.currentHeat && !metaTileEntity.getWorld().isRemote) {
+        if (heat != this.currentHeat && !metaTileEntity.getWorld().isClientSide) {
             writeCustomData(GregtechDataCodes.BOILER_HEAT, b -> b.writeVarInt(heat));
         }
         this.currentHeat = heat;
@@ -194,7 +194,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     public void setLastTickSteam(int lastTickSteamOutput) {
-        if (lastTickSteamOutput != this.lastTickSteamOutput && !metaTileEntity.getWorld().isRemote) {
+        if (lastTickSteamOutput != this.lastTickSteamOutput && !metaTileEntity.getWorld().isClientSide) {
             writeCustomData(GregtechDataCodes.BOILER_LAST_TICK_STEAM, b -> b.writeVarInt(lastTickSteamOutput));
         }
         this.lastTickSteamOutput = lastTickSteamOutput;
@@ -222,8 +222,8 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = super.serializeNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = super.serializeNBT();
         compound.setInteger("Heat", currentHeat);
         compound.setInteger("ExcessFuel", excessFuel);
         compound.setInteger("ExcessWater", excessWater);
@@ -232,7 +232,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public void deserializeNBT(@Nonnull NBTTagCompound compound) {
+    public void deserializeNBT(@Nonnull CompoundTag compound) {
         super.deserializeNBT(compound);
         this.currentHeat = compound.getInteger("Heat");
         this.excessFuel = compound.getInteger("ExcessFuel");
@@ -241,21 +241,21 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    public void writeInitialData(@Nonnull PacketBuffer buf) {
+    public void writeInitialData(@Nonnull FriendlyByteBuf buf) {
         super.writeInitialData(buf);
         buf.writeVarInt(currentHeat);
         buf.writeVarInt(lastTickSteamOutput);
     }
 
     @Override
-    public void receiveInitialData(@Nonnull PacketBuffer buf) {
+    public void receiveInitialData(@Nonnull FriendlyByteBuf buf) {
         super.receiveInitialData(buf);
         this.currentHeat = buf.readVarInt();
         this.lastTickSteamOutput = buf.readVarInt();
     }
 
     @Override
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
+    public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         super.receiveCustomData(dataId, buf);
         if (dataId == GregtechDataCodes.BOILER_HEAT) {
             this.currentHeat = buf.readVarInt();

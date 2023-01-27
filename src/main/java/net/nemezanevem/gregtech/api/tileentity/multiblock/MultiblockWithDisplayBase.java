@@ -10,10 +10,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.nemezanevem.gregtech.api.capability.IMaintenanceHatch;
 import net.nemezanevem.gregtech.api.tileentity.IVoidable;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -168,7 +170,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     @Override
     public void update() {
         super.update();
-        if (!getWorld().isRemote) {
+        if (!getWorld().isClientSide) {
             boolean state = isActive();
             if (lastActive != state) {
                 this.setLastActive(state);
@@ -312,9 +314,9 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      */
     protected void addDisplayText(List<ITextComponent> textList) {
         if (!isStructureFormed()) {
-            ITextComponent tooltip = new TextComponentTranslation("gregtech.multiblock.invalid_structure.tooltip");
+            ITextComponent tooltip = Component.translatable("gregtech.multiblock.invalid_structure.tooltip");
             tooltip.setStyle(new Style().setColor(TextFormatting.GRAY));
-            textList.add(new TextComponentTranslation("gregtech.multiblock.invalid_structure")
+            textList.add(Component.translatable("gregtech.multiblock.invalid_structure")
                     .setStyle(new Style().setColor(TextFormatting.RED)
                             .setHoverEvent(new HoverEvent(Action.SHOW_TEXT, tooltip))));
         } else {
@@ -322,42 +324,42 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
                 addMaintenanceText(textList);
             }
             if (hasMufflerMechanics() && !isMufflerFaceFree())
-                textList.add(new TextComponentTranslation("gregtech.multiblock.universal.muffler_obstructed")
+                textList.add(Component.translatable("gregtech.multiblock.universal.muffler_obstructed")
                         .setStyle(new Style().setColor(TextFormatting.RED)
                                 .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        new TextComponentTranslation("gregtech.multiblock.universal.muffler_obstructed.tooltip")))));
+                                        Component.translatable("gregtech.multiblock.universal.muffler_obstructed.tooltip")))));
         }
     }
 
     protected void addMaintenanceText(List<ITextComponent> textList) {
         if (!hasMaintenanceProblems()) {
-            textList.add(new TextComponentTranslation("gregtech.multiblock.universal.no_problems")
-                    .setStyle(new Style().setColor(TextFormatting.GREEN))
+            textList.add(Component.translatable("gregtech.multiblock.universal.no_problems")
+                    .withStyle(ChatFormatting.GREEN)
             );
         } else {
 
-            ITextComponent hoverEventTranslation = new TextComponentTranslation("gregtech.multiblock.universal.has_problems_header")
+            ITextComponent hoverEventTranslation = Component.translatable("gregtech.multiblock.universal.has_problems_header")
                     .setStyle(new Style().setColor(TextFormatting.GRAY));
 
             if (((this.maintenance_problems) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.wrench", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.wrench", "\n"));
 
             if (((this.maintenance_problems >> 1) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.screwdriver", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.screwdriver", "\n"));
 
             if (((this.maintenance_problems >> 2) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.soft_mallet", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.soft_mallet", "\n"));
 
             if (((this.maintenance_problems >> 3) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.hard_hammer", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.hard_hammer", "\n"));
 
             if (((this.maintenance_problems >> 4) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.wire_cutter", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.wire_cutter", "\n"));
 
             if (((this.maintenance_problems >> 5) & 1) == 0)
-                hoverEventTranslation.appendSibling(new TextComponentTranslation("gregtech.multiblock.universal.problem.crowbar", "\n"));
+                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.crowbar", "\n"));
 
-            TextComponentTranslation textTranslation = new TextComponentTranslation("gregtech.multiblock.universal.has_problems");
+            TextComponentTranslation textTranslation = Component.translatable("gregtech.multiblock.universal.has_problems");
 
             textList.add(textTranslation.setStyle(new Style().setColor(TextFormatting.RED)
                     .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverEventTranslation))));
@@ -372,7 +374,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     protected void handleDisplayClick(String componentData, ClickData clickData) {
     }
 
-    protected ModularUI.Builder createUITemplate(EntityPlayer entityPlayer) {
+    protected ModularUI.Builder createUITemplate(Player entityPlayer) {
         ModularUI.Builder builder = ModularUI.extendedBuilder();
         builder.image(7, 4, 162, 121, GuiTextures.DISPLAY);
         builder.label(11, 9, getMetaFullName(), 0xFFFFFF);
@@ -422,7 +424,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound data) {
+    public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
         data.setByte("Maintenance", maintenance_problems);
         data.setInteger("ActiveTimer", timeActive);
@@ -433,7 +435,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound data) {
+    public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         maintenance_problems = data.getByte("Maintenance");
         timeActive = data.getInteger("ActiveTimer");
@@ -451,7 +453,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public void writeInitialSyncData(PacketBuffer buf) {
+    public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
         buf.writeByte(maintenance_problems);
         buf.writeInt(timeActive);
@@ -461,7 +463,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public void receiveInitialSyncData(PacketBuffer buf) {
+    public void receiveInitialSyncData(FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
         maintenance_problems = buf.readByte();
         timeActive = buf.readInt();
@@ -471,7 +473,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     }
 
     @Override
-    public void receiveCustomData(int dataId, PacketBuffer buf) {
+    public void receiveCustomData(int dataId, FriendlyByteBuf buf) {
         super.receiveCustomData(dataId, buf);
         if (dataId == STORE_TAPED) {
             storedTaped = buf.readBoolean();

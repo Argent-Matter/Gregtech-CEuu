@@ -1,15 +1,23 @@
 package net.nemezanevem.gregtech.client.particle;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
 import java.util.function.Consumer;
 
-public abstract class GTParticle extends TextureSheetParticle {
+public abstract class GTParticle extends SingleQuadParticle {
     protected int texturesCount = 1;
     protected int squareRenderRange = -1;
     protected boolean motionless = false;
@@ -130,26 +138,42 @@ public abstract class GTParticle extends TextureSheetParticle {
     }
 
     @Override
-    public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ) {
-        float scale = 0.1F * this.quadSize;
-
-        if (this.te != null) {
-            minU = this.particleTexture.getMinU();
-            maxU = this.particleTexture.getMaxU();
-            minV = this.particleTexture.getMinV();
-            maxV = this.particleTexture.getMaxV();
+    public void render(VertexConsumer pBuffer, Camera pRenderInfo, float pPartialTicks) {
+        Quaternion quaternion;
+        if (this.roll == 0.0F) {
+            quaternion = pRenderInfo.rotation();
+        } else {
+            quaternion = new Quaternion(pRenderInfo.rotation());
+            float f3 = Mth.lerp(pPartialTicks, this.oRoll, this.roll);
+            quaternion.mul(Vector3f.ZP.rotation(f3));
         }
 
-        float renderX = (float) (this.prevPosX + (this.posX - this.prevPosX) * (double) partialTicks - interpPosX);
-        float renderY = (float) (this.prevPosY + (this.posY - this.prevPosY) * (double) partialTicks - interpPosY);
-        float renderZ = (float) (this.prevPosZ + (this.posZ - this.prevPosZ) * (double) partialTicks - interpPosZ);
-        int brightnessForRender = this.getBrightnessForRender(partialTicks);
+        float renderX = Mth.lerp(pPartialTicks, (float) this.xo, (float) this.x);
+        float renderY = Mth.lerp(pPartialTicks, (float) this.yo, (float) this.y);
+        float renderZ = Mth.lerp(pPartialTicks, (float) this.zo, (float) this.z);
+        float size = this.getQuadSize(pPartialTicks);
+
+        Vector3f[] points = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
+
+        for(int i = 0; i < 4; ++i) {
+            Vector3f vector3f = points[i];
+            vector3f.transform(quaternion);
+            vector3f.mul(size);
+            vector3f.add(renderX, renderY, renderZ);
+        }
+
+        float f7 = this.getU0();
+        float f8 = this.getU1();
+        float f5 = this.getV0();
+        float f6 = this.getV1();
+
+        int brightnessForRender = this.getLightColor(pPartialTicks);
         int j = brightnessForRender >> 16 & 65535;
         int k = brightnessForRender & 65535;
-        buffer.pos(renderX - rotationX * scale - rotationXY * scale, renderY - rotationZ * scale,  (renderZ - rotationYZ * scale - rotationXZ * scale)).tex(maxU, maxV).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(renderX - rotationX * scale + rotationXY * scale, renderY + rotationZ * scale,  (renderZ - rotationYZ * scale + rotationXZ * scale)).tex(maxU, minV).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(renderX + rotationX * scale + rotationXY * scale,  (renderY + rotationZ * scale),  (renderZ + rotationYZ * scale + rotationXZ * scale)).tex(minU, minV).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-        buffer.pos(renderX + rotationX * scale - rotationXY * scale,  (renderY - rotationZ * scale),  (renderZ + rotationYZ * scale - rotationXZ * scale)).tex(minU, maxV).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
+        pBuffer.vertex(points[0].x(), points[0].y(), points[0].z()).uv(f8, f6).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j, k).endVertex();
+        pBuffer.vertex(points[1].x(), points[1].y(), points[1].z()).uv(f8, f5).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j, k).endVertex();
+        pBuffer.vertex(points[2].x(), points[2].y(), points[2].z()).uv(f7, f5).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j, k).endVertex();
+        pBuffer.vertex(points[3].x(), points[3].y(), points[3].z()).uv(f7, f6).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j, k).endVertex();
     }
 
     /***

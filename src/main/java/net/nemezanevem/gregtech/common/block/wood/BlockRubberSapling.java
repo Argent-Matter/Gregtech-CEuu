@@ -9,7 +9,7 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
 import net.minecraftforge.common.EnumPlantType;
 
@@ -39,7 +39,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
 
     @Override
     public void updateTick(World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Random rand) {
-        if (!worldIn.isRemote) {
+        if (!worldIn.isClientSide) {
             super.updateTick(worldIn, pos, state, rand);
             if (!worldIn.isAreaLoaded(pos, 1))
                 return;
@@ -66,7 +66,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
     @Nonnull
     @Override
     @SuppressWarnings("deprecation")
-    public AxisAlignedBB getBoundingBox(@Nonnull BlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
+    public AxisAlignedBB getBoundingBox(@Nonnull BlockState state, @Nonnull BlockGetter source, @Nonnull BlockPos pos) {
         return SAPLING_AABB;
     }
 
@@ -81,7 +81,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public boolean canBeReplacedByLeaves(@Nonnull BlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
+    public boolean canBeReplacedByLeaves(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos) {
         return true;
     }
 
@@ -92,7 +92,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
 
     @Override
     @Nonnull
-    public EnumPlantType getPlantType(@Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
+    public EnumPlantType getPlantType(@Nonnull BlockGetter world, @Nonnull BlockPos pos) {
         return EnumPlantType.Plains;
     }
 }

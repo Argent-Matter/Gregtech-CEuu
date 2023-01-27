@@ -218,7 +218,7 @@ public final class ModularUI implements ISizeProvider {
             return widget(new ProgressWidget(progressSupplier, x, y, width, height, texture, moveType));
         }
 
-        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType, RecipeMap<?> recipeMap) {
+        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType, RecipeType<?> recipeMap) {
             return widget(new RecipeProgressWidget(progressSupplier, x, y, width, height, texture, moveType, recipeMap));
         }
 

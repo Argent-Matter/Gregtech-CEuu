@@ -1,15 +1,15 @@
 package net.nemezanevem.gregtech.api.cover;
 
 import gregtech.api.gui.ModularUI;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.Player;
+import net.minecraft.entity.player.PlayerMP;
 
 public interface CoverWithUI {
 
-    default void openUI(EntityPlayerMP player) {
+    default void openUI(PlayerMP player) {
         CoverBehaviorUIFactory.INSTANCE.openUI((CoverBehavior) this, player);
     }
 
-    ModularUI createUI(EntityPlayer player);
+    ModularUI createUI(Player player);
 
 }

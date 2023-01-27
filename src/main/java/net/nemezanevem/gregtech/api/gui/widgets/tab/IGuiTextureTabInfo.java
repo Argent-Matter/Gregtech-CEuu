@@ -24,7 +24,7 @@ public class IGuiTextureTabInfo implements ITabInfo {
 
     @Override
     public void renderHoverText(int posX, int posY, int xSize, int ySize, int guiWidth, int guiHeight, boolean isSelected, int mouseX, int mouseY) {
-        String localizedText = I18n.format(nameLocale);
+        String localizedText = Component.translatable(nameLocale);
         Minecraft mc = Minecraft.getMinecraft();
         ScaledResolution resolution = new ScaledResolution(mc);
         GuiUtils.drawHoveringText(Lists.newArrayList(localizedText), mouseX, mouseY, resolution.getScaledWidth(), resolution.getScaledHeight(), -1, mc.fontRenderer);

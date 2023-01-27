@@ -24,7 +24,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
@@ -136,7 +136,7 @@ public final class BlockCompressed extends DelayedStateBlock implements IModelSu
     @Nonnull
     @Override
     @SuppressWarnings("deprecation")
-    public MapColor getMapColor(@Nonnull BlockState state, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos) {
+    public MapColor getMapColor(@Nonnull BlockState state, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
         return getMaterial(state).getMaterialMapColor();
     }
 

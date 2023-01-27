@@ -10,7 +10,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.unification.material.Material;
@@ -37,52 +39,52 @@ public class GtBlocks {
     private GtBlocks() {
     }
 
-    public static BlockMachine MACHINE;
+    public static final RegistryObject<Block> MACHINE = BLOCKS.register("machine", () -> new BlockMachine());
     public static final BlockCable[] CABLES = new BlockCable[10];
     public static final BlockFluidPipe[] FLUID_PIPES = new BlockFluidPipe[7];
     public static final BlockItemPipe[] ITEM_PIPES = new BlockItemPipe[8];
 
-    public static BlockBoilerCasing BOILER_CASING;
-    public static BlockFireboxCasing BOILER_FIREBOX_CASING;
-    public static BlockMetalCasing METAL_CASING;
-    public static BlockTurbineCasing TURBINE_CASING;
-    public static BlockMachineCasing MACHINE_CASING;
-    public static BlockSteamCasing STEAM_CASING;
-    public static BlockMultiblockCasing MULTIBLOCK_CASING;
-    public static BlockGlassCasing TRANSPARENT_CASING;
-    public static BlockWireCoil WIRE_COIL;
-    public static BlockFusionCasing FUSION_CASING;
-    public static BlockWarningSign WARNING_SIGN;
-    public static BlockWarningSign1 WARNING_SIGN_1;
-    public static BlockHermeticCasing HERMETIC_CASING;
-    public static BlockCleanroomCasing CLEANROOM_CASING;
+    public static RegistryObject<Block> BOILER_CASING = BLOCKS.register("boiler_casing", () -> new BlockBoilerCasing());
+    public static final RegistryObject<Block> BOILER_FIREBOX_CASING = BLOCKS.register("boiler_firebox_casing", () -> new BlockFireboxCasing());
+    public static final RegistryObject<Block> METAL_CASING = BLOCKS.register("metal_casing", () -> new BlockMetalCasing());
+    public static final RegistryObject<Block> TURBINE_CASING = BLOCKS.register("turbine_casing", () -> new BlockTurbineCasing());
+    public static final RegistryObject<Block> MACHINE_CASING = BLOCKS.register("machine_casing", () -> new BlockMachineCasing());
+    public static final RegistryObject<Block> STEAM_CASING = BLOCKS.register("steam_casing", () -> new BlockSteamCasing());
+    public static final RegistryObject<Block> MULTIBLOCK_CASING = BLOCKS.register("multiblock_casing", () -> new BlockMultiblockCasing());
+    public static final RegistryObject<Block> TRANSPARENT_CASING = BLOCKS.register("transparent_casing", () -> new BlockGlassCasing());
+    public static final RegistryObject<Block> WIRE_COIL = BLOCKS.register("wire_coil", () -> new BlockWireCoil());
+    public static final RegistryObject<Block> FUSION_CASING = BLOCKS.register("fusion_casing", () -> new BlockFusionCasing());
+    public static final RegistryObject<Block> WARNING_SIGN = BLOCKS.register("warning_sign", () -> new BlockWarningSign());
+    public static final RegistryObject<Block> WARNING_SIGN_1 = BLOCKS.register("warning_sign_1", () -> new BlockWarningSign1());
+    public static final RegistryObject<Block> HERMETIC_CASING = BLOCKS.register("hermetic_casing", () -> new BlockHermeticCasing());
+    public static final RegistryObject<Block> CLEANROOM_CASING = BLOCKS.register("cleanroom_casing", () -> new BlockCleanroomCasing());
 
-    public static BlockAsphalt ASPHALT;
+    public static final RegistryObject<Block> ASPHALT = BLOCKS.register("asphalt", () -> new BlockAsphalt());
 
-    public static BlockStoneSmooth STONE_SMOOTH;
-    public static BlockStoneCobble STONE_COBBLE;
-    public static BlockStoneCobbleMossy STONE_COBBLE_MOSSY;
-    public static BlockStonePolished STONE_POLISHED;
-    public static BlockStoneBricks STONE_BRICKS;
-    public static BlockStoneBricksCracked STONE_BRICKS_CRACKED;
-    public static BlockStoneBricksMossy STONE_BRICKS_MOSSY;
-    public static BlockStoneChiseled STONE_CHISELED;
-    public static BlockStoneTiled STONE_TILED;
-    public static BlockStoneTiledSmall STONE_TILED_SMALL;
-    public static BlockStoneBricksSmall STONE_BRICKS_SMALL;
-    public static BlockStoneWindmillA STONE_WINDMILL_A;
-    public static BlockStoneWindmillB STONE_WINDMILL_B;
-    public static BlockStoneBricksSquare STONE_BRICKS_SQUARE;
+    public static final RegistryObject<Block> STONE_SMOOTH = BLOCKS.register("stone_smooth", () -> new BlockStoneSmooth());
+    public static final RegistryObject<Block> STONE_COBBLE = BLOCKS.register("stone_cobble", () -> new BlockStoneCobble());
+    public static final RegistryObject<Block> STONE_COBBLE_MOSSY = BLOCKS.register("stone_cobble_mossy", () -> new BlockStoneCobbleMossy());
+    public static final RegistryObject<Block> STONE_POLISHED = BLOCKS.register("stone_polished", () -> new BlockStonePolished());
+    public static final RegistryObject<Block> STONE_BRICKS = BLOCKS.register("stone_bricks", () -> new BlockStoneBricks());
+    public static final RegistryObject<Block> STONE_BRICKS_CRACKED = BLOCKS.register("stone_bricks_cracked", () -> new BlockStoneBricksCracked());
+    public static final RegistryObject<Block> STONE_BRICKS_MOSSY = BLOCKS.register("stone_bricks_mossy", () -> new BlockStoneBricksMossy());
+    public static final RegistryObject<Block> STONE_CHISELED = BLOCKS.register("stone_chiseled", () -> new BlockStoneChiseled());
+    public static final RegistryObject<Block> STONE_TILED = BLOCKS.register("stone_tiled", () -> new BlockStoneTiled());
+    public static final RegistryObject<Block> STONE_TILED_SMALL = BLOCKS.register("stone_tiled_small", () -> new BlockStoneTiledSmall());
+    public static final RegistryObject<Block> STONE_BRICKS_SMALL = BLOCKS.register("stone_bricks_small", () -> new BlockStoneBricksSmall());
+    public static final RegistryObject<Block> STONE_WINDMILL_A = BLOCKS.register("stone_windmill_a", () -> new BlockStoneWindmillA());
+    public static final RegistryObject<Block> STONE_WINDMILL_B = BLOCKS.register("stone_windmill_b", () -> new BlockStoneWindmillB());
+    public static final RegistryObject<Block> STONE_BRICKS_SQUARE = BLOCKS.register("stone_bricks_square", () -> new BlockStoneBricksSquare());
 
-    public static BlockFoam FOAM;
-    public static BlockFoam REINFORCED_FOAM;
-    public static BlockPetrifiedFoam PETRIFIED_FOAM;
-    public static BlockPetrifiedFoam REINFORCED_PETRIFIED_FOAM;
+    public static final RegistryObject<Block> FOAM = BLOCKS.register("foam", () -> new BlockFoam());
+    public static final RegistryObject<Block> REINFORCED_FOAM = BLOCKS.register("reinforced_foam", () -> new BlockFoam());
+    public static final RegistryObject<Block> PETRIFIED_FOAM = BLOCKS.register("petrified_foam", () -> new BlockPetrifiedFoam());
+    public static final RegistryObject<Block> REINFORCED_PETRIFIED_FOAM = BLOCKS.register("reinforced_petrified_foam", () -> new BlockPetrifiedFoam());
 
-    public static BlockRubberLog RUBBER_LOG;
-    public static BlockRubberLeaves RUBBER_LEAVES;
-    public static BlockRubberSapling RUBBER_SAPLING;
-    public static BlockGregPlanks PLANKS;
+    public static final RegistryObject<Block> RUBBER_LOG = BLOCKS.register("rubber_log", () -> new BlockRubberLog());
+    public static final RegistryObject<Block> RUBBER_LEAVES = BLOCKS.register("rubber_leaves", () -> new BlockRubberLeaves());
+    public static final RegistryObject<Block> RUBBER_SAPLING = BLOCKS.register("rubber_sapling", () -> new BlockRubberSapling());
+    public static final RegistryObject<Block> PLANKS = BLOCKS.register("planks", () -> new BlockGregPlanks());
 
     public static final Map<Material, BlockCompressed> COMPRESSED = new HashMap<>();
     public static final Map<Material, BlockFrame> FRAMES = new HashMap<>();

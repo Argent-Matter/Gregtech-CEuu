@@ -2,8 +2,8 @@ package net.nemezanevem.gregtech.api.pipenet.block;
 
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.common.ConfigHolder;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.block.state.BlockState;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -30,9 +30,9 @@ public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public boolean placeBlockAt(@Nonnull ItemStack stack, @Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Direction side, float hitX, float hitY, float hitZ, @Nonnull IBlockState newState) {
+    public boolean placeBlockAt(@Nonnull ItemStack stack, @Nonnull Player player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Direction side, float hitX, float hitY, float hitZ, @Nonnull BlockState newState) {
         boolean superVal = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
-        if (superVal && !world.isRemote) {
+        if (superVal && !world.isClientSide) {
             IPipeTile selfTile = (IPipeTile) world.getTileEntity(pos);
             if (selfTile == null) return superVal;
             if (selfTile.getPipeBlock().canConnect(selfTile, side.getOpposite())) {

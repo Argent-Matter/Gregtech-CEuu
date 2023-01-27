@@ -17,6 +17,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.DeferredRegister;
 import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.metaitem.StandardMetaItem;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
@@ -55,16 +56,16 @@ public class PrefixItem extends StandardMetaItem {
         this.material = material;
     }
 
-    public static void registerItems() {
+    public static void registerItems(DeferredRegister<Item> registry) {
         for (var entry : MaterialRegistry.MATERIALS_BUILTIN.get().getEntries()) {
             ResourceLocation loc = entry.getKey().location();
             var material = entry.getValue();
             for(var prefix : TagPrefix.values()) {
                 if (prefix != null && canGenerate(prefix, material)) {
-                    builder(prefix.name + "/" + loc.getPath())
+                    registry.register(prefix.name + "/" + loc.getPath(), () -> builder(prefix.name + "/" + loc.getPath())
                             .setUnificationData(prefix, material)
                             .setMaterialInfo(new ItemMaterialInfo(material.getMaterialComponents()))
-                            .build(prefix, material);
+                            .build(prefix, material));
                 }
             }
 

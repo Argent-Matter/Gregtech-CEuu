@@ -71,7 +71,7 @@ public abstract class TieredMetaTileEntity extends MetaTileEntity implements IEn
     public void addInformation(ItemStack stack, @Nullable World player, @Nonnull List<String> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         if (ConfigHolder.machines.doTerrainExplosion && getIsWeatherOrTerrainResistant())
-            tooltip.add(I18n.format("gregtech.universal.tooltip.terrain_resist"));
+            tooltip.add(Component.translatable("gregtech.universal.tooltip.terrain_resist"));
     }
 
     @Override

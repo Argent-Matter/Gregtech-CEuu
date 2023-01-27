@@ -25,32 +25,57 @@ import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.block.DelayedStateBlock;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.ItemBlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.client.model.IModelSupplier;
+import net.nemezanevem.gregtech.common.block.properties.PropertyMaterial;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class BlockFrame extends DelayedStateBlock implements IModelSupplier {
 
-    public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GTValues.MODID, "frame_block"), "normal");
-    public static final AxisAlignedBB COLLISION_BOX = new AxisAlignedBB(0.05, 0.0, 0.05, 0.95, 1.0, 0.95);
+    public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GregTech.MODID, "frame_block"), "normal");
+    public static final AABB COLLISION_BOX = new AABB(0.05, 0.0, 0.05, 0.95, 1.0, 0.95);
 
     public final PropertyMaterial variantProperty;
 
@@ -74,15 +99,15 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     @Override
     @SuppressWarnings("deprecation")
     public BlockState getStateFromMeta(int meta) {
-        if (meta >= variantProperty.getAllowedValues().size()) {
+        if (meta >= variantProperty.getPossibleValues().size()) {
             meta = 0;
         }
-        return getDefaultState().withProperty(variantProperty, variantProperty.getAllowedValues().get(meta));
+        return defaultBlockState().setValue(variantProperty, variantProperty.getPossibleValues().get(meta));
     }
 
     @Override
     public int getMetaFromState(BlockState state) {
-        return variantProperty.getAllowedValues().indexOf(state.getValue(variantProperty));
+        return variantProperty.getPossibleValues().indexOf(state.getValue(variantProperty));
     }
 
     @Override
@@ -96,7 +121,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     @Nonnull
     @Override
-    public SoundType getSoundType(BlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nullable Entity entity) {
+    public SoundType getSoundType(BlockState state, @Nonnull Level world, @Nonnull BlockPos pos, @Nullable Entity entity) {
         Material material = state.getValue(variantProperty);
         if (ModHandler.isMaterialWood(material)) {
             return SoundType.WOOD;
@@ -118,11 +143,6 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     }
 
     @Override
-    protected BlockStateContainer createStateContainer() {
-        return new BlockStateContainer(this, variantProperty);
-    }
-
-    @Override
     @Nonnull
     @SuppressWarnings("deprecation")
     public net.minecraft.block.material.Material getMaterial(BlockState state) {
@@ -133,41 +153,29 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
         return super.getMaterial(state);
     }
 
-    @Override
-    public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        blockState.getValidStates().stream()
-                .filter(blockState -> blockState.getValue(variantProperty) != Materials.NULL)
-                .forEach(blockState -> list.add(getItem(blockState)));
-    }
-
     public ItemStack getItem(BlockState blockState) {
-        return GTUtility.toItem(blockState);
+        return new ItemStack(blockState.getBlock());
     }
 
     public ItemStack getItem(Material material) {
-        return getItem(getDefaultState().withProperty(variantProperty, material));
+        return getItem(defaultBlockState().withProperty(variantProperty, material));
     }
 
     public BlockState getBlock(Material material) {
-        return getDefaultState().withProperty(variantProperty, material);
+        return defaultBlockState().setValue(variantProperty, material);
     }
 
     public Material getGtMaterial(int meta) {
-        return variantProperty.getAllowedValues().get(meta);
+        return variantProperty.getPossibleValues().get(meta);
     }
 
-    @Override
-    public boolean canCreatureSpawn(@Nonnull BlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull SpawnPlacementType type) {
-        return false;
-    }
-
-    public boolean replaceWithFramedPipe(World worldIn, BlockPos pos, BlockState state, EntityPlayer playerIn, ItemStack stackInHand, Direction facing) {
+    public boolean replaceWithFramedPipe(Level worldIn, BlockPos pos, BlockState state, Player playerIn, ItemStack stackInHand, Direction facing) {
         BlockPipe<?, ?, ?> blockPipe = (BlockPipe<?, ?, ?>) ((ItemBlockPipe<?, ?>) stackInHand.getItem()).getBlock();
         if (blockPipe.getItemPipeType(stackInHand).getThickness() < 1) {
-            ItemBlock itemBlock = (ItemBlock) stackInHand.getItem();
-            BlockState pipeState = blockPipe.getDefaultState();
+            BlockItem itemBlock = (BlockItem) stackInHand.getItem();
+            BlockState pipeState = blockPipe.defaultBlockState();
             // these 0 values are not actually used by forge
-            itemBlock.placeBlockAt(stackInHand, playerIn, worldIn, pos, facing, 0, 0, 0, pipeState);
+            itemBlock.place(new BlockPlaceContext(playerIn, playerIn.getUsedItemHand(), stackInHand, new BlockHitResult(Vec3.atCenterOf(pos), Direction.NORTH, pos, true)));
             IPipeTile<?, ?> pipeTile = blockPipe.getPipeTileEntity(worldIn, pos);
             if (pipeTile instanceof TileEntityPipeBase) {
                 ((TileEntityPipeBase<?, ?>) pipeTile).setFrameMaterial(getGtMaterial(getMetaFromState(state)));
@@ -186,7 +194,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     }
 
     @Override
-    public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, EntityPlayer playerIn, @Nonnull EnumHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
+    public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
         ItemStack stackInHand = playerIn.getHeldItem(hand);
         if (stackInHand.isEmpty()) {
             return false;
@@ -264,7 +272,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     @Override
     @SuppressWarnings("deprecation")
-    public AxisAlignedBB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos) {
+    public AxisAlignedBB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
         return COLLISION_BOX;
     }
 
@@ -283,7 +291,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     @Nonnull
     @Override
     @SuppressWarnings("deprecation")
-    public BlockFaceShape getBlockFaceShape(@Nonnull IBlockAccess worldIn, @Nonnull BlockState state, @Nonnull BlockPos pos, @Nonnull Direction face) {
+    public BlockFaceShape getBlockFaceShape(@Nonnull BlockGetter worldIn, @Nonnull BlockState state, @Nonnull BlockPos pos, @Nonnull Direction face) {
         return BlockFaceShape.UNDEFINED;
     }
 

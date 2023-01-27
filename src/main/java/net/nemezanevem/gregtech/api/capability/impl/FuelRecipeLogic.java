@@ -4,7 +4,7 @@ import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.multiblock.ParallelLogicType;
 import gregtech.api.recipes.RecipeBuilder;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 
 import javax.annotation.Nonnull;
@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 
 public class FuelRecipeLogic extends RecipeLogicEnergy {
 
-    public FuelRecipeLogic(MetaTileEntity tileEntity, RecipeMap<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
+    public FuelRecipeLogic(MetaTileEntity tileEntity, RecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
         super(tileEntity, recipeMap, energyContainer);
     }
 

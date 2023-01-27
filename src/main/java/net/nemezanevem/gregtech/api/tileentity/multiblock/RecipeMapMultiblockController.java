@@ -17,28 +17,39 @@ import gregtech.api.metatileentity.IDataInfoProvider;
 import gregtech.api.pattern.PatternMatchContext;
 import gregtech.api.pattern.TraceabilityPredicate;
 import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.util.GTUtility;
 import gregtech.common.ConfigHolder;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.capability.impl.ItemHandlerList;
+import net.nemezanevem.gregtech.api.capability.impl.MultiblockRecipeLogic;
+import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.tileentity.IDataInfoProvider;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class RecipeMapMultiblockController extends MultiblockWithDisplayBase implements IDataInfoProvider, ICleanroomReceiver {
+public abstract class RecipeTypeMultiblockController extends MultiblockWithDisplayBase implements IDataInfoProvider, ICleanroomReceiver {
 
-    public final RecipeMap<?> recipeMap;
+    public final RecipeType<?> recipeMap;
     protected MultiblockRecipeLogic recipeMapWorkable;
     protected IItemHandlerModifiable inputInventory;
     protected IItemHandlerModifiable outputInventory;
@@ -50,7 +61,7 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
 
     private ICleanroomProvider cleanroom;
 
-    public RecipeMapMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap) {
+    public RecipeTypeMultiblockController(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap) {
         super(metaTileEntityId);
         this.recipeMap = recipeMap;
         this.recipeMapWorkable = new MultiblockRecipeLogic(this);
@@ -77,7 +88,7 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
         return outputFluidInventory;
     }
 
-    public MultiblockRecipeLogic getRecipeMapWorkable() {
+    public MultiblockRecipeLogic getRecipeTypeWorkable() {
         return recipeMapWorkable;
     }
 
@@ -85,7 +96,7 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
      * Performs extra checks for validity of given recipe before multiblock
      * will start it's processing.
      */
-    public boolean checkRecipe(@Nonnull Recipe recipe, boolean consumeIfSuccess) {
+    public boolean checkRecipe(@Nonnull GTRecipe recipe, boolean consumeIfSuccess) {
         return true;
     }
 
@@ -135,22 +146,22 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
     }
 
     @Override
-    protected void addDisplayText(List<ITextComponent> textList) {
+    protected void addDisplayText(List<Component> textList) {
         super.addDisplayText(textList);
         if (isStructureFormed()) {
             IEnergyContainer energyContainer = recipeMapWorkable.getEnergyContainer();
             if (energyContainer != null && energyContainer.getEnergyCapacity() > 0) {
                 long maxVoltage = Math.max(energyContainer.getInputVoltage(), energyContainer.getOutputVoltage());
                 String voltageName = GTValues.VNF[GTUtility.getFloorTierByVoltage(maxVoltage)];
-                textList.add(new TextComponentTranslation("gregtech.multiblock.max_energy_per_tick", maxVoltage, voltageName));
+                textList.add(Component.translatable("gregtech.multiblock.max_energy_per_tick", maxVoltage, voltageName));
             }
 
             if (canBeDistinct() && inputInventory.getSlots() > 0) {
-                ITextComponent buttonText = new TextComponentTranslation("gregtech.multiblock.universal.distinct");
+                ITextComponent buttonText = Component.translatable("gregtech.multiblock.universal.distinct");
                 buttonText.appendText(" ");
                 ITextComponent button = AdvancedTextWidget.withButton(isDistinct() ?
-                        new TextComponentTranslation("gregtech.multiblock.universal.distinct.yes").setStyle(new Style().setColor(TextFormatting.GREEN)) :
-                        new TextComponentTranslation("gregtech.multiblock.universal.distinct.no").setStyle(new Style().setColor(TextFormatting.RED)), "distinct");
+                        Component.translatable("gregtech.multiblock.universal.distinct.yes").withStyle(ChatFormatting.GREEN) :
+                        Component.translatable("gregtech.multiblock.universal.distinct.no").withStyle(ChatFormatting.RED), "distinct");
                 AdvancedTextWidget.withHoverTextTranslate(button, "gregtech.multiblock.universal.distinct.info");
                 buttonText.appendSibling(button);
                 textList.add(buttonText);
@@ -159,21 +170,21 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
             addExtraDisplayInfo(textList);
 
             if (!recipeMapWorkable.isWorkingEnabled()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.work_paused"));
+                textList.add(Component.translatable("gregtech.multiblock.work_paused"));
 
             } else if (recipeMapWorkable.isActive()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.running"));
+                textList.add(Component.translatable("gregtech.multiblock.running"));
                 int currentProgress = (int) (recipeMapWorkable.getProgressPercent() * 100);
                 if (this.recipeMapWorkable.getParallelLimit() != 1) {
-                    textList.add(new TextComponentTranslation("gregtech.multiblock.parallel", this.recipeMapWorkable.getParallelLimit()));
+                    textList.add(Component.translatable("gregtech.multiblock.parallel", this.recipeMapWorkable.getParallelLimit()));
                 }
-                textList.add(new TextComponentTranslation("gregtech.multiblock.progress", currentProgress));
+                textList.add(Component.translatable("gregtech.multiblock.progress", currentProgress));
             } else {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.idling"));
+                textList.add(Component.translatable("gregtech.multiblock.idling"));
             }
 
             if (recipeMapWorkable.isHasNotEnoughEnergy()) {
-                textList.add(new TextComponentTranslation("gregtech.multiblock.not_enough_energy").setStyle(new Style().setColor(TextFormatting.RED)));
+                textList.add(Component.translatable("gregtech.multiblock.not_enough_energy").withStyle(ChatFormatting.RED));
             }
         }
     }
@@ -244,26 +255,26 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound data) {
+    public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
         data.setBoolean("isDistinct", isDistinct);
         return data;
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound data) {
+    public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         isDistinct = data.getBoolean("isDistinct");
     }
 
     @Override
-    public void writeInitialSyncData(PacketBuffer buf) {
+    public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
         buf.writeBoolean(isDistinct);
     }
 
     @Override
-    public void receiveInitialSyncData(PacketBuffer buf) {
+    public void receiveInitialSyncData(FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
         isDistinct = buf.readBoolean();
     }
@@ -297,38 +308,38 @@ public abstract class RecipeMapMultiblockController extends MultiblockWithDispla
     public List<ITextComponent> getDataInfo() {
         List<ITextComponent> list = new ArrayList<>();
         if (recipeMapWorkable.getMaxProgress() > 0) {
-            list.add(new TextComponentTranslation("behavior.tricorder.workable_progress",
-                    new TextComponentTranslation(GTUtility.formatNumbers(recipeMapWorkable.getProgress() / 20)).setStyle(new Style().setColor(TextFormatting.GREEN)),
-                    new TextComponentTranslation(GTUtility.formatNumbers(recipeMapWorkable.getMaxProgress() / 20)).setStyle(new Style().setColor(TextFormatting.YELLOW))
+            list.add(Component.translatable("behavior.tricorder.workable_progress",
+                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getProgress() / 20)).withStyle(ChatFormatting.GREEN),
+                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getMaxProgress() / 20)).withStyle(ChatFormatting.YELLOW)
             ));
         }
 
-        list.add(new TextComponentTranslation("behavior.tricorder.energy_container_storage",
-                new TextComponentTranslation(GTUtility.formatNumbers(energyContainer.getEnergyStored())).setStyle(new Style().setColor(TextFormatting.GREEN)),
-                new TextComponentTranslation(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).setStyle(new Style().setColor(TextFormatting.YELLOW))
+        list.add(Component.translatable("behavior.tricorder.energy_container_storage",
+                Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyStored())).withStyle(ChatFormatting.GREEN),
+                Component.translatable(GTUtility.formatNumbers(energyContainer.getEnergyCapacity())).withStyle(ChatFormatting.YELLOW)
         ));
 
         if (recipeMapWorkable.getRecipeEUt() > 0) {
-            list.add(new TextComponentTranslation("behavior.tricorder.workable_consumption",
-                    new TextComponentTranslation(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt())).setStyle(new Style().setColor(TextFormatting.RED)),
-                    new TextComponentTranslation(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt() == 0 ? 0 : 1)).setStyle(new Style().setColor(TextFormatting.RED))
+            list.add(Component.translatable("behavior.tricorder.workable_consumption",
+                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt())).withStyle(ChatFormatting.RED),
+                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getRecipeEUt() == 0 ? 0 : 1)).withStyle(ChatFormatting.RED)
             ));
         }
 
-        list.add(new TextComponentTranslation("behavior.tricorder.multiblock_energy_input",
-                new TextComponentTranslation(GTUtility.formatNumbers(energyContainer.getInputVoltage())).setStyle(new Style().setColor(TextFormatting.YELLOW)),
-                new TextComponentTranslation(GTValues.VN[GTUtility.getTierByVoltage(energyContainer.getInputVoltage())]).setStyle(new Style().setColor(TextFormatting.YELLOW))
+        list.add(Component.translatable("behavior.tricorder.multiblock_energy_input",
+                Component.translatable(GTUtility.formatNumbers(energyContainer.getInputVoltage())).withStyle(ChatFormatting.YELLOW),
+                Component.translatable(GTValues.VN[GTUtility.getTierByVoltage(energyContainer.getInputVoltage())]).withStyle(ChatFormatting.YELLOW)
         ));
 
         if (ConfigHolder.machines.enableMaintenance && hasMaintenanceMechanics()) {
-            list.add(new TextComponentTranslation("behavior.tricorder.multiblock_maintenance",
-                    new TextComponentTranslation(GTUtility.formatNumbers(getNumMaintenanceProblems())).setStyle(new Style().setColor(TextFormatting.RED))
+            list.add(Component.translatable("behavior.tricorder.multiblock_maintenance",
+                    Component.translatable(GTUtility.formatNumbers(getNumMaintenanceProblems())).withStyle(ChatFormatting.RED)
             ));
         }
 
         if (recipeMapWorkable.getParallelLimit() > 1) {
-            list.add(new TextComponentTranslation("behavior.tricorder.multiblock_parallel",
-                    new TextComponentTranslation(GTUtility.formatNumbers(recipeMapWorkable.getParallelLimit())).setStyle(new Style().setColor(TextFormatting.GREEN))
+            list.add(Component.translatable("behavior.tricorder.multiblock_parallel",
+                    Component.translatable(GTUtility.formatNumbers(recipeMapWorkable.getParallelLimit())).withStyle(ChatFormatting.GREEN)
             ));
         }
 

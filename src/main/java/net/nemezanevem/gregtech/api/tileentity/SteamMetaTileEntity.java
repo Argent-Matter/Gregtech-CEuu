@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.tileentity;
 
-import codechicken.lib.raytracer.CuboidRayTraceResult;
+import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
@@ -13,7 +13,7 @@ import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.gui.widgets.ImageWidget;
 import gregtech.api.recipes.ModHandler;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import gregtech.api.util.GTUtility;
 import gregtech.client.renderer.ICubeRenderer;
 import gregtech.client.renderer.texture.Textures;
@@ -22,15 +22,25 @@ import gregtech.client.utils.RenderUtil;
 import gregtech.common.ConfigHolder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.api.capability.impl.FilteredFluidHandler;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.capability.impl.RecipeLogicSteam;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.ImageWidget;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -46,7 +56,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
     protected RecipeLogicSteam workableHandler;
     protected FluidTank steamFluidTank;
 
-    public SteamMetaTileEntity(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap, ICubeRenderer renderer, boolean isHighPressure) {
+    public SteamMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, boolean isHighPressure) {
         super(metaTileEntityId);
         this.workableHandler = new RecipeLogicSteam(this,
                 recipeMap, isHighPressure, steamFluidTank, 1.0);
@@ -59,7 +69,6 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
         return workableHandler.isActive() && workableHandler.isWorkingEnabled();
     }
 
-    @SideOnly(Side.CLIENT)
     protected SimpleSidedCubeRenderer getBaseRenderer() {
         if (isHighPressure) {
             if (isBrickedCasing()) {
@@ -82,7 +91,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
     }
 
     @Override
-    public boolean onWrenchClick(EntityPlayer playerIn, EnumHand hand, Direction facing, CuboidRayTraceResult hitResult) {
+    public boolean onWrenchClick(Player playerIn, InteractionHand hand, Direction facing, VoxelShapeBlockHitResult hitResult) {
         if (!playerIn.isSneaking()) {
             Direction currentVentingSide = workableHandler.getVentingSide();
             if (currentVentingSide == facing ||
@@ -118,7 +127,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
         return new FluidTankList(false, steamFluidTank);
     }
 
-    public ModularUI.Builder createUITemplate(EntityPlayer player) {
+    public ModularUI.Builder createUITemplate(Player player) {
         return ModularUI.builder(GuiTextures.BACKGROUND_STEAM.get(isHighPressure), 176, 166)
                 .label(6, 6, getMetaFullName()).shouldColor(false)
                 .widget(new ImageWidget(79, 42, 18, 18, GuiTextures.INDICATOR_NO_STEAM.get(isHighPressure))
@@ -128,7 +137,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
 
     @Override
     public SoundEvent getSound() {
-        return workableHandler.getRecipeMap().getSound();
+        return workableHandler.getRecipeType().getSound();
     }
 
     @SideOnly(Side.CLIENT)
@@ -172,9 +181,9 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
 
     @Override
     public void addToolUsages(ItemStack stack, @Nullable World world, List<String> tooltip, boolean advanced) {
-        tooltip.add(I18n.format("gregtech.tool_action.screwdriver.access_covers"));
-        tooltip.add(I18n.format("gregtech.tool_action.wrench.set_facing"));
-        tooltip.add(I18n.format("gregtech.tool_action.soft_mallet.reset"));
+        tooltip.add(Component.translatable("gregtech.tool_action.screwdriver.access_covers"));
+        tooltip.add(Component.translatable("gregtech.tool_action.wrench.set_facing"));
+        tooltip.add(Component.translatable("gregtech.tool_action.soft_mallet.reset"));
         super.addToolUsages(stack, world, tooltip, advanced);
     }
 }

@@ -13,7 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -83,7 +83,7 @@ public class CycleButtonWidget extends Widget {
             buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0, 0.0, 1.0, 1.0);
         }
         FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        String text = I18n.format(optionNames[currentOption]);
+        String text = Component.translatable(optionNames[currentOption]);
         fontRenderer.drawStringWithShadow(text,
                 pos.x + size.width / 2 - fontRenderer.getStringWidth(text) / 2,
                 pos.y + size.height / 2 - fontRenderer.FONT_HEIGHT / 2 + 1, textColor);
@@ -92,7 +92,7 @@ public class CycleButtonWidget extends Widget {
     @Override
     public void drawInForeground(int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY) && tooltipHoverString != null) {
-            List<String> hoverList = Arrays.asList(I18n.format(tooltipHoverString).split("/n"));
+            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString).split("/n"));
             drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
@@ -107,7 +107,7 @@ public class CycleButtonWidget extends Widget {
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         super.readUpdateInfo(id, buffer);
         if (id == 1) {
             this.currentOption = buffer.readVarInt();
@@ -135,7 +135,7 @@ public class CycleButtonWidget extends Widget {
 
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             this.currentOption = MathHelper.clamp(buffer.readVarInt(), 0, optionNames.length);

@@ -8,6 +8,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.crafting.*;
+import net.minecraftforge.common.crafting.conditions.*;
 import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -21,16 +23,21 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
+import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredientSerializer;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconTypeRegistry;
+import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
+import net.nemezanevem.gregtech.api.tileentity.GtMetaTileEntities;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
+import net.nemezanevem.gregtech.common.block.GtBlocks;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
+import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 import org.apache.commons.compress.harmony.pack200.Pack200Exception;
@@ -84,8 +91,14 @@ public class GregTech {
         MaterialRegistry.MATERIALS.register(modEventBus);
         GtMaterials.register();
 
+        GtBlocks.init();
+
         GtItemRegistry.ITEMS.register(modEventBus);
         GtItemRegistry.register();
+
+        MetaTileEntityRegistry.init();
+        MetaTileEntityRegistry.META_TILE_ENTITIES.register(modEventBus);
+        GtMetaTileEntities.init();
 
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -98,10 +111,15 @@ public class GregTech {
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIOpen.class, PacketUIOpen::encode, PacketUIOpen::decode, PacketUIOpen::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketBlockParticle.class, PacketBlockParticle::encode, PacketBlockParticle::decode, PacketBlockParticle::handle);
+        NETWORK_HANDLER.registerMessage(packetIndex++, PacketRecoverMTE.class, PacketRecoverMTE::encode, PacketRecoverMTE::decode, PacketRecoverMTE::handle);
     }
 
     private void register(RegisterEvent event) {
+        if (event.getRegistryKey().equals(ForgeRegistries.Keys.RECIPE_SERIALIZERS))
+        {
+            CraftingHelper.register(new ResourceLocation(MODID, "fluid"), FluidIngredientSerializer.INSTANCE);
 
+        }
     }
 
     private void tagsUpdatedEvent(TagsUpdatedEvent event) {

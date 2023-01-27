@@ -19,8 +19,8 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
@@ -117,7 +117,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
                     ingredientStack = drainFrom(ingredient);
 
                 if (ingredientStack != null) {
-                    NBTTagCompound tagCompound = ingredientStack.writeToNBT(new NBTTagCompound());
+                    CompoundTag tagCompound = ingredientStack.writeToNBT(new CompoundTag());
                     writeClientAction(2, buffer -> buffer.writeCompoundTag(tagCompound));
                 }
 
@@ -159,7 +159,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
             this.lastFluidStack = currentStack;
             writeUpdateInfo(1, buffer -> {
                 buffer.writeBoolean(true);
-                buffer.writeCompoundTag(currentStack.writeToNBT(new NBTTagCompound()));
+                buffer.writeCompoundTag(currentStack.writeToNBT(new CompoundTag()));
             });
         }
         if (showTipSupplier != null && showTip != showTipSupplier.get()) {
@@ -169,11 +169,11 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
     }
 
     @Override
-    public void readUpdateInfo(int id, PacketBuffer buffer) {
+    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             if (buffer.readBoolean()) {
                 try {
-                    NBTTagCompound tagCompound = buffer.readCompoundTag();
+                    CompoundTag tagCompound = buffer.readCompoundTag();
                     this.lastFluidStack = FluidStack.loadFluidStackFromNBT(tagCompound);
                 } catch (IOException e) {
                     GTLog.logger.error("Could not read NBT from PhantomFluidWidget buffer", e);
@@ -187,7 +187,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
     }
 
     @Override
-    public void handleClientAction(int id, PacketBuffer buffer) {
+    public void handleClientAction(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             ClickData clickData = ClickData.readFromBuf(buffer);
             ItemStack itemStack = gui.Player.inventory.getItemStack().copy();
@@ -306,7 +306,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
                 hoverStringList.add(fluidName);
                 if (showTip) {
                     hoverStringList.add(lastFluidStack.amount + " L");
-                    hoverStringList.addAll(Arrays.asList(I18n.format("cover.fluid_filter.config_amount").split("/n")));
+                    hoverStringList.addAll(Arrays.asList(Component.translatable("cover.fluid_filter.config_amount").split("/n")));
                 }
                 drawHoveringText(ItemStack.EMPTY, hoverStringList, -1, mouseX, mouseY);
             }

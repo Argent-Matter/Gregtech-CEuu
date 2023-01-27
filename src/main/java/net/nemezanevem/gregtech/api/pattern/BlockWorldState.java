@@ -12,21 +12,21 @@ import java.util.Map;
 public class BlockWorldState {
 
     protected Level world;
-    protected BlockPos pos;
+    public BlockPos pos;
     protected BlockState state;
     protected BlockEntity blockEntity;
     protected boolean BlockEntityInitialized;
     protected PatternMatchContext matchContext;
     protected Map<TraceabilityPredicate.SimplePredicate, Integer> globalCount;
     protected Map<TraceabilityPredicate.SimplePredicate, Integer> layerCount;
-    protected TraceabilityPredicate predicate;
+    public TraceabilityPredicate predicate;
     protected PatternError error;
 
     public void update(Level worldIn, BlockPos posIn, PatternMatchContext matchContext, Map<TraceabilityPredicate.SimplePredicate, Integer> globalCount, Map<TraceabilityPredicate.SimplePredicate, Integer> layerCount, TraceabilityPredicate predicate) {
         this.world = worldIn;
         this.pos = posIn;
         this.state = null;
-        this.BlockEntity = null;
+        this.blockEntity = null;
         this.BlockEntityInitialized = false;
         this.matchContext = matchContext;
         this.globalCount = globalCount;

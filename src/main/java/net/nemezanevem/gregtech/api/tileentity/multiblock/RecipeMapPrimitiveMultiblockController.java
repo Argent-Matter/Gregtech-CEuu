@@ -2,7 +2,7 @@ package net.nemezanevem.gregtech.api.tileentity.multiblock;
 
 import gregtech.api.capability.impl.*;
 import gregtech.api.metatileentity.MTETrait;
-import gregtech.api.recipes.RecipeMap;
+import gregtech.api.recipes.RecipeType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fluids.FluidTank;
@@ -10,22 +10,22 @@ import net.minecraftforge.fluids.FluidTank;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class RecipeMapPrimitiveMultiblockController extends MultiblockWithDisplayBase {
+public abstract class RecipeTypePrimitiveMultiblockController extends MultiblockWithDisplayBase {
 
     protected PrimitiveRecipeLogic recipeMapWorkable;
 
-    public RecipeMapPrimitiveMultiblockController(ResourceLocation metaTileEntityId, RecipeMap<?> recipeMap) {
+    public RecipeTypePrimitiveMultiblockController(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap) {
         super(metaTileEntityId);
         this.recipeMapWorkable = new PrimitiveRecipeLogic(this, recipeMap);
         initializeAbilities();
     }
 
-    // just initialize inventories based on RecipeMap values by default
+    // just initialize inventories based on RecipeType values by default
     protected void initializeAbilities() {
-        this.importItems = new NotifiableItemStackHandler(recipeMapWorkable.getRecipeMap().getMaxInputs(), this, false);
-        this.importFluids = new FluidTankList(true, makeFluidTanks(recipeMapWorkable.getRecipeMap().getMaxFluidInputs(), false));
-        this.exportItems = new NotifiableItemStackHandler(recipeMapWorkable.getRecipeMap().getMaxOutputs(), this, true);
-        this.exportFluids = new FluidTankList(false, makeFluidTanks(recipeMapWorkable.getRecipeMap().getMaxFluidOutputs(), true));
+        this.importItems = new NotifiableItemStackHandler(recipeMapWorkable.getRecipeType().getMaxInputs(), this, false);
+        this.importFluids = new FluidTankList(true, makeFluidTanks(recipeMapWorkable.getRecipeType().getMaxFluidInputs(), false));
+        this.exportItems = new NotifiableItemStackHandler(recipeMapWorkable.getRecipeType().getMaxOutputs(), this, true);
+        this.exportFluids = new FluidTankList(false, makeFluidTanks(recipeMapWorkable.getRecipeType().getMaxFluidOutputs(), true));
 
         this.itemInventory = new ItemHandlerProxy(this.importItems, this.exportItems);
         this.fluidInventory = new FluidHandlerProxy(this.importFluids, this.exportFluids);
@@ -62,7 +62,7 @@ public abstract class RecipeMapPrimitiveMultiblockController extends MultiblockW
 
     @Override
     public SoundEvent getSound() {
-        return recipeMapWorkable.getRecipeMap().getSound();
+        return recipeMapWorkable.getRecipeType().getSound();
     }
 
     @Override
