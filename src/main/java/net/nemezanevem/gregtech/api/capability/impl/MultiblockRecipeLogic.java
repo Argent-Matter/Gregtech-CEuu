@@ -286,7 +286,7 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
         int numMaintenanceProblems = displayBase == null || !displayBase.hasMaintenanceMechanics() || !ConfigHolder.machines.enableMaintenance ? 0 : displayBase.getNumMaintenanceProblems();
         double durationMultiplier = 1.0D;
         if (displayBase != null && displayBase.hasMaintenanceMechanics() && ConfigHolder.machines.enableMaintenance) {
-            IMaintenanceHatch hatch = displayBase.getAbilities(MultiblockAbility.MAINTENANCE_HATCH).get(0);
+            IMaintenanceHatch hatch = displayBase.getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).get(0);
             durationMultiplier = hatch.getDurationMultiplier();
         }
         return new Tuple<>(numMaintenanceProblems, durationMultiplier);

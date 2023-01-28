@@ -32,7 +32,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -57,7 +56,7 @@ import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
-import net.nemezanevem.gregtech.api.item.toolitem.ToolClasses;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
@@ -174,7 +173,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     public void addDebugInfo(List<String> list) {
     }
 
-    public void addInformation(ItemStack stack, @Nullable Level world, @Nonnull List<String> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level world, @Nonnull List<Component> tooltip, boolean advanced) {
     }
 
     /**
@@ -420,23 +419,23 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         CoverBehavior coverBehavior = gridSideHit == null ? null : getCoverAtSide(gridSideHit);
 
         // Prioritize covers where they apply (Screwdriver, Soft Mallet)
-        if (toolClasses.contains(ToolClasses.SCREWDRIVER)) {
+        if (toolClasses.contains(ToolClass.SCREWDRIVER)) {
             if (coverBehavior != null && coverBehavior.onScrewdriverClick(playerIn, hand, hitResult) == InteractionResult.SUCCESS) {
                 return true;
             } else return onScrewdriverClick(playerIn, hand, gridSideHit, hitResult);
         }
-        if (toolClasses.contains(ToolClasses.SOFT_MALLET)) {
+        if (toolClasses.contains(ToolClass.SOFT_MALLET)) {
             if (coverBehavior != null && coverBehavior.onSoftMalletClick(playerIn, hand, hitResult) == InteractionResult.SUCCESS) {
                 return true;
             } else return onSoftMalletClick(playerIn, hand, gridSideHit, hitResult);
         }
-        if (toolClasses.contains(ToolClasses.WRENCH)) {
+        if (toolClasses.contains(ToolClass.WRENCH)) {
             return onWrenchClick(playerIn, hand, gridSideHit, hitResult);
         }
-        if (toolClasses.contains(ToolClasses.CROWBAR)) {
+        if (toolClasses.contains(ToolClass.CROWBAR)) {
             return onCrowbarClick(playerIn, hand, gridSideHit, hitResult);
         }
-        if (toolClasses.contains(ToolClasses.HARD_HAMMER)) {
+        if (toolClasses.contains(ToolClass.HARD_HAMMER)) {
             return onHardHammerClick(playerIn, hand, gridSideHit, hitResult);
         }
         return false;
@@ -748,7 +747,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             if (--playSoundCooldown > 0) {
                 return;
             }
-            GregTechAPI.soundManager.startTileSound(sound.getSoundName(), 1.0F, getPos());
+            GregTechAPI.soundManager.startTileSound(sound.getLocation(), 1.0F, getPos());
             playSoundCooldown = 20;
         } else {
             GregTechAPI.soundManager.stopTileSound(getPos());
@@ -819,7 +818,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
      * @return tool required to dismantle this meta tile entity properly
      */
     public String getHarvestTool() {
-        return ToolClasses.WRENCH;
+        return ToolClass.WRENCH;
     }
 
     /**

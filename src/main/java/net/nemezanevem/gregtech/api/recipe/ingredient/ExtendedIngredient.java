@@ -1,52 +1,58 @@
 package net.nemezanevem.gregtech.api.recipe.ingredient;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.common.crafting.AbstractIngredient;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
 import net.minecraftforge.common.crafting.PartialNBTIngredient;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.GregTech;
+import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ExtendedIngredient extends AbstractIngredient {
-    public static final ExtendedIngredient EMPTY = new ExtendedIngredient(Stream.empty(), false, null);
+    public static final ExtendedIngredient EMPTY = new ExtendedIngredient((Value) null, false);
 
-
-
-    private final boolean isConsumable;
-
+    private int amount;
+    protected final boolean isConsumable;
     private final boolean isTag;
+    public final Value value;
 
-    @Nullable
-    private final TagKey<Item> tag;
-
-    protected ExtendedIngredient(@Nullable Stream<? extends Value> pValues, boolean isConsumable, @Nullable TagKey<Item> tag) {
-        super(pValues == null ? ForgeRegistries.ITEMS.tags().getTag(tag).stream().map(val -> new ItemValue(new ItemStack(val))) : pValues);
+    protected ExtendedIngredient(@Nullable Value pValue, boolean isConsumable) {
+        super(Stream.of(pValue));
+        this.value = pValue;
         this.isConsumable = isConsumable;
-        this.isTag = pValues == null || pValues.anyMatch(val -> val instanceof TagValue);
-        this.tag = tag;
+        this.isTag = pValue instanceof TagValue;
     }
 
-    protected ExtendedIngredient(@Nonnull Stream<? extends ItemStack> pValues, boolean isConsumable) {
-        this(pValues.map(ItemValue::new), isConsumable, null);
+    protected ExtendedIngredient(@Nonnull ItemStack pValue, boolean isConsumable) {
+        this(new CountValue(new ItemValue(pValue), pValue.getCount()), isConsumable);
     }
 
+    protected ExtendedIngredient(@Nonnull TagValue pValue, int count, boolean isConsumable) {
+        this(new CountValue(pValue, count), isConsumable);
+    }
+
+    protected ExtendedIngredient(@Nonnull TagKey<Item> pValue, int count, boolean isConsumable) {
+        this(new CountValue(new TagValue(pValue), count), isConsumable);
+    }
 
     public boolean isConsumable() {
         return isConsumable;
@@ -56,18 +62,19 @@ public class ExtendedIngredient extends AbstractIngredient {
         return isTag;
     }
 
+    @Nullable
     public TagKey<Item> getTag() {
-        return tag;
+        return this.values[0] instanceof TagValue tag ? tag.tag : null;
     }
 
-    public static ExtendedIngredient fromValues(Stream<? extends Ingredient.Value> pStream, boolean isConsumable) {
-        ExtendedIngredient ingredient = new ExtendedIngredient(pStream, isConsumable, null);
+    public static ExtendedIngredient fromValue(Value pStream, boolean isConsumable) {
+        ExtendedIngredient ingredient = new ExtendedIngredient(pStream, isConsumable);
         return ingredient.values.length == 0 ? (ExtendedIngredient) EMPTY : ingredient;
     }
 
-    public static ExtendedIngredient fromValues(TagKey<Item> tagKey, boolean isConsumable) {
-        ExtendedIngredient ingredient = new ExtendedIngredient(null, isConsumable, tagKey);
-        return ingredient.values.length == 0 ? (ExtendedIngredient) EMPTY : ingredient;
+    public static ExtendedIngredient fromValue(TagKey<Item> tagKey, boolean isConsumable) {
+        ExtendedIngredient ingredient = new ExtendedIngredient(new TagValue(tagKey), isConsumable);
+        return ingredient.values.length == 0 ? EMPTY : ingredient;
     }
 
     @Override
@@ -86,56 +93,82 @@ public class ExtendedIngredient extends AbstractIngredient {
         json.addProperty("type", CraftingHelper.getID(PartialNBTIngredient.Serializer.INSTANCE).toString());
         json.addProperty("isConsumable", isConsumable);
 
-        if (this.values.length == 1) {
-            var serialized = this.values[0].serialize();
-            json.add("item", serialized);
-            return serialized;
-        } else {
-            JsonArray values = new JsonArray();
-
-            for(Ingredient.Value ingredient$value : this.values) {
-                values.add(ingredient$value.serialize());
-            }
-
-            json.add("items", values);
-        }
+        var serialized = this.value.serialize();
+        json.add("value", serialized);
 
 
         return json;
     }
 
-    public static Ingredient of() {
+    @Nonnull
+    public static ExtendedIngredient of() {
         return EMPTY;
     }
 
-    public static Ingredient of(boolean isConsumable, ItemLike... pItems) {
-        return of(Arrays.stream(pItems).map(ItemStack::new), isConsumable);
-    }
-
-    public static Ingredient of(boolean isConsumable, ItemStack... pStacks) {
-        return of(Arrays.stream(pStacks));
-    }
-
-    public static Ingredient of(Stream<ItemStack> pStacks, boolean isConsumable) {
-        return fromValues(pStacks.filter((p_43944_) -> {
-            return !p_43944_.isEmpty();
-        }).map(Ingredient.ItemValue::new), isConsumable);
+    public static ExtendedIngredient of(ItemStack stack, boolean isConsumable) {
+        return stack.isEmpty() ? EMPTY : fromValue(new ItemValue(stack), isConsumable);
     }
 
     public static ExtendedIngredient of(TagKey<Item> pTag, boolean isConsumable) {
-        return fromValues(Stream.of(new ExtendedIngredient.TagValue(pTag)), isConsumable);
+        return fromValue(pTag, isConsumable);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ExtendedIngredient that)) return false;
-        return isConsumable == that.isConsumable && isTag == that.isTag && Objects.equals(tag, that.tag);
+        return isConsumable == that.isConsumable && isTag == that.isTag && ItemStack.matches(this.getItems()[0], that.getItems()[0]);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isConsumable, isTag, tag);
+        return Objects.hash(isConsumable, isTag);
+    }
+
+    protected ExtendedIngredient copy() {
+        return new ExtendedIngredient(this.values[0], this.isConsumable);
+    }
+
+    public ExtendedIngredient copyWithAmount(int amount) {
+        return new ExtendedIngredient(new CountValue(this.value, amount), isConsumable);
+    }
+
+    public static class CountValue implements Ingredient.Value {
+        private final Value value;
+        private int count;
+        public CountValue(Value pItem, int count) {
+            this.value = pItem;
+            this.count = count;
+        }
+
+        public Collection<ItemStack> getItems() {
+            return this.value.getItems();
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public JsonObject serialize() {
+            JsonObject jsonobject = this.value.serialize();
+            jsonobject.addProperty("type", GregTech.MODID + ":" + "count");
+            if(count > 1) {
+                jsonobject.addProperty("count", this.getCount());
+            }
+            return jsonobject;
+        }
+
+        public static CountValue fromJson(JsonObject json) {
+            if(json.has("item")) {
+                ItemStack stack = CraftingHelper.getItemStack(json, false);
+                return new CountValue(new ItemValue(stack), stack.getCount());
+            } else if (json.has("tag")) {
+                ResourceLocation resourcelocation = new ResourceLocation(GsonHelper.getAsString(json, "tag"));
+                TagKey<Item> tagkey = TagKey.create(Registry.ITEM_REGISTRY, resourcelocation);
+                return new CountValue(new Ingredient.TagValue(tagkey), GsonHelper.getAsInt(json, "count"));
+            }
+            return new CountValue(new ItemValue(new ItemStack(Items.BARRIER)), 0);
+        }
     }
 
     public static class Serializer implements IIngredientSerializer<ExtendedIngredient>
@@ -145,12 +178,14 @@ public class ExtendedIngredient extends AbstractIngredient {
         @Override
         public ExtendedIngredient parse(JsonObject json) {
             // parse items
-            Stream<Ingredient.Value> items = null;
+            Ingredient.Value value = null;
             TagKey<Item> tag = null;
             if (json.has("item")) {
                 Item item = ShapedRecipe.itemFromJson(json);
-                items = Stream.of(new Ingredient.ItemValue(new ItemStack(item)));
+                value = new Ingredient.ItemValue(new ItemStack(item));
             }
+            else if (json.has("tag") && json.has("count"))
+                value = CountValue.fromJson(json.getAsJsonObject());
             else if (json.has("tag"))
                 tag = ForgeRegistries.ITEMS.tags().createTagKey(new ResourceLocation(json.get("tag").getAsString()));
             else
@@ -158,15 +193,15 @@ public class ExtendedIngredient extends AbstractIngredient {
 
             boolean isConsumable = json.get("isConsumable").getAsBoolean();
 
-            return new ExtendedIngredient(items, isConsumable, tag);
+            return new ExtendedIngredient(value == null ? new TagValue(tag) : value, isConsumable);
         }
 
         @Override
         public ExtendedIngredient parse(FriendlyByteBuf buffer) {
             if(buffer.readBoolean()) {
-                return ExtendedIngredient.fromValues(ForgeRegistries.ITEMS.tags().createTagKey(buffer.readResourceLocation()), buffer.readBoolean());
+                return ExtendedIngredient.fromValue(ForgeRegistries.ITEMS.tags().createTagKey(buffer.readResourceLocation()), buffer.readBoolean());
             } else {
-                return ExtendedIngredient.fromValues(Stream.generate(() -> new Ingredient.ItemValue(buffer.readItem())).limit(buffer.readVarInt()), buffer.readBoolean());
+                return ExtendedIngredient.fromValue(new Ingredient.ItemValue(buffer.readItem()), buffer.readBoolean());
             }
         }
 
@@ -174,14 +209,10 @@ public class ExtendedIngredient extends AbstractIngredient {
         public void write(FriendlyByteBuf buffer, ExtendedIngredient ingredient) {
             if(ingredient.isTag) {
                 buffer.writeBoolean(true);
-                buffer.writeResourceLocation(ingredient.tag.location());
+                buffer.writeResourceLocation(ingredient.getTag().location());
             } else {
                 buffer.writeBoolean(false);
-                ItemStack[] items = ingredient.getItems();
-                buffer.writeVarInt(items.length);
-
-                for (ItemStack stack : items)
-                    buffer.writeItem(stack);
+                buffer.writeItem(ingredient.getItems()[0]);
             }
             buffer.writeBoolean(ingredient.isConsumable);
         }

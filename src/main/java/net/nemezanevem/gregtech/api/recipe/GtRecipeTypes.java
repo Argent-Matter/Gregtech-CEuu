@@ -22,11 +22,11 @@ public class GtRecipeTypes {
 
     public static final Map<ResourceLocation, GTRecipeType<?>> toRegister = new HashMap<>(20, 0.5f);
 
-    public void registerRecipeTypes(IEventBus bus) {
+    /*public void registerRecipeTypes(IEventBus bus) {
         RECIPE_TYPES.register(bus);
         RECIPE_SERIALIZERS.register(bus);
         for (var machineId : MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get().getEntries()) {
-            RECIPE_TYPES.register(machineId.getKey().location().getPath(), () -> new GTRecipeType<GTRecipe>() {
+            RECIPE_TYPES.register(machineId.getKey().location().getPath(), () -> new GTRecipeTypeImpl<GTRecipe>() {
                 @Override
                 public IChanceFunction getChanceFunction() {
                     return machineId.getValue().getHolder().getMetaTileEntity().getRecipeType().getChanceFunction();
@@ -38,5 +38,5 @@ public class GtRecipeTypes {
                 }
             });
         }
-    }
+    }*/
 }

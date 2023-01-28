@@ -1,35 +1,24 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.IStateHarvestLevel;
-import gregtech.api.block.VariantBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLiving.SpawnPlacementType;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.block.IStateHarvestLevel;
+import net.nemezanevem.gregtech.api.block.VariantBlock;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 
 import javax.annotation.Nonnull;
 
 public class BlockMetalCasing extends VariantBlock<BlockMetalCasing.MetalCasingType> {
 
     public BlockMetalCasing() {
-        super(Material.IRON);
-        setTranslationKey("metal_casing");
-        setHardness(5.0f);
-        setResistance(10.0f);
-        setSoundType(SoundType.METAL);
-        setDefaultState(getState(MetalCasingType.BRONZE_BRICKS));
+        super(BlockBehaviour.Properties.of(Material.METAL).strength(5.0f, 10.0f).sound(SoundType.METAL).isValidSpawn((pState, pLevel, pPos, pValue) -> false));
+        registerDefaultState(getState(MetalCasingType.BRONZE_BRICKS));
     }
 
-    @Override
-    public boolean canCreatureSpawn(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull SpawnPlacementType type) {
-        return false;
-    }
-
-    public enum MetalCasingType implements IStringSerializable, IStateHarvestLevel {
+    public enum MetalCasingType implements StringRepresentable, IStateHarvestLevel {
 
         BRONZE_BRICKS("bronze_bricks", 1),
         PRIMITIVE_BRICKS("primitive_bricks", 1),
@@ -53,7 +42,7 @@ public class BlockMetalCasing extends VariantBlock<BlockMetalCasing.MetalCasingT
 
         @Nonnull
         @Override
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 
@@ -63,8 +52,8 @@ public class BlockMetalCasing extends VariantBlock<BlockMetalCasing.MetalCasingT
         }
 
         @Override
-        public String getHarvestTool(BlockState state) {
-            return ToolClasses.WRENCH;
+        public ToolClass getHarvestTool(BlockState state) {
+            return ToolClass.WRENCH;
         }
     }
 

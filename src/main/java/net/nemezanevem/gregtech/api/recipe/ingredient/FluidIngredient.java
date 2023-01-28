@@ -12,6 +12,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.crafting.AbstractIngredient;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -21,11 +22,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class FluidIngredient extends Ingredient {
+public class FluidIngredient extends AbstractIngredient {
 
     public static final FluidIngredient EMPTY = new FluidIngredient(Stream.empty(), false);
     private final FluidIngredient.Value[] values;
@@ -59,7 +59,7 @@ public class FluidIngredient extends Ingredient {
 
     private void dissolve() {
         if (this.fluidStacks == null) {
-            this.fluidStacks = Arrays.stream(this.values).flatMap((value) -> value.getItems().stream()).distinct().toArray(FluidStack[]::new);
+            this.fluidStacks = Arrays.stream(this.values).flatMap((value) -> value.getFluids().stream()).distinct().toArray(FluidStack[]::new);
         }
     }
 
@@ -85,6 +85,10 @@ public class FluidIngredient extends Ingredient {
     public void toNetworkFluid(FriendlyByteBuf pBuffer) {
         this.dissolve();
         pBuffer.writeCollection(Arrays.asList(this.fluidStacks), FriendlyByteBuf::writeFluidStack);
+    }
+
+    public FluidIngredient copyWithAmount(int amount) {
+        return FluidIngredient.ofFluid(this.isConsumable, new FluidStack(this.getFluids()[0].getFluid(), amount));
     }
 
     public JsonElement toJson() {
@@ -216,7 +220,7 @@ public class FluidIngredient extends Ingredient {
             this.fluid = pItem;
         }
 
-        public Collection<FluidStack> getItems() {
+        public Collection<FluidStack> getFluids() {
             return Collections.singleton(this.fluid);
         }
 
@@ -235,16 +239,13 @@ public class FluidIngredient extends Ingredient {
             this.amount = amount;
         }
 
-        public Collection<FluidStack> getItems() {
+        public Collection<FluidStack> getFluids() {
             List<FluidStack> list = Lists.newArrayList();
 
             for(Fluid fluid : ForgeRegistries.FLUIDS.tags().getTag(this.tag)) {
-                list.add(new FluidStack(fluid, 1000));
+                list.add(new FluidStack(fluid, amount));
             }
 
-            if (list.size() == 0) {
-                list.add(new FluidStack(Fluids.EMPTY, 1000));
-            }
             return list;
         }
 
@@ -256,7 +257,7 @@ public class FluidIngredient extends Ingredient {
     }
 
     public interface Value {
-        Collection<FluidStack> getItems();
+        Collection<FluidStack> getFluids();
 
         JsonObject serialize();
     }

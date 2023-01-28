@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.recipe.property;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -82,14 +83,17 @@ public interface IRecipePropertyStorage {
     void toJson(JsonObject json);
 
     static IRecipePropertyStorage fromJson(JsonObject json) {
-        RecipePropertyStorage storage = new RecipePropertyStorage();
-        var array = GsonHelper.getAsJsonArray(json, "properties");
-        for (int i = 0; i < array.size(); ++i) {
-            var object = array.get(i).getAsJsonObject();
-            var key = RecipePropertyRegistry.RECIPE_PROPERTIES_BUILTIN.get().getValue(new ResourceLocation(GsonHelper.getAsString(object, "type")));
-            if(key == null) throw new IllegalStateException("key " + GsonHelper.getAsString(object, "type") + " was invalid!");
-            storage.store(key, object);
+        if(json.has("properties")) {
+            RecipePropertyStorage storage = new RecipePropertyStorage();
+            var array = GsonHelper.getAsJsonArray(json, "properties");
+            for (int i = 0; i < array.size(); ++i) {
+                var object = array.get(i).getAsJsonObject();
+                var key = RecipePropertyRegistry.RECIPE_PROPERTIES_BUILTIN.get().getValue(new ResourceLocation(GsonHelper.getAsString(object, "type")));
+                if(key == null) throw new IllegalStateException("key " + GsonHelper.getAsString(object, "type") + " was invalid!");
+                storage.store(key, object);
+            }
+            return storage;
         }
-        return storage;
+        return EmptyRecipePropertyStorage.INSTANCE;
     }
 }

@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -12,6 +13,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
 import net.nemezanevem.gregtech.api.gui.INativeWidget;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
@@ -140,7 +142,7 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
             ModularUIGui modularUIGui = gui.getModularUIGui();
             boolean last = modularUIGui.getIsQuickCrafting();
@@ -153,7 +155,7 @@ public class SlotWidget extends Widget implements INativeWidget {
                 else if (button == 1) {
                     modularUIGui.dragSplittingLimit = 1;
                 }
-                else if (Minecraft.getMinecraft().gameSettings.keyBindPickBlock.isActiveAndMatches(button - 100)) {
+                else if (Minecraft.getInstance().options.keyPickItem.isActiveAndMatches(InputConstants.getKey(button - 100, -1))) {
                     modularUIGui.dragSplittingLimit = 2;
                 }
             }
@@ -163,7 +165,7 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public boolean mouseReleased(int mouseX, int mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
             gui.getModularUIGui().superMouseReleased(mouseX, mouseY, button);
             return true;
@@ -172,7 +174,7 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (isMouseOverElement(mouseX, mouseY) && gui != null) {
             gui.getModularUIGui().superMouseDragged(mouseX, mouseY, button, dragX, dragY);
             return true;
@@ -184,14 +186,22 @@ public class SlotWidget extends Widget implements INativeWidget {
     protected void onPositionUpdate() {
         if (slotReference != null && sizes != null) {
             Position position = getPosition();
-            this.slotReference.xPos = position.x + 1 - sizes.getGuiLeft();
-            this.slotReference.yPos = position.y + 1 - sizes.getGuiTop();
+            this.slotReference.x = position.x + 1 - sizes.getGuiLeft();
+            this.slotReference.y = position.y + 1 - sizes.getGuiTop();
         }
     }
 
     public SlotWidget setChangeListener(Runnable changeListener) {
         this.changeListener = changeListener;
         return this;
+    }
+
+    public SlotWidget(IItemHandlerModifiable itemHandler, int slotIndex, int xPosition, int yPosition) {
+        this(itemHandler, slotIndex, xPosition, yPosition, true, true);
+    }
+
+    public SlotWidget(Container inventory, int slotIndex, int xPosition, int yPosition) {
+        this(inventory, slotIndex, xPosition, yPosition, true, true);
     }
 
     /**

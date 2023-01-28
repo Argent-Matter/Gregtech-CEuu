@@ -12,16 +12,12 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.phys.Vec2;
-import net.minecraftforge.common.data.SoundDefinition;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.nemezanevem.gregtech.api.gui.widgets.WidgetUIAccess;
 import net.nemezanevem.gregtech.api.util.Position;
@@ -145,13 +141,13 @@ public abstract class Widget {
     protected void onSizeUpdate() {
     }
 
-    public boolean isMouseOverElement(int mouseX, int mouseY) {
+    public boolean isMouseOverElement(double mouseX, double mouseY) {
         Position position = getPosition();
         Size size = getSize();
         return isMouseOver(position.x, position.y, size.width, size.height, mouseX, mouseY);
     }
 
-    public static boolean isMouseOver(int x, int y, int width, int height, int mouseX, int mouseY) {
+    public static boolean isMouseOver(int x, int y, int width, int height, double mouseX, double mouseY) {
         return mouseX >= x && mouseY >= y && x + width > mouseX && y + height > mouseY;
     }
 
@@ -202,21 +198,21 @@ public abstract class Widget {
     /**
      * Called when mouse is clicked in GUI
      */
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return false;
     }
 
     /**
      * Called when mouse is pressed and hold down in GUI
      */
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         return false;
     }
 
     /**
      * Called when mouse is released in GUI
      */
-    public boolean mouseReleased(int mouseX, int mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         return false;
     }
 

@@ -10,6 +10,7 @@ import net.nemezanevem.gregtech.api.gui.impl.ModularUIGui;
 import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.gui.widgets.*;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Position;
 
 import java.util.ArrayList;
@@ -218,7 +219,7 @@ public final class ModularUI implements ISizeProvider {
             return widget(new ProgressWidget(progressSupplier, x, y, width, height, texture, moveType));
         }
 
-        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType, RecipeType<?> recipeMap) {
+        public Builder progressBar(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea texture, ProgressWidget.MoveType moveType, GTRecipeType<?> recipeMap) {
             return widget(new RecipeProgressWidget(progressSupplier, x, y, width, height, texture, moveType, recipeMap));
         }
 

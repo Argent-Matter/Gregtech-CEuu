@@ -27,7 +27,7 @@ public class MultiblockFuelRecipeLogic extends MultiblockRecipeLogic {
 
         int[] overclock = null;
         if (displayBase != null && ConfigHolder.machines.enableMaintenance && displayBase.hasMaintenanceMechanics()) {
-            IMaintenanceHatch hatch = displayBase.getAbilities(MultiblockAbility.MAINTENANCE_HATCH).get(0);
+            IMaintenanceHatch hatch = displayBase.getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).get(0);
             double durationMultiplier = hatch.getDurationMultiplier();
             if (durationMultiplier != 1.0) {
                 overclock = new int[]{recipeEUt * -1, (int) Math.round(recipeDuration / durationMultiplier)};

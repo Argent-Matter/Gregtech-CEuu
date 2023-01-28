@@ -14,19 +14,18 @@ public class IntCircuitIngredient extends ExtendedIngredient {
     public static final int CIRCUIT_MAX = 32;
     private final int matchingConfigurations;
 
-    public static IntCircuitIngredient getOrCreate(IntCircuitIngredient ri) {
-        return (IntCircuitIngredient) getFromCache(new IntCircuitIngredient(ri.matchingConfigurations));
-    }
-
     @Override
     protected IntCircuitIngredient copy() {
-        IntCircuitIngredient copy = new IntCircuitIngredient(this.matchingConfigurations);
-        copy.isConsumable = this.isConsumable;
-        return copy;
+        return new IntCircuitIngredient(this.matchingConfigurations, this.isConsumable);
     }
 
     public IntCircuitIngredient(int matchingConfigurations) {
-        super(Stream.of(getIntegratedCircuit(matchingConfigurations)), false);
+        super(getIntegratedCircuit(matchingConfigurations), false);
+        this.matchingConfigurations = matchingConfigurations;
+    }
+
+    public IntCircuitIngredient(int matchingConfigurations, boolean isConsumable) {
+        super(getIntegratedCircuit(matchingConfigurations), isConsumable);
         this.matchingConfigurations = matchingConfigurations;
     }
 

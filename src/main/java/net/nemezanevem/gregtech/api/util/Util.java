@@ -20,6 +20,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RedStoneWireBlock;
@@ -39,11 +40,15 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.block.machine.MachineBlockItem;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.properties.MaterialPropertyRegistry;
+import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
@@ -322,6 +327,11 @@ public class Util {
         return itemStackList;
     }
 
+    public static boolean isBetweenInclusive(long start, long end, long value) {
+        return start <= value && value <= end;
+    }
+
+
     public static boolean harvestBlock(Level level, BlockPos pos, Player player) {
         BlockState blockState = level.getBlockState(pos);
         BlockEntity tileEntity = level.getBlockEntity(pos);
@@ -401,6 +411,21 @@ public class Util {
                 }
             }
         }
+    }
+
+    public static MetaTileEntity getMetaTileEntity(BlockGetter world, BlockPos pos) {
+        if (world == null || pos == null) return null;
+        BlockEntity te = world.getBlockEntity(pos);
+        return te instanceof IGregTechTileEntity gtBe ? gtBe.getMetaTileEntity() : null;
+    }
+
+    public static MetaTileEntity getMetaTileEntity(ItemStack stack) {
+        if (!(stack.getItem() instanceof MachineBlockItem blockItem)) return null;
+        return MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get().getValue(Util.getId(blockItem));
+    }
+
+    public static boolean arePosEqual(BlockPos pos1, BlockPos pos2) {
+        return pos1.getX() == pos2.getX() & pos1.getY() == pos2.getY() & pos1.getZ() == pos2.getZ();
     }
 
 

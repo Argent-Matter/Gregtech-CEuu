@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.capability.impl.miner;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
+import net.minecraft.world.level.block.state.BlockState;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IMiner;
 import gregtech.api.metatileentity.MetaTileEntity;

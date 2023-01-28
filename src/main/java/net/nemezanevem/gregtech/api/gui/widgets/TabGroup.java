@@ -1,18 +1,17 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.widgets.tab.HorizontalTabListRenderer;
-import gregtech.api.gui.widgets.tab.HorizontalTabListRenderer.HorizontalStartCorner;
-import gregtech.api.gui.widgets.tab.HorizontalTabListRenderer.VerticalLocation;
-import gregtech.api.gui.widgets.tab.ITabInfo;
-import gregtech.api.gui.widgets.tab.TabListRenderer;
-import gregtech.api.gui.widgets.tab.VerticalTabListRenderer;
-import gregtech.api.gui.widgets.tab.VerticalTabListRenderer.HorizontalLocation;
-import gregtech.api.gui.widgets.tab.VerticalTabListRenderer.VerticalStartCorner;
-import gregtech.api.util.Position;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Tuple;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.HorizontalTabListRenderer;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.HorizontalTabListRenderer.*;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.VerticalTabListRenderer;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.VerticalTabListRenderer.*;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.ITabInfo;
+import net.nemezanevem.gregtech.api.gui.widgets.tab.TabListRenderer;
+import net.nemezanevem.gregtech.api.util.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,29 +106,29 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
         this.tabListRenderer.renderTabs(gui, getPosition(), tabInfos, sizes.getWidth(), sizes.getHeight(), selectedTabIndex);
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
-        super.drawInForeground(mouseX, mouseY);
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
+        super.drawInForeground(poseStack, mouseX, mouseY);
         Tuple<ITabInfo, int[]> tabOnMouse = getTabOnMouse(mouseX, mouseY);
         if (tabOnMouse != null) {
-            int[] tabSizes = tabOnMouse.getSecond();
-            ITabInfo tabInfo = tabOnMouse.getFirst();
+            int[] tabSizes = tabOnMouse.getB();
+            ITabInfo tabInfo = tabOnMouse.getA();
             boolean isSelected = tabInfos.get(selectedTabIndex) == tabInfo;
             tabInfo.renderHoverText(tabSizes[0], tabSizes[1], tabSizes[2], tabSizes[3], sizes.getWidth(), sizes.getHeight(), isSelected, mouseX, mouseY);
         }
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean flag = super.mouseClicked(mouseX, mouseY, button);
         Tuple<ITabInfo, int[]> tabOnMouse = getTabOnMouse(mouseX, mouseY);
         if (tabOnMouse != null) {
-            ITabInfo tabInfo = tabOnMouse.getFirst();
+            ITabInfo tabInfo = tabOnMouse.getA();
             int tabIndex = tabInfos.indexOf(tabInfo);
             if (selectedTabIndex != tabIndex) {
                 setSelectedTab(tabIndex);

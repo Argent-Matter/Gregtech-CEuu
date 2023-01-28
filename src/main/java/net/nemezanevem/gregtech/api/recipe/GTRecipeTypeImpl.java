@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.recipe;
 
+import codechicken.lib.util.ServerUtils;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
@@ -35,6 +36,7 @@ import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.api.util.ValidationResult;
 import net.nemezanevem.gregtech.api.util.ValidationResult.EnumValidationResult;
 import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,6 +47,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
+
+    public static final Map<GTRecipeType<?>, GTRecipeBuilder<?>> TYPES_TO_BUILDERS = new HashMap<>();
+
     private static final Comparator<GTRecipe> RECIPE_DURATION_THEN_EU = Comparator.comparingInt(GTRecipe::getDuration)
             .thenComparingInt(GTRecipe::getEUt)
             .thenComparing(GTRecipe::hashCode);
@@ -73,7 +78,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     public final boolean isHidden;
 
     private final Branch lookup = new Branch();
-    private boolean hasOreDictedInputs = false;
+    private boolean hastaggedInputs = false;
     private boolean hasNBTMatcherInputs = false;
     private static final WeakHashMap<AbstractMapIngredient, WeakReference<AbstractMapIngredient>> ingredientRoot = new WeakHashMap<>();
     private final WeakHashMap<AbstractMapIngredient, WeakReference<AbstractMapIngredient>> fluidIngredientRoot = new WeakHashMap<>();
@@ -101,6 +106,8 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
         defaultRecipe.setType(this);
         this.recipeBuilderSample = defaultRecipe;
         GtRecipeTypes.toRegister.put(this.id, this);
+
+        TYPES_TO_BUILDERS.put(this, new GTRecipeBuilder<>(this));
     }
 
     public static List<GTRecipeType<?>> getRecipeMaps() {
@@ -209,8 +216,8 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
             GregTech.LOGGER.error("Stacktrace:", new IllegalArgumentException("Invalid number of Outputs"));
             recipeStatus = EnumValidationResult.INVALID;
         }
-        if (!Util.isBetweenInclusive(getMinFluidInputs(), getMaxFluidInputs(), recipe.getFluidIngredients().size())) {
-            GregTech.LOGGER.error("Invalid amount of recipe fluid inputs. Actual: {}. Should be between {} and {} inclusive.", recipe.getFluidIngredients().size(), getMinFluidInputs(), getMaxFluidInputs());
+        if (!Util.isBetweenInclusive(getMinFluidInputs(), getMaxFluidInputs(), recipe.getFluidInputs().size())) {
+            GregTech.LOGGER.error("Invalid amount of recipe fluid inputs. Actual: {}. Should be between {} and {} inclusive.", recipe.getFluidInputs().size(), getMinFluidInputs(), getMaxFluidInputs());
             GregTech.LOGGER.error("Stacktrace:", new IllegalArgumentException("Invalid number of Fluid Inputs"));
             recipeStatus = EnumValidationResult.INVALID;
         }
@@ -223,7 +230,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     }
 
     @Nullable
-    public GTRecipe findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity) {
+    public R findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity) {
         return this.findRecipe(voltage, Util.itemHandlerToList(inputs), Util.fluidHandlerToList(fluidInputs), outputFluidTankCapacity);
     }
 
@@ -237,7 +244,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
      * @return the Recipe it has found or null for no matching Recipe
      */
     @Nullable
-    public GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity) {
+    public R findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity) {
         return findRecipe(voltage, inputs, fluidInputs, outputFluidTankCapacity, false);
     }
 
@@ -253,8 +260,8 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
      */
 
     @Nullable
-    public GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity, boolean exactVoltage) {
-        return find(inputs.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList()), fluidInputs.stream().filter(Objects::nonNull).collect(Collectors.toList()), recipe -> {
+    public R findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity, boolean exactVoltage) {
+        return find(inputs.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList()), fluidInputs.stream().filter(f -> !f.isEmpty()).collect(Collectors.toList()), recipe -> {
             if (exactVoltage && recipe.getEUt() != voltage) {
                 return false;
             }
@@ -263,7 +270,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     }
 
     @Nullable
-    public GTRecipe find(@Nonnull List<ItemStack> items, @Nonnull List<FluidStack> fluids, @Nonnull Predicate<GTRecipe> canHandle) {
+    public R find(@Nonnull List<ItemStack> items, @Nonnull List<FluidStack> fluids, @Nonnull Predicate<GTRecipe> canHandle) {
         // First, check if items and fluids are valid.
         if (items.size() == Integer.MAX_VALUE || fluids.size() == Integer.MAX_VALUE) {
             return null;
@@ -272,7 +279,9 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
             return null;
         }
 
-        List<List<AbstractMapIngredient>> list = new ObjectArrayList<>(items.size() + fluids.size());
+        Optional<R> recipeOptional = ServerUtils.getServer().getRecipeManager().getAllRecipesFor(this).stream().filter(recipe -> recipe.matches(false, items, fluids) && canHandle.test(recipe)).distinct().findFirst();
+        return recipeOptional.orElse(null);
+        /*List<List<AbstractMapIngredient>> list = new ObjectArrayList<>(items.size() + fluids.size());
         if (items.size() > 0) {
             buildFromItemStacks(list, uniqueItems(items));
         }
@@ -292,6 +301,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
             return null;
         }
         return recurseIngredientTreeFindRecipe(list, lookup, canHandle);
+        */
     }
 
     /**
@@ -739,12 +749,12 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     }
 
     protected List<List<AbstractMapIngredient>> fromRecipe(GTRecipe r) {
-        List<List<AbstractMapIngredient>> list = new ObjectArrayList<>((r.getIngredients().size()) + r.getFluidIngredients().size());
+        List<List<AbstractMapIngredient>> list = new ObjectArrayList<>((r.getIngredients().size()) + r.getFluidInputs().size());
         if (r.getInputs().size() > 0) {
             buildFromRecipeItems(list, uniqueIngredientsList(r.getInputs()));
         }
-        if (r.getFluidIngredients().size() > 0) {
-            buildFromRecipeFluids(list, r.getFluidIngredients());
+        if (r.getFluidInputs().size() > 0) {
+            buildFromRecipeFluids(list, r.getFluidInputs());
         }
         return list;
     }
@@ -753,7 +763,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
         for (ExtendedIngredient r : ingredients) {
             AbstractMapIngredient ingredient;
             if (r.isTag()) {
-                hasOreDictedInputs = true;
+                hastaggedInputs = true;
                 ingredient = new MapTagIngredient(r.getTag());
 
                 WeakReference<AbstractMapIngredient> cached = ingredientRoot.get(ingredient);
@@ -788,10 +798,12 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
             List<AbstractMapIngredient> ls = new ObjectArrayList<>(1);
             ls.add(new MapItemStackIngredient(stack, nbt));
-            if (hasOreDictedInputs) {
-                ForgeRegistries.ITEMS.tags().getTagNames().forEach(val -> {
-                    AbstractMapIngredient ingredient = new MapTagIngredient(val);
-                    ls.add(ingredient);
+            if (hastaggedInputs) {
+                ForgeRegistries.ITEMS.tags().getReverseTag(stack.getItem()).ifPresent(reverseTag -> {
+                    reverseTag.getTagKeys().forEach(tagKey -> {
+                        AbstractMapIngredient ingredient = new MapTagIngredient(tagKey);
+                        ls.add(ingredient);
+                    });
                 });
             }
             if (ls.size() > 0) {
@@ -826,6 +838,11 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
     public ResourceLocation getId() {
         return id;
+    }
+
+    @Override
+    public GTRecipeBuilder<R> recipeBuilder() {
+        return (GTRecipeBuilder<R>) TYPES_TO_BUILDERS.get(this);
     }
 
     /**

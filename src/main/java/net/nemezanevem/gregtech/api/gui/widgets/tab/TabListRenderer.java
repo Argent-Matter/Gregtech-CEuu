@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.gui.widgets.tab;
 
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.util.Position;
 
 import java.util.List;
 

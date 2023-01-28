@@ -332,7 +332,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
             ItemStack currentStack = gui.player.getInventory().getSelected();
             if (button == 0 && (allowClickEmptying || allowClickFilling) &&

@@ -32,7 +32,7 @@ public class VariantBlock<T extends Enum<T> & StringRepresentable> extends Block
     }
 
     public BlockState getState(T variant) {
-        return defaultBlockState().setValue(VARIANT, variant);
+        return stateDefinition.any().setValue(VARIANT, variant);
     }
 
     public T getState(BlockState blockState) {

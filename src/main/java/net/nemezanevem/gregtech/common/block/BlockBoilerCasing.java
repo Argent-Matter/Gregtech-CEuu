@@ -11,18 +11,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.nemezanevem.gregtech.api.block.IStateHarvestLevel;
 import net.nemezanevem.gregtech.api.block.VariantBlock;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 
 import javax.annotation.Nonnull;
 
-public class BlockBoilerCasing extends VariantBlock<BoilerCasingType> {
+public class BlockBoilerCasing extends VariantBlock<BlockBoilerCasing.BoilerCasingType> {
 
     public BlockBoilerCasing() {
         super(BlockBehaviour.Properties.of(Material.METAL).strength(5.0f, 10.0f).sound(SoundType.METAL));
         registerDefaultState(getState(BoilerCasingType.BRONZE_PIPE));
     }
-}
 
-public enum BoilerCasingType implements StringRepresentable, IStateHarvestLevel {
+    public enum BoilerCasingType implements StringRepresentable, IStateHarvestLevel {
 
         BRONZE_PIPE("bronze_pipe", 2),
         STEEL_PIPE("steel_pipe", 3),
@@ -50,7 +50,10 @@ public enum BoilerCasingType implements StringRepresentable, IStateHarvestLevel 
         }
 
         @Override
-        public String getHarvestTool(BlockState state) {
-            return ToolClasses.WRENCH;
+        public ToolClass getHarvestTool(BlockState state) {
+            return ToolClass.WRENCH;
         }
+    }
+
 }
+

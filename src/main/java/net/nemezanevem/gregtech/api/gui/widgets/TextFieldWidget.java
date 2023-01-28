@@ -154,7 +154,7 @@ public class TextFieldWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return this.textField.mouseClicked(mouseX, mouseY, button);
     }
 

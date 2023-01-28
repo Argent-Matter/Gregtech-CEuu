@@ -14,12 +14,9 @@ import net.nemezanevem.gregtech.api.util.Position;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static net.nemezanevem.gregtech.api.gui.Widget.getItemToolTip;
 
 /**
  * @author brachy84
@@ -46,7 +43,7 @@ public class OreDictFilterTestSlot extends Widget implements IGhostIngredientTar
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
             // this is only called on client, so this is fine
             Player player = Minecraft.getInstance().player;

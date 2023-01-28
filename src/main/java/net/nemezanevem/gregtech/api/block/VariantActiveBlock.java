@@ -8,10 +8,12 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,7 +37,7 @@ import java.util.List;
 public class VariantActiveBlock<T extends Enum<T> & StringRepresentable> extends VariantBlock<T> implements IModelSupplier {
 
     public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GregTech.MODID, "active_blocks"), "inventory");
-    public static final Object2ObjectOpenHashMap<Integer, ObjectSet<BlockPos>> ACTIVE_BLOCKS = new Object2ObjectOpenHashMap<>();
+    public static final Object2ObjectOpenHashMap<ResourceKey<Level>, ObjectSet<BlockPos>> ACTIVE_BLOCKS = new Object2ObjectOpenHashMap<>();
     private static final List<VariantActiveBlock<?>> INSTANCES = new ArrayList<>();
     public static final Object2ObjectOpenHashMap<Block, ObjectOpenHashSet<RenderType>> block2blockRenderLayerMap = new Object2ObjectOpenHashMap<>();
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");

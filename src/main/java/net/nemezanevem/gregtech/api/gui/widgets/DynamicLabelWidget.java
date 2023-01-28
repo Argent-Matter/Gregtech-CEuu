@@ -1,12 +1,11 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.client.gui.Font;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import java.util.function.Supplier;
 
@@ -14,7 +13,7 @@ import java.util.function.Supplier;
  * Represents a label with text, dynamically obtained
  * from supplied getter in constructor
  * Note that this DOESN'T DO SYNC and calls getter on client side only
- * if you're looking for server-side controlled text field, see {@link gregtech.api.gui.widgets.AdvancedTextWidget}
+ * if you're looking for server-side controlled text field, see {@link AdvancedTextWidget}
  */
 public class DynamicLabelWidget extends Widget {
 
@@ -33,26 +32,26 @@ public class DynamicLabelWidget extends Widget {
     }
 
     private void updateSize() {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
         String resultText = lastTextValue;
-        setSize(new Size(fontRenderer.getStringWidth(resultText), fontRenderer.FONT_HEIGHT));
+        setSize(new Size(fontRenderer.width(resultText), fontRenderer.lineHeight));
         if (uiAccess != null) {
             uiAccess.notifySizeChange();
         }
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         String suppliedText = textSupplier.get();
         if (!suppliedText.equals(lastTextValue)) {
             this.lastTextValue = suppliedText;
             updateSize();
         }
         String[] split = textSupplier.get().split("\n");
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
         Position position = getPosition();
         for (int i = 0; i < split.length; i++) {
-            fontRenderer.drawString(split[i], position.x, position.y + (i * (fontRenderer.FONT_HEIGHT + 2)), color);
+            fontRenderer.drawShadow(poseStack, split[i], position.x, position.y + (i * (fontRenderer.lineHeight + 2)), color);
         }
     }
 

@@ -303,7 +303,7 @@ public class AbstractWidgetGroup extends Widget implements IGhostIngredientTarge
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (int i = widgets.size() - 1; i >= 0; i--) {
             Widget widget = widgets.get(i);
             if(widget.isVisible() && widget.isActive() && widget.mouseClicked(mouseX, mouseY, button)) {
@@ -314,7 +314,7 @@ public class AbstractWidgetGroup extends Widget implements IGhostIngredientTarge
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         for (int i = widgets.size() - 1; i >= 0; i--) {
             Widget widget = widgets.get(i);
             if(widget.isVisible() && widget.isActive() && widget.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
@@ -325,7 +325,7 @@ public class AbstractWidgetGroup extends Widget implements IGhostIngredientTarge
     }
 
     @Override
-    public boolean mouseReleased(int mouseX, int mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         for (int i = widgets.size() - 1; i >= 0; i--) {
             Widget widget = widgets.get(i);
             if(widget.isVisible() && widget.isActive() && widget.mouseReleased(mouseX, mouseY, button)) {

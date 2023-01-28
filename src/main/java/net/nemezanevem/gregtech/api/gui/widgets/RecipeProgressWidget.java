@@ -35,7 +35,7 @@ public class RecipeProgressWidget extends ProgressWidget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!ModList.get().isLoaded(GregTech.MODID_JEI))
             return false;
         if (isMouseOverElement(mouseX, mouseY) && RecipeTypeCategory.getCategoryMap().containsKey(recipeMap)) {

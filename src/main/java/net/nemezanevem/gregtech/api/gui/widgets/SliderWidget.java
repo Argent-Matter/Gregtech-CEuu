@@ -1,18 +1,19 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.base.Preconditions;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import gregtech.api.util.function.FloatConsumer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,12 +21,12 @@ import java.util.function.BiFunction;
 
 public class SliderWidget extends Widget {
 
-    public static final BiFunction<String, Float, String> DEFAULT_TEXT_SUPPLIER = (name, value) -> Component.translatable(name, value.intValue());
+    public static final BiFunction<String, Float, Component> DEFAULT_TEXT_SUPPLIER = (name, value) -> Component.translatable(name, value.intValue());
 
     private int sliderWidth = 8;
     private TextureArea backgroundArea = GuiTextures.SLIDER_BACKGROUND;
     private TextureArea sliderIcon = GuiTextures.SLIDER_ICON;
-    private final BiFunction<String, Float, String> textSupplier = DEFAULT_TEXT_SUPPLIER;
+    private final BiFunction<String, Float, Component> textSupplier = DEFAULT_TEXT_SUPPLIER;
     private int textColor = 0xFFFFFF;
 
     private final float min;
@@ -35,7 +36,7 @@ public class SliderWidget extends Widget {
     private final FloatConsumer responder;
     private boolean isPositionSent;
 
-    private String displayString;
+    private Component displayString;
     private float sliderPosition;
     public boolean isMouseDown;
 
@@ -83,12 +84,12 @@ public class SliderWidget extends Widget {
         return this.min + (this.max - this.min) * this.sliderPosition;
     }
 
-    protected String getDisplayString() {
+    protected Component getDisplayString() {
         return textSupplier.apply(name, getSliderValue());
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundArea != null) {
@@ -98,14 +99,14 @@ public class SliderWidget extends Widget {
             this.displayString = getDisplayString();
         }
         sliderIcon.draw(pos.x + (int) (this.sliderPosition * (float) (size.width - 8)), pos.y, sliderWidth, size.height);
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        fontRenderer.drawString(displayString,
-                pos.x + size.width / 2 - fontRenderer.getStringWidth(displayString) / 2,
-                pos.y + size.height / 2 - fontRenderer.FONT_HEIGHT / 2, textColor);
+        Font fontRenderer = Minecraft.getInstance().font;
+        fontRenderer.draw(poseStack, displayString,
+                pos.x + size.width / 2f - fontRenderer.width(displayString) / 2f,
+                pos.y + size.height / 2f - fontRenderer.lineHeight / 2f, textColor);
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int pButton, double dragX, double dragY) {
         if (this.isMouseDown) {
             Position pos = getPosition();
             Size size = getSize();
@@ -127,7 +128,7 @@ public class SliderWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
             Position pos = getPosition();
             Size size = getSize();
@@ -149,7 +150,7 @@ public class SliderWidget extends Widget {
     }
 
     @Override
-    public boolean mouseReleased(int mouseX, int mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         this.isMouseDown = false;
         return false;
     }
@@ -158,8 +159,8 @@ public class SliderWidget extends Widget {
     public void handleClientAction(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             this.sliderPosition = buffer.readFloat();
-            this.sliderPosition = MathHelper.clamp(sliderPosition, 0.0f, 1.0f);
-            this.responder.apply(getSliderValue());
+            this.sliderPosition = Mth.clamp(sliderPosition, 0.0f, 1.0f);
+            this.responder.accept(getSliderValue());
         }
     }
 
@@ -167,7 +168,7 @@ public class SliderWidget extends Widget {
     public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
             this.sliderPosition = buffer.readFloat();
-            this.sliderPosition = MathHelper.clamp(sliderPosition, 0.0f, 1.0f);
+            this.sliderPosition = Mth.clamp(sliderPosition, 0.0f, 1.0f);
             this.displayString = getDisplayString();
         }
     }

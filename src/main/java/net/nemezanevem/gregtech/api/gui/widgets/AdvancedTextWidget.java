@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -13,6 +14,7 @@ import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
+import net.nemezanevem.gregtech.client.util.MouseButtonHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -74,14 +76,14 @@ public class AdvancedTextWidget extends Widget {
 
     private WrapScreen getWrapScreen() {
         if (wrapScreen == null)
-            wrapScreen = new WrapScreen();
+            wrapScreen = new WrapScreen(Component.empty());
 
         return wrapScreen;
     }
 
     private void resizeWrapScreen() {
         if (sizes != null) {
-            getWrapScreen().setWorldAndResolution(Minecraft.getInstance(), sizes.getScreenWidth(), sizes.getScreenHeight());
+            getWrapScreen().resize(Minecraft.getInstance(), sizes.getScreenWidth(), sizes.getScreenHeight());
         }
     }
 
@@ -110,22 +112,22 @@ public class AdvancedTextWidget extends Widget {
             writeUpdateInfo(1, buffer -> {
                 buffer.writeVarInt(displayText.size());
                 for (Component textComponent : displayText) {
-                    buffer.writeString(Component.Serializer.componentToJson(textComponent));
+                    buffer.writeUtf(Component.Serializer.toJson(textComponent));
                 }
             });
         }
     }
 
-    protected Component getTextUnderMouse(int mouseX, int mouseY) {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+    protected Component getTextUnderMouse(double mouseX, double mouseY) {
+        Font fontRenderer = Minecraft.getInstance().font;
         Position position = getPosition();
-        int selectedLine = (mouseY - position.y) / (fontRenderer.FONT_HEIGHT + 2);
+        int selectedLine = ((int) mouseY - position.y) / (fontRenderer.lineHeight + 2);
         if (mouseX >= position.x && selectedLine >= 0 && selectedLine < displayText.size()) {
             Component selectedComponent = displayText.get(selectedLine);
-            int mouseOffset = mouseX - position.x;
+            double mouseOffset = mouseX - position.x;
             int currentOffset = 0;
-            for (Component lineComponent : selectedComponent) {
-                currentOffset += fontRenderer.getStringWidth(lineComponent.getUnformattedComponentText());
+            for (Component lineComponent : selectedComponent.getSiblings()) {
+                currentOffset += fontRenderer.width(lineComponent.getVisualOrderText());
                 if (currentOffset >= mouseOffset) {
                     return lineComponent;
                 }
@@ -135,12 +137,12 @@ public class AdvancedTextWidget extends Widget {
     }
 
     private void updateComponentTextSize() {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
         int maxStringWidth = 0;
         int totalHeight = 0;
         for (Component textComponent : displayText) {
-            maxStringWidth = Math.max(maxStringWidth, fontRenderer.getStringWidth(textComponent.getFormattedText()));
-            totalHeight += fontRenderer.FONT_HEIGHT + 2;
+            maxStringWidth = Math.max(maxStringWidth, fontRenderer.width(textComponent.getVisualOrderText()));
+            totalHeight += fontRenderer.lineHeight + 2;
         }
         totalHeight -= 2;
         setSize(new Size(maxStringWidth, totalHeight));
@@ -150,7 +152,7 @@ public class AdvancedTextWidget extends Widget {
     }
 
     private void formatDisplayText() {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
         int maxTextWidthResult = maxWidthLimit == 0 ? Integer.MAX_VALUE : maxWidthLimit;
         this.displayText = displayText.stream()
                 .flatMap(c -> GuiUtilRenderComponents.splitText(c, maxTextWidthResult, fontRenderer, true, true).stream())
@@ -163,8 +165,8 @@ public class AdvancedTextWidget extends Widget {
             this.displayText.clear();
             int count = buffer.readVarInt();
             for (int i = 0; i < count; i++) {
-                String jsonText = buffer.readString(32767);
-                this.displayText.add(Component.Serializer.jsonToComponent(jsonText));
+                String jsonText = buffer.readUtf();
+                this.displayText.add(Component.Serializer.fromJsonLenient(jsonText));
             }
             formatDisplayText();
             updateComponentTextSize();
@@ -176,7 +178,7 @@ public class AdvancedTextWidget extends Widget {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             ClickData clickData = ClickData.readFromBuf(buffer);
-            String componentData = buffer.readString(128);
+            String componentData = buffer.readUtf(128);
             if (clickHandler != null) {
                 clickHandler.accept(componentData, clickData);
             }
@@ -188,12 +190,12 @@ public class AdvancedTextWidget extends Widget {
         if (style.getClickEvent() != null) {
             ClickEvent clickEvent = style.getClickEvent();
             String componentText = clickEvent.getValue();
-            if (clickEvent.getAction() == Action.OPEN_URL && componentText.startsWith("@!")) {
+            if (clickEvent.getAction() == ClickEvent.Action.OPEN_URL && componentText.startsWith("@!")) {
                 String rawText = componentText.substring(2);
                 ClickData clickData = new ClickData(MouseButtonHelper.button, isShiftDown(), isCtrlDown());
                 writeClientAction(1, buf -> {
                     clickData.writeToBuf(buf);
-                    buf.writeString(rawText);
+                    buf.writeUtf(rawText);
                 });
                 return true;
             }
@@ -202,7 +204,7 @@ public class AdvancedTextWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         Component textComponent = getTextUnderMouse(mouseX, mouseY);
         if (textComponent != null) {
             if (handleCustomComponentClick(textComponent) ||
@@ -215,21 +217,21 @@ public class AdvancedTextWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
         Font fontRenderer = Minecraft.getInstance().font;
         Position position = getPosition();
         for (int i = 0; i < displayText.size(); i++) {
-            fontRenderer.drawShadow(displayText.get(i).getFormattedText(), position.x, position.y + i * (fontRenderer.FONT_HEIGHT + 2), color);
+            fontRenderer.drawShadow(poseStack, displayText.get(i).getVisualOrderText(), position.x, position.y + i * (fontRenderer.lineHeight + 2), color);
         }
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
-        super.drawInForeground(mouseX, mouseY);
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
+        super.drawInForeground(poseStack, mouseX, mouseY);
         Component component = getTextUnderMouse(mouseX, mouseY);
         if (component != null) {
-            getWrapScreen().handleComponentHover(component, mouseX, mouseY);
+            getWrapScreen().renderComponentHoverEffect(poseStack, component.getStyle(), mouseX, mouseY);
         }
     }
 
@@ -255,6 +257,7 @@ public class AdvancedTextWidget extends Widget {
         @Override
         public void renderComponentTooltip(PoseStack pPoseStack, @Nonnull List<Component> textLines, int x, int y) {
             GuiUtils.drawHoveringText(textLines, x, y, width, height, 256, font);
+            //super.renderComponentTooltip(pPoseStack, textLines, x, y);
         }
     }
 }

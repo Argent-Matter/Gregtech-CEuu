@@ -27,7 +27,6 @@ public class CrateRenderer implements IIconRegister {
 
     @Override
     public void registerIcons(AtlasRegistrar textureMap) {
-        this.sideSprite = ;
         textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/" + basePath), val -> this.sideSprite = val);
     }
 

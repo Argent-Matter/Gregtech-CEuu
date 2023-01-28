@@ -3,7 +3,6 @@ package net.nemezanevem.gregtech.api.gui.widgets;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler.Target;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.nbt.CompoundTag;
@@ -24,8 +23,6 @@ import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.util.RenderUtil;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -119,7 +116,7 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
             writeClientAction(VOID_PHANTOM_FLUID, buf -> {});
             if (isClient) {

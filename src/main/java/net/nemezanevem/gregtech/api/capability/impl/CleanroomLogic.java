@@ -1,13 +1,13 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.minecraft.world.level.Level;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.multiblock.ICleanroomProvider;
-import gregtech.api.metatileentity.multiblock.IMaintenance;
-import gregtech.common.ConfigHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.World;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.tileentity.multiblock.ICleanroomProvider;
+import net.nemezanevem.gregtech.api.tileentity.multiblock.IMaintenance;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 
@@ -106,7 +106,7 @@ public class CleanroomLogic {
         if (this.isActive != active) {
             this.isActive = active;
             this.metaTileEntity.markDirty();
-            World world = this.metaTileEntity.getWorld();
+            Level world = this.metaTileEntity.getWorld();
             if (world != null && !world.isClientSide) {
                 this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKABLE_ACTIVE, buf -> buf.writeBoolean(active));
             }
@@ -119,7 +119,7 @@ public class CleanroomLogic {
     public void setWorkingEnabled(boolean workingEnabled) {
         this.isWorkingEnabled = workingEnabled;
         this.metaTileEntity.markDirty();
-        World world = this.metaTileEntity.getWorld();
+        Level world = this.metaTileEntity.getWorld();
         if (world != null && !world.isClientSide) {
             this.metaTileEntity.writeCustomData(GregtechDataCodes.WORKING_ENABLED, buf -> buf.writeBoolean(workingEnabled));
         }
@@ -167,11 +167,11 @@ public class CleanroomLogic {
      * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(CompoundTag)} method
      */
     public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
-        data.setBoolean("isActive", this.isActive);
-        data.setBoolean("isWorkingEnabled", this.isWorkingEnabled);
-        data.setBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
-        data.setInteger("progressTime", progressTime);
-        data.setInteger("maxProgress", maxProgress);
+        data.putBoolean("isActive", this.isActive);
+        data.putBoolean("isWorkingEnabled", this.isWorkingEnabled);
+        data.putBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
+        data.putInt("progressTime", progressTime);
+        data.putInt("maxProgress", maxProgress);
         return data;
     }
 
@@ -183,8 +183,8 @@ public class CleanroomLogic {
         this.isActive = data.getBoolean("isActive");
         this.isWorkingEnabled = data.getBoolean("isWorkingEnabled");
         this.wasActiveAndNeedsUpdate = data.getBoolean("wasActiveAndNeedsUpdate");
-        this.progressTime = data.getInteger("progressTime");
-        this.maxProgress = data.getInteger("maxProgress");
+        this.progressTime = data.getInt("progressTime");
+        this.maxProgress = data.getInt("maxProgress");
     }
 
     /**

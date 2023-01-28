@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.resources.utils;
 
-import gregtech.GregTechMod;
+import net.nemezanevem.gregtech.GregTech;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 
 public class ImageUtils {
-    public static final Logger LOGGER = LogManager.getLogger(GregTechMod.class);
+    public static final Logger LOGGER = LogManager.getLogger(GregTech.class);
 
     public static String readType(byte[] input) throws IOException {
         InputStream in = null;

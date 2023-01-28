@@ -8,12 +8,10 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentUtils;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import org.lwjgl.glfw.GLFW;
 
-import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -181,7 +179,7 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
 
             focused = true;
@@ -202,7 +200,7 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (focused && button == 0) {
             if (mouseX < getPosition().x) {
                 cursorPos = 0;

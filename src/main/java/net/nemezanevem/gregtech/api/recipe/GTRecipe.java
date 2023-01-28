@@ -78,8 +78,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
                     NonNullList<FluidIngredient> fluidInputs, NonNullList<FluidStack> fluidOutputs,
                     int duration, int EUt, boolean hidden,
                     IRecipePropertyStorage recipePropertyStorage) {
-        this.recipePropertyStorage =
-                recipePropertyStorage == null ? EmptyRecipePropertyStorage.INSTANCE : recipePropertyStorage;
+        this.recipePropertyStorage = recipePropertyStorage == null ? EmptyRecipePropertyStorage.INSTANCE : recipePropertyStorage;
         this.inputs = inputs;
         this.outputs = outputs;
         this.chancedOutputs = chancedOutputs;
@@ -450,7 +449,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
         return chancedOutputs;
     }
 
-    public List<FluidIngredient> getFluidIngredients() {
+    public List<FluidIngredient> getFluidInputs() {
         return fluidInputs;
     }
 
@@ -608,9 +607,17 @@ public class GTRecipe implements Recipe<CraftingContainer> {
             NonNullList<ExtendedIngredient> inputs = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "itemIngredients"));
             NonNullList<FluidIngredient> fluids = fluidsFromJson(GsonHelper.getAsJsonArray(pJson, "fluidIngredients"));
 
-            NonNullList<ItemStack> results = resultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
-            NonNullList<ChanceEntry> chanceds = chancedsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
-            NonNullList<FluidStack> fluidResults = fluidResultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
+            NonNullList<ItemStack> results;
+            if(pJson.has("results")) results = resultsFromJson(GsonHelper.getAsJsonArray(pJson, "results"));
+            else if(pJson.has("result")) results = NonNullList.of(CraftingHelper.getItemStack(GsonHelper.getAsJsonObject(pJson, "result"), true, true));
+            else throw new IllegalStateException("Recipe " + pRecipeId + " has to have either 'result' OR 'results' key");
+
+            NonNullList<ChanceEntry> chanceds;
+            if(pJson.has("chancedResults")) chanceds = chancedResultsFromJson(GsonHelper.getAsJsonArray(pJson, "chancedResults"));
+            else if(pJson.has("chancedResult")) chanceds = NonNullList.of(ChanceEntry.fromJson(GsonHelper.getAsJsonObject(pJson, "chancedResult")));
+            else throw new IllegalStateException("Recipe " + pRecipeId + " has to have either 'chancedResult' OR 'chancedResults' key");
+
+            NonNullList<FluidStack> fluidResults = fluidResultsFromJson(GsonHelper.getAsJsonArray(pJson, "fluidResults"));
             IRecipePropertyStorage storage = IRecipePropertyStorage.fromJson(pJson);
             return new GTRecipe(typeReal, pRecipeId, inputs, results, chanceds, fluids, fluidResults, duration, eUt, hidden, storage);
         }
@@ -641,7 +648,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
             return results;
         }
 
-        private static NonNullList<ChanceEntry> chancedsFromJson(JsonArray pIngredientArray) {
+        private static NonNullList<ChanceEntry> chancedResultsFromJson(JsonArray pIngredientArray) {
             NonNullList<ChanceEntry> results = NonNullList.create();
 
             for(int i = 0; i < pIngredientArray.size(); ++i) {
@@ -763,11 +770,6 @@ public class GTRecipe implements Recipe<CraftingContainer> {
                 this.boostPerTier = boostPerTier;
             }
 
-            @Override
-            public ItemStack itemStack() {
-                return itemStack.copy();
-            }
-
             public ItemStack getItemStackRaw() {
                 return itemStack;
             }
@@ -795,6 +797,12 @@ public class GTRecipe implements Recipe<CraftingContainer> {
                 int chance = GsonHelper.getAsInt(object, "chance");
                 int boostPerTier = GsonHelper.getAsInt(object, "boostPerTier");
                 return new ChanceEntry(new ItemStack(item), chance, boostPerTier);
+            }
+
+            public void toJson(JsonObject object) {
+                object.addProperty("item", ForgeRegistries.ITEMS.getKey(this.itemStack.getItem()).toString());
+                object.addProperty("chance", this.chance);
+                object.addProperty("boostPerTier", this.boostPerTier);
             }
         }
 }

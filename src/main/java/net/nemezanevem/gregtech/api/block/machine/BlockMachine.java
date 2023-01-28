@@ -1,18 +1,28 @@
 package net.nemezanevem.gregtech.api.block.machine;
 
 import codechicken.lib.raytracer.IndexedVoxelShape;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.Material;
 import net.nemezanevem.gregtech.api.block.BlockCustomParticle;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.common.block.properties.StringProperty;
 import net.nemezanevem.gregtech.integration.IFacadeWrapper;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.tools.Tool;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,25 +36,23 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
     // not enough information to get the harvest tool and level from a MetaTileEntity on its own.
     // Using unlisted properties lets us get this information from getActualState(), which
     // provides enough information to get and read the MetaTileEntity data.
-    private static final Property<String> HARVEST_TOOL = new Property<String>("harvest_tool");
-    private static final Property<Integer> HARVEST_LEVEL = new UnlistedIntegerProperty("harvest_level");
+    private static final EnumProperty<ToolClass> HARVEST_TOOL = EnumProperty.create("harvest_tool", ToolClass.class);
+    private static final IntegerProperty HARVEST_LEVEL = IntegerProperty.create("harvest_level", 0, 10);
 
     public BlockMachine() {
         super(BlockBehaviour.Properties.of(Material.METAL).strength(6.0f, 6.0f).sound(SoundType.METAL));
-        setCreativeTab(GregTechAPI.TAB_GREGTECH);
-        setDefaultState(getDefaultState().withProperty(OPAQUE, true));
+        registerDefaultState(stateDefinition.any().setValue(OPAQUE, true).setValue(HARVEST_LEVEL, 0).setValue(HARVEST_TOOL, ToolClass.WRENCH));
     }
 
     @Nullable
     @Override
-    public String getHarvestTool(@Nonnull BlockState state) {
-        String value = ((IExtendedBlockState) state).getValue(HARVEST_TOOL);
-        return value == null ? ToolClasses.WRENCH : value;
+    public ToolClass getHarvestTool(@Nonnull BlockState state) {
+        return state.getValue(HARVEST_TOOL);
     }
 
     @Override
     public int getHarvestLevel(@Nonnull BlockState state) {
-        Integer value = ((IExtendedBlockState) state).getValue(HARVEST_LEVEL);
+        Integer value = state.getValue(HARVEST_LEVEL);
         return value == null ? 1 : value;
     }
 

@@ -1,26 +1,29 @@
 package net.nemezanevem.gregtech.api.pipenet.block;
 
-import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.common.ConfigHolder;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
 
 import javax.annotation.Nonnull;
 
-public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> extends ItemBlock {
+public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> extends BlockItem {
 
     protected final BlockPipe<PipeType, NodeDataType, ?> blockPipe;
 
     public ItemBlockPipe(BlockPipe<PipeType, NodeDataType, ?> block) {
-        super(block);
+        super(block, new Item.Properties().tab(GregTech.TAB_GREGTECH));
         this.blockPipe = block;
-        setHasSubtypes(true);
     }
 
     @Override
@@ -30,8 +33,8 @@ public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public boolean placeBlockAt(@Nonnull ItemStack stack, @Nonnull Player player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Direction side, float hitX, float hitY, float hitZ, @Nonnull BlockState newState) {
-        boolean superVal = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
+    public InteractionResult place(BlockPlaceContext pContext) {
+        InteractionResult superVal = super.place(pContext);
         if (superVal && !world.isClientSide) {
             IPipeTile selfTile = (IPipeTile) world.getTileEntity(pos);
             if (selfTile == null) return superVal;

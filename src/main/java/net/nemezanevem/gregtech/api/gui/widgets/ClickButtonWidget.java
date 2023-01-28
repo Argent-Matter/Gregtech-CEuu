@@ -104,7 +104,7 @@ public class ClickButtonWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!shouldDisplay.get()) return false;
         if (isMouseOverElement(mouseX, mouseY)) {
             triggerButton();

@@ -1,9 +1,9 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import codechicken.lib.math.MathHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.util.Mth;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
@@ -11,7 +11,6 @@ import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
 import net.nemezanevem.gregtech.client.util.RenderUtil;
 
-import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,8 +20,8 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     protected int slotHeight;
     protected int scrollOffset;
     protected final int scrollPaneWidth = 10;
-    protected int lastMouseX;
-    protected int lastMouseY;
+    protected double lastMouseX;
+    protected double lastMouseY;
     protected boolean draggedOnScrollBar;
 
     public ScrollableListWidget(int xPosition, int yPosition, int width, int height) {
@@ -41,11 +40,11 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     private void addScrollOffset(int offset) {
-        this.scrollOffset = MathHelper.clip(scrollOffset + offset, 0, totalListHeight - getSize().height);
+        this.scrollOffset = Mth.clamp(scrollOffset + offset, 0, totalListHeight - getSize().height);
         updateElementPositions();
     }
 
-    private boolean isOnScrollPane(int mouseX, int mouseY) {
+    private boolean isOnScrollPane(double mouseX, double mouseY) {
         Position pos = getPosition();
         Size size = getSize();
         return isMouseOver(pos.x + size.width - scrollPaneWidth, pos.y, scrollPaneWidth, size.height, mouseX, mouseY);
@@ -115,7 +114,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
         return isWidgetOverlapsScissor(widget);
     }
 
-    private boolean isPositionInsideScissor(int mouseX, int mouseY) {
+    private boolean isPositionInsideScissor(double mouseX, double mouseY) {
         return isMouseOverElement(mouseX, mouseY) && !isOnScrollPane(mouseX, mouseY);
     }
 
@@ -140,7 +139,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     @Override
     public boolean mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
         if (isMouseOverElement(mouseX, mouseY)) {
-            int direction = -MathHelper.clip(wheelDelta, -1, 1);
+            int direction = -Mth.clamp(wheelDelta, -1, 1);
             int moveDelta = direction * (slotHeight / 2);
             addScrollOffset(moveDelta);
             return true;
@@ -149,7 +148,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
         if (isOnScrollPane(mouseX, mouseY)) {
@@ -162,12 +161,12 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int button, double dragX, double dragY) {
-        int mouseDelta = (mouseY - lastMouseY);
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        double mouseDelta = (mouseY - lastMouseY);
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
         if (draggedOnScrollBar) {
-            addScrollOffset(mouseDelta);
+            addScrollOffset((int) mouseDelta);
             return true;
         }
         if (isPositionInsideScissor(mouseX, mouseY)) {
@@ -177,7 +176,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public boolean mouseReleased(int mouseX, int mouseY, int button) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         this.draggedOnScrollBar = false;
         if (isPositionInsideScissor(mouseX, mouseY)) {
             return super.mouseReleased(mouseX, mouseY, button);

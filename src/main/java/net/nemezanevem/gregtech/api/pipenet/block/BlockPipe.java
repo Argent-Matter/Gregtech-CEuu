@@ -8,17 +8,27 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.nemezanevem.gregtech.api.block.BuiltInRenderBlock;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
@@ -30,6 +40,7 @@ import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
 import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
 import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.block.BlockFrame;
 import net.nemezanevem.gregtech.common.block.FrameItemBlock;
@@ -37,27 +48,21 @@ import net.nemezanevem.gregtech.integration.IFacadeWrapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
-import static gregtech.api.metatileentity.MetaTileEntity.FULL_CUBE_COLLISION;
+import static net.nemezanevem.gregtech.api.tileentity.MetaTileEntity.FULL_CUBE_COLLISION;
 
+@ParametersAreNonnullByDefault
 @SuppressWarnings("deprecation")
 public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType, WorldPipeNetType extends WorldPipeNet<NodeDataType, ? extends PipeNet<NodeDataType>>> extends BuiltInRenderBlock implements EntityBlock, IFacadeWrapper, IBlockAppearance {
 
     protected final ThreadLocal<IPipeTile<PipeType, NodeDataType>> tileEntities = new ThreadLocal<>();
 
     public BlockPipe() {
-        super(net.minecraft.block.material.Material.IRON);
-        setTranslationKey("pipe");
-        setCreativeTab(GregTechAPI.TAB_GREGTECH);
-        setSoundType(SoundType.METAL);
-        setHardness(2.0f);
-        setResistance(3.0f);
-        setLightOpacity(0);
-        disableStats();
+        super(BlockBehaviour.Properties.of(net.minecraft.world.level.material.Material.METAL).sound(SoundType.METAL).strength(2.0f, 3.0f).dynamicShape().isViewBlocking((state, level, pos) -> false));
     }
 
     public static Cuboid6 getSideBox(Direction side, float thickness) {
@@ -104,7 +109,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public abstract Class<PipeType> getPipeTypeClass();
 
-    public abstract WorldPipeNetType getWorldPipeNet(Level world);
+    public abstract WorldPipeNetType getWorldPipeNet(LevelReader world);
 
     public abstract TileEntityPipeBase<PipeType, NodeDataType> createNewTileEntity(boolean supportsTicking);
 
@@ -123,34 +128,29 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
 
     @Override
-    public void breakBlock(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state) {
-        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
+    public void playerWillDestroy(Level pLevel, BlockPos pPos, BlockState pState, Player pPlayer) {
+        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(pLevel, pPos);
         if (pipeTile != null) {
             pipeTile.getCoverableImplementation().dropAllCovers();
             tileEntities.set(pipeTile);
         }
-        super.breakBlock(worldIn, pos, state);
-        getWorldPipeNet(worldIn).removeNode(pos);
+        super.playerWillDestroy(pLevel, pPos, pState, pPlayer);
+        getWorldPipeNet(pLevel).removeNode(pPos);
     }
 
     @Override
-    public void onBlockAdded(Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state) {
-        worldIn.scheduleUpdate(pos, this, 1);
-    }
-
-    @Override
-    public void updateTick(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Random rand) {
-        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
+    public void tick(BlockState pState, ServerLevel pLevel, BlockPos pPos, RandomSource pRandom) {
+        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(pLevel, pPos);
         if (pipeTile != null) {
             int activeConnections = pipeTile.getConnections();
             boolean isActiveNode = activeConnections != 0;
-            getWorldPipeNet(worldIn).addNode(pos, createProperties(pipeTile), 0, activeConnections, isActiveNode);
-            onActiveModeChange(worldIn, pos, isActiveNode, true);
+            getWorldPipeNet(pLevel).addNode(pPos, createProperties(pipeTile), 0, activeConnections, isActiveNode);
+            onActiveModeChange(pLevel, pPos, isActiveNode, true);
         }
     }
 
     @Override
-    public void onBlockPlacedBy(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull LivingEntity placer, @Nonnull ItemStack stack) {
+    public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
         if (pipeTile != null) {
             setTileEntityData((TileEntityPipeBase<PipeType, NodeDataType>) pipeTile, stack);
@@ -169,15 +169,15 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public void neighborChanged(@Nonnull BlockState state, @Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull Block blockIn, @Nonnull BlockPos fromPos) {
-        if (worldIn.isClientSide) return;
+    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
+        if (level.isClientSide()) return;
         if (!ConfigHolder.machines.gt6StylePipesCables) {
-            IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
+            IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(level, pos);
             if (pipeTile != null) {
                 Direction facing = null;
-                for (Direction facing1 : Direction.values()) {
-                    if (Util.arePosEqual(fromPos, pos.offset(facing1))) {
-                        facing = facing1;
+                for (Direction direction : Direction.values()) {
+                    if (Util.arePosEqual(pos, pos.offset(direction.getNormal()))) {
+                        facing = direction;
                         break;
                     }
                 }
@@ -187,23 +187,25 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
                 }
                 boolean open = pipeTile.isConnected(facing);
                 boolean canConnect = pipeTile.getCoverableImplementation().getCoverAtSide(facing) != null || canConnect(pipeTile, facing);
-                if (!open && canConnect && state.getBlock() != blockIn)
+                if (!open && canConnect && state.getBlock() != pipeTile.getPipeBlock())
                     pipeTile.setConnection(facing, true, false);
                 if (open && !canConnect)
                     pipeTile.setConnection(facing, false, false);
-                updateActiveNodeStatus(worldIn, pos, pipeTile);
+                updateActiveNodeStatus(level, pos, pipeTile);
                 pipeTile.getCoverableImplementation().updateInputRedstoneSignals();
             }
         }
 
     }
 
+    @Nonnull
     @Override
-    public void observedNeighborChange(@Nonnull BlockState observerState, @Nonnull Level world, @Nonnull BlockPos observerPos, @Nonnull Block changedBlock, @Nonnull BlockPos changedBlockPos) {
-        PipeNet<NodeDataType> net = getWorldPipeNet(world).getNetFromPos(observerPos);
+    public BlockState updateShape(BlockState pState, Direction pFacing, BlockState pFacingState, LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pFacingPos) {
+        PipeNet<NodeDataType> net = getWorldPipeNet(pLevel).getNetFromPos(pCurrentPos);
         if (net != null) {
-            net.onNeighbourUpdate(changedBlockPos);
+            net.onNeighbourUpdate(pFacingPos);
         }
+        return pState;
     }
 
     @Override
@@ -213,19 +215,19 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public boolean shouldCheckWeakPower(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull Direction side) {
+    public boolean shouldCheckWeakPower(BlockState state, LevelReader level, BlockPos pos, Direction side) {
         // The check in World::getRedstonePower in the vanilla code base is reversed. Setting this to false will
         // actually cause getWeakPower to be called, rather than prevent it.
         return false;
     }
 
     @Override
-    public int getWeakPower(@Nonnull BlockState blockState, @Nonnull BlockGetter blockAccess, @Nonnull BlockPos pos, @Nonnull Direction side) {
-        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(blockAccess, pos);
-        return pipeTile == null ? 0 : pipeTile.getCoverableImplementation().getOutputRedstoneSignal(side.getOpposite());
+    public int getSignal(BlockState pState, BlockGetter pLevel, BlockPos pPos, Direction pDirection) {
+        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(pLevel, pPos);
+        return pipeTile == null ? 0 : pipeTile.getCoverableImplementation().getOutputRedstoneSignal(pDirection.getOpposite());
     }
 
-    public void updateActiveNodeStatus(Level worldIn, BlockPos pos, IPipeTile<PipeType, NodeDataType> pipeTile) {
+    public void updateActiveNodeStatus(LevelReader worldIn, BlockPos pos, IPipeTile<PipeType, NodeDataType> pipeTile) {
         PipeNet<NodeDataType> pipeNet = getWorldPipeNet(worldIn).getNetFromPos(pos);
         if (pipeNet != null && pipeTile != null) {
             int activeConnections = pipeTile.getConnections(); //remove blocked connections
@@ -247,7 +249,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
      * Can be used to update tile entity to tickable when node becomes active
      * usable for fluid pipes, as example
      */
-    protected void onActiveModeChange(Level world, BlockPos pos, boolean isActiveNow, boolean isInitialChange) {
+    protected void onActiveModeChange(LevelReader world, BlockPos pos, boolean isActiveNow, boolean isInitialChange) {
     }
 
     @Nonnull
@@ -269,16 +271,16 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public boolean onBlockActivated(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
-        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
-        VoxelShapeBlockHitResult rayTraceResult = (VoxelShapeBlockHitResult) RayTracer.retraceBlock(worldIn, playerIn, pos);
+    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(pLevel, pPos);
+        VoxelShapeBlockHitResult rayTraceResult = (VoxelShapeBlockHitResult) RayTracer.retraceBlock(pLevel, pPlayer, pPos);
         if (rayTraceResult == null || pipeTile == null) {
             return false;
         }
-        return onPipeActivated(worldIn, state, pos, playerIn, hand, facing, rayTraceResult, pipeTile);
+        return onPipeActivated(pLevel, pState, pPos, pPlayer, pHand, pHit.getDirection(), rayTraceResult, pipeTile);
     }
 
-    public boolean onPipeActivated(Level world, BlockState state, BlockPos pos, Player entityPlayer, InteractionHand hand, Direction side, VoxelShapeBlockHitResult hit, IPipeTile<PipeType, NodeDataType> pipeTile) {
+    public InteractionResult onPipeActivated(Level world, BlockState state, BlockPos pos, Player entityPlayer, InteractionHand hand, Direction side, VoxelShapeBlockHitResult hit, IPipeTile<PipeType, NodeDataType> pipeTile) {
         ItemStack itemStack = entityPlayer.getItemInHand(hand);
 
         if (pipeTile.getFrameMaterial() == null && pipeTile instanceof TileEntityPipeBase && itemStack.getItem() instanceof FrameItemBlock && pipeTile.getPipeType().getThickness() < 1) {
@@ -286,11 +288,11 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             Material material = frameBlock.getGtMaterial(itemStack.getMetadata());
             ((TileEntityPipeBase<PipeType, NodeDataType>) pipeTile).setFrameMaterial(material);
             SoundType type = frameBlock.getSoundType(itemStack);
-            world.playSound(entityPlayer, pos, type.getPlaceSound(), SoundCategory.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
-            if (!entityPlayer.capabilities.isCreativeMode) {
+            world.playSound(entityPlayer, pos, type.getPlaceSound(), SoundSource.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
+            if (!entityPlayer.isCreative()) {
                 itemStack.shrink(1);
             }
-            return true;
+            return InteractionResult.PASS;
         }
 
         if (itemStack.getItem() instanceof ItemBlockPipe) {
@@ -516,7 +518,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public abstract boolean canPipesConnect(IPipeTile<PipeType, NodeDataType> selfTile, Direction side, IPipeTile<PipeType, NodeDataType> sideTile);
 
-    public abstract boolean canPipeConnectToBlock(IPipeTile<PipeType, NodeDataType> selfTile, Direction side, @Nullable TileEntity tile);
+    public abstract boolean canPipeConnectToBlock(IPipeTile<PipeType, NodeDataType> selfTile, Direction side, @Nullable BlockEntity tile);
 
     private List<IndexedCuboid6> getCollisionBox(BlockGetter world, BlockPos pos, @Nullable Entity entityIn) {
         IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(world, pos);

@@ -13,6 +13,46 @@ public class ConfigHolder {
     }
 
     public static class ClientConfig {
+
+        public static ForgeConfigSpec.ConfigValue<String> terminalRootPath;
+
+        builder.comment({"Whether to hook depth texture. Has no effect on performance, but if there is a problem with rendering, try disabling it.", "Default: true"})
+        public boolean hookDepthTexture = true;
+
+        builder.comment({"Resolution level for fragment shaders.",
+                "Higher values increase quality (limited by the resolution of your screen) but are more GPU intensive.", "Default: 2"})
+        @Config.RangeDouble(min = 0, max = 5)
+        @Config.SlidingOption
+        public double resolution = 2;
+
+        builder.comment({"Whether or not to enable Emissive Textures for GregTech Machines.", "Default: true"})
+        public boolean machinesEmissiveTextures = true;
+
+        builder.comment({"Whether or not to enable Emissive Textures for GregTech Casings " +
+                "when the multiblock is working (EBF coils, Fusion Casings, etc.).", "Default: false"})
+        public boolean casingsActiveEmissiveTextures = false;
+
+        builder.comment({"Whether or not sounds should be played when using tools outside of crafting.", "Default: true"})
+        public boolean toolUseSounds = true;
+
+        builder.comment({"Whether or not sounds should be played when crafting with tools.", "Default: true"})
+        public boolean toolCraftingSounds = true;
+
+        builder.comment({"Overrides the MC total playable sounds limit. MC's default is 28, which causes problems with many machine sounds at once",
+                "If sounds are causing large amounts of lag, try lowering this.",
+                "If sounds are not working at all, try setting this to the lowest value (28).", "Default: 512"})
+        @Config.RangeInt(min = 28, max = 2048)
+        @Config.RequiresMcRestart
+        public int maxNumSounds = 512;
+
+        builder.comment({"The default color to overlay onto machines.", "16777215 (0xFFFFFF in decimal) is no coloring (like GTCE).",
+                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
+        public int defaultPaintingColor = 0xD2DCFF;
+
+        builder.comment({"The default color to overlay onto Machine (and other) UIs.", "16777215 (0xFFFFFF) is no coloring (like GTCE).",
+                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
+        public int defaultUIColor = 0xD2DCFF;
+
         public static class GuiConfig {
             public static ForgeConfigSpec.IntValue scrollSpeed;
         }
@@ -70,45 +110,6 @@ public class ConfigHolder {
             @Config.RangeDouble(min = 0)
             public double step = 1;
         }
-
-        public static ForgeConfigSpec.ConfigValue<String> terminalRootPath;
-
-        builder.comment({"Whether to hook depth texture. Has no effect on performance, but if there is a problem with rendering, try disabling it.", "Default: true"})
-        public boolean hookDepthTexture = true;
-
-        builder.comment({"Resolution level for fragment shaders.",
-                "Higher values increase quality (limited by the resolution of your screen) but are more GPU intensive.", "Default: 2"})
-        @Config.RangeDouble(min = 0, max = 5)
-        @Config.SlidingOption
-        public double resolution = 2;
-
-        builder.comment({"Whether or not to enable Emissive Textures for GregTech Machines.", "Default: true"})
-        public boolean machinesEmissiveTextures = true;
-
-        builder.comment({"Whether or not to enable Emissive Textures for GregTech Casings " +
-                "when the multiblock is working (EBF coils, Fusion Casings, etc.).", "Default: false"})
-        public boolean casingsActiveEmissiveTextures = false;
-
-        builder.comment({"Whether or not sounds should be played when using tools outside of crafting.", "Default: true"})
-        public boolean toolUseSounds = true;
-
-        builder.comment({"Whether or not sounds should be played when crafting with tools.", "Default: true"})
-        public boolean toolCraftingSounds = true;
-
-        builder.comment({"Overrides the MC total playable sounds limit. MC's default is 28, which causes problems with many machine sounds at once",
-                "If sounds are causing large amounts of lag, try lowering this.",
-                "If sounds are not working at all, try setting this to the lowest value (28).", "Default: 512"})
-        @Config.RangeInt(min = 28, max = 2048)
-        @Config.RequiresMcRestart
-        public int maxNumSounds = 512;
-
-        builder.comment({"The default color to overlay onto machines.", "16777215 (0xFFFFFF in decimal) is no coloring (like GTCE).",
-                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
-        public int defaultPaintingColor = 0xD2DCFF;
-
-        builder.comment({"The default color to overlay onto Machine (and other) UIs.", "16777215 (0xFFFFFF) is no coloring (like GTCE).",
-                "13819135 (0xD2DCFF in decimal) is the classic blue from GT5 (default)."})
-        public int defaultUIColor = 0xD2DCFF;
     }
 
     private static void setupConfig(ForgeConfigSpec.Builder builder) {

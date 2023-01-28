@@ -21,6 +21,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
+import net.nemezanevem.gregtech.api.module.IModuleManager;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredientSerializer;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
@@ -28,6 +29,7 @@ import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconTypeRegistry;
 import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
+import net.nemezanevem.gregtech.api.sound.ISoundManager;
 import net.nemezanevem.gregtech.api.tileentity.GtMetaTileEntities;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
@@ -56,6 +58,9 @@ public class GregTech {
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
+
+    public static ISoundManager soundManager;
+    public static IModuleManager moduleManager;
 
     public static final Object2ObjectOpenHashMap<BlockState, IHeatingCoilBlockStats> HEATING_COILS = new Object2ObjectOpenHashMap<>();
 

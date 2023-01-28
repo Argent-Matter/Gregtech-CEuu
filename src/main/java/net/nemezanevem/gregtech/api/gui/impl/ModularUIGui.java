@@ -19,6 +19,7 @@ import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
+import java.io.IOException;
 import java.util.Set;
 
 import static net.nemezanevem.gregtech.api.gui.Widget.drawGradientRect;
@@ -76,7 +77,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    public void renderBg(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
         lastUpdate += partialTicks;
         while (lastUpdate >= 0) {
             lastUpdate -= FRAMES_PER_TICK;
@@ -89,7 +90,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         RenderSystem.disableDepthTest();
 
-        drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
+        this.renderBg(poseStack, partialTicks, mouseX, mouseY);
 
         Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
         poseStack.pushPose();
@@ -114,7 +115,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         poseStack.popPose();
 
-        drawGuiContainerForegroundLayer(poseStack, mouseX, mouseY);
+        renderLabels(poseStack, mouseX, mouseY);
 
         poseStack.pushPose();
         poseStack.translate(leftPos, topPos, 0.0F);
@@ -188,7 +189,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(PoseStack poseStack, int mouseX, int mouseY) {
+    protected void renderLabels(PoseStack poseStack, int mouseX, int mouseY) {
         modularUI.guiWidgets.values().forEach(widget -> {
             if (!widget.isVisible()) return;
             poseStack.pushPose();
@@ -199,7 +200,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+    protected void renderBg(PoseStack poseStack, float partialTicks, int pMouseX, int pMouseY) {
         poseStack.pushPose();
         RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
         RenderSystem.enableBlend();
@@ -209,21 +210,10 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
             if (!widget.isVisible()) return;
             poseStack.pushPose();
             RenderSystem.enableBlend();
-            widget.drawInBackground(poseStack, mouseX, mouseY, partialTicks,this);
+            widget.drawInBackground(poseStack, pMouseX, pMouseY, partialTicks,this);
             RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
             poseStack.popPose();
         });
-    }
-
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput();
-        int wheelMovement = Mouse.getEventDWheel();
-        if (wheelMovement != 0) {
-            int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-            int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-            mouseWheelMove(mouseX, mouseY, wheelMovement);
-        }
     }
 
     protected void mouseWheelMove(int mouseX, int mouseY, int wheelDelta) {
@@ -244,23 +234,22 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         for (int i = modularUI.guiWidgets.size() - 1; i >= 0; i--) {
             Widget widget = modularUI.guiWidgets.get(i);
             if(widget.isVisible() && widget.isActive() && widget.mouseClicked(mouseX, mouseY, mouseButton)) {
-                return;
+                return true;
             }
         }
+        return false;
     }
 
-    public void superMouseClicked(int mouseX, int mouseY, int mouseButton) {
-        try {
-            super.mouseClicked(mouseX, mouseY, mouseButton);
-        } catch (Exception ignored) { }
+    public void superMouseClicked(double mouseX, double mouseY, int mouseButton) {
+        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
-    public boolean mouseDragged(int mouseX, int mouseY, int pButton, double dragX, double dragY) {
+    public boolean mouseDragged(double mouseX, double mouseY, int pButton, double dragX, double dragY) {
         for (int i = modularUI.guiWidgets.size() - 1; i >= 0; i--) {
             Widget widget = modularUI.guiWidgets.get(i);
             if(widget.isVisible() && widget.isActive()) {
@@ -270,18 +259,19 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         return false;
     }
 
-    public void superMouseDragged(int mouseX, int mouseY, int clickedMouseButton, double pDragX, double pDragY) {
+    public void superMouseDragged(double mouseX, double mouseY, int clickedMouseButton, double pDragX, double pDragY) {
         super.mouseDragged(mouseX, mouseY, clickedMouseButton, pDragX, pDragY);
     }
 
     @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state) {
+    public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) {
         for (int i = modularUI.guiWidgets.size() - 1; i >= 0; i--) {
             Widget widget = modularUI.guiWidgets.get(i);
-            if(widget.isVisible() && widget.isActive() && widget.mouseReleased(mouseX, mouseY, state)) {
-                return;
+            if(widget.isVisible() && widget.isActive() && widget.mouseReleased(pMouseX, pMouseY, pButton)) {
+                return true;
             }
         }
+        return super.mouseReleased(pMouseX, pMouseY, pButton);
     }
 
     public void superMouseReleased(int mouseX, int mouseY, int state) {
@@ -289,13 +279,13 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
     }
 
     @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+    public boolean charTyped(char pCodePoint, int pModifiers) {
         for (int i = modularUI.guiWidgets.size() - 1; i >= 0; i--) {
             Widget widget = modularUI.guiWidgets.get(i);
-            if(widget.isVisible() && widget.isActive() && widget.keyTyped(typedChar, keyCode)) {
-                return;
+            if(widget.isVisible() && widget.isActive() && widget.keyTyped(pCodePoint, pModifiers)) {
+                return true;
             }
         }
-        super.keyTyped(typedChar, keyCode);
+        return super.charTyped(pCodePoint, pModifiers);
     }
 }

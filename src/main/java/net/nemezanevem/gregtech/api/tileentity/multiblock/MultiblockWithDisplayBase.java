@@ -1,20 +1,44 @@
 package net.nemezanevem.gregtech.api.tileentity.multiblock;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.block.VariantActiveBlock;
+import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.capability.IMaintenanceHatch;
+import net.nemezanevem.gregtech.api.capability.IMufflerHatch;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.widgets.AdvancedTextWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.ImageCycleButtonWidget;
+import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
+import net.nemezanevem.gregtech.api.pattern.TraceabilityPredicate;
 import net.nemezanevem.gregtech.api.tileentity.IVoidable;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.ArrayList;
@@ -22,6 +46,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
+
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
 
 public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase implements IMaintenance {
 
@@ -33,8 +59,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     /**
      * Items to recover in a muffler hatch
      */
-    protected final List<Item> recoveryItems = new ArrayList<>() {{
-        add(TagUnifier.get(TagPrefix.dustTiny, GtMaterials.Ash.get()));
+    protected final List<ItemStack> recoveryItems = new ArrayList<>() {{
+        add(new ItemStack(TagUnifier.get(TagPrefix.dustTiny, GtMaterials.Ash.get()));
     }};
 
     private int timeActive;
@@ -126,7 +152,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
         if (!ConfigHolder.machines.enableMaintenance || !hasMaintenanceMechanics())
             return;
 
-        IMaintenanceHatch maintenanceHatch = getAbilities(MultiblockAbility.MAINTENANCE_HATCH).get(0);
+        IMaintenanceHatch maintenanceHatch = getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).get(0);
         if (maintenanceHatch.isFullAuto()) {
             return;
         }
@@ -149,9 +175,9 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     protected void formStructure(PatternMatchContext context) {
         super.formStructure(context);
         if (this.hasMaintenanceMechanics() && ConfigHolder.machines.enableMaintenance) { // nothing extra if no maintenance
-            if (getAbilities(MultiblockAbility.MAINTENANCE_HATCH).isEmpty())
+            if (getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).isEmpty())
                 return;
-            IMaintenanceHatch maintenanceHatch = getAbilities(MultiblockAbility.MAINTENANCE_HATCH).get(0);
+            IMaintenanceHatch maintenanceHatch = getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).get(0);
             if (maintenanceHatch.startWithoutProblems()) {
                 this.maintenance_problems = (byte) 0b111111;
                 this.timeActive = 0;
@@ -163,7 +189,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
             }
         }
         this.variantActiveBlocks = context.getOrDefault("VABlock", new LinkedList<>());
-        VariantActiveBlock.ACTIVE_BLOCKS.putIfAbsent(getWorld().provider.getDimension(), new ObjectOpenHashSet<>());
+        VariantActiveBlock.ACTIVE_BLOCKS.putIfAbsent(getWorld().dimension(), new ObjectOpenHashSet<>());
         replaceVariantBlocksActive(false);
     }
 
@@ -204,8 +230,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     private void readMaintenanceData(IMaintenanceHatch hatch) {
         if (hatch.hasMaintenanceData()) {
             Tuple<Byte, Integer> data = hatch.readMaintenanceData();
-            this.maintenance_problems = data.getFirst();
-            this.timeActive = data.getSecond();
+            this.maintenance_problems = data.getA();
+            this.timeActive = data.getB();
         }
     }
 
@@ -237,9 +263,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     /**
      * Produces the muffler particles
      */
-    @SideOnly(Side.CLIENT)
     public void runMufflerEffect(float xPos, float yPos, float zPos, float xSpd, float ySpd, float zSpd) {
-        getWorld().spawnParticle(EnumParticleTypes.SMOKE_LARGE, xPos, yPos, zPos, xSpd, ySpd, zSpd);
+        getWorld().addParticle(EnumParticleTypes.SMOKE_LARGE, xPos, yPos, zPos, xSpd, ySpd, zSpd);
     }
 
     /**
@@ -262,8 +287,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     @Override
     public void invalidateStructure() {
         if (hasMaintenanceMechanics() && ConfigHolder.machines.enableMaintenance) { // nothing extra if no maintenance
-            if (!getAbilities(MultiblockAbility.MAINTENANCE_HATCH).isEmpty())
-                getAbilities(MultiblockAbility.MAINTENANCE_HATCH).get(0)
+            if (!getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).isEmpty())
+                getAbilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get()).get(0)
                         .storeMaintenanceData(maintenance_problems, timeActive);
         }
         this.lastActive = false;
@@ -273,10 +298,10 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
 
     protected void replaceVariantBlocksActive(boolean isActive) {
         if (variantActiveBlocks != null && !variantActiveBlocks.isEmpty()) {
-            int id = getWorld().provider.getDimension();
+            ResourceKey<Level> id = getWorld().dimension();
 
             writeCustomData(GregtechDataCodes.VARIANT_RENDER_UPDATE, buf -> {
-                buf.writeInt(id);
+                buf.writeResourceKey(id);
                 buf.writeBoolean(isActive);
                 buf.writeInt(variantActiveBlocks.size());
                 for (BlockPos blockPos : variantActiveBlocks) {
@@ -298,7 +323,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     public TraceabilityPredicate autoAbilities(boolean checkMaintenance, boolean checkMuffler) {
         TraceabilityPredicate predicate = new TraceabilityPredicate();
         if (checkMaintenance && hasMaintenanceMechanics()) {
-            predicate = predicate.or(abilities(MultiblockAbility.MAINTENANCE_HATCH)
+            predicate = predicate.or(abilities(GtMultiblockAbilities.MAINTENANCE_HATCH.get())
                     .setMinGlobalLimited(ConfigHolder.machines.enableMaintenance ? 1 : 0).setMaxGlobalLimited(1));
         }
         if (checkMuffler && hasMufflerMechanics()) {
@@ -312,57 +337,56 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      * each element of list is displayed on new line
      * to use translation, use TextComponentTranslation
      */
-    protected void addDisplayText(List<ITextComponent> textList) {
+    protected void addDisplayText(List<Component> textList) {
         if (!isStructureFormed()) {
-            ITextComponent tooltip = Component.translatable("gregtech.multiblock.invalid_structure.tooltip");
-            tooltip.setStyle(new Style().setColor(TextFormatting.GRAY));
+            MutableComponent tooltip = Component.translatable("gregtech.multiblock.invalid_structure.tooltip");
+            tooltip.withStyle(ChatFormatting.GRAY);
             textList.add(Component.translatable("gregtech.multiblock.invalid_structure")
-                    .setStyle(new Style().setColor(TextFormatting.RED)
-                            .setHoverEvent(new HoverEvent(Action.SHOW_TEXT, tooltip))));
+                    .withStyle((style) ->  style.withColor(ChatFormatting.RED)
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         } else {
             if (hasMaintenanceMechanics() && ConfigHolder.machines.enableMaintenance) {
                 addMaintenanceText(textList);
             }
             if (hasMufflerMechanics() && !isMufflerFaceFree())
                 textList.add(Component.translatable("gregtech.multiblock.universal.muffler_obstructed")
-                        .setStyle(new Style().setColor(TextFormatting.RED)
-                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                        .withStyle((style) ->  style.withColor(ChatFormatting.RED)
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         Component.translatable("gregtech.multiblock.universal.muffler_obstructed.tooltip")))));
         }
     }
 
-    protected void addMaintenanceText(List<ITextComponent> textList) {
+    protected void addMaintenanceText(List<Component> textList) {
         if (!hasMaintenanceProblems()) {
             textList.add(Component.translatable("gregtech.multiblock.universal.no_problems")
                     .withStyle(ChatFormatting.GREEN)
             );
         } else {
 
-            ITextComponent hoverEventTranslation = Component.translatable("gregtech.multiblock.universal.has_problems_header")
-                    .setStyle(new Style().setColor(TextFormatting.GRAY));
+            MutableComponent hoverEventTranslation = Component.translatable("gregtech.multiblock.universal.has_problems_header")
+                    .setStyle(new Style().setColor(ChatFormatting.GRAY));
 
             if (((this.maintenance_problems) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.wrench", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.wrench", "\n"));
 
             if (((this.maintenance_problems >> 1) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.screwdriver", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.screwdriver", "\n"));
 
             if (((this.maintenance_problems >> 2) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.soft_mallet", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.soft_mallet", "\n"));
 
             if (((this.maintenance_problems >> 3) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.hard_hammer", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.hard_hammer", "\n"));
 
             if (((this.maintenance_problems >> 4) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.wire_cutter", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.wire_cutter", "\n"));
 
             if (((this.maintenance_problems >> 5) & 1) == 0)
-                hoverEventTranslation.appendSibling(Component.translatable("gregtech.multiblock.universal.problem.crowbar", "\n"));
+                hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.crowbar", "\n"));
 
-            TextComponentTranslation textTranslation = Component.translatable("gregtech.multiblock.universal.has_problems");
+            MutableComponent textTranslation = Component.translatable("gregtech.multiblock.universal.has_problems");
 
-            textList.add(textTranslation.setStyle(new Style().setColor(TextFormatting.RED)
-                    .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverEventTranslation))));
+            textList.add(textTranslation.copy().withStyle((val) -> val.withColor(ChatFormatting.RED).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverEventTranslation))));
         }
     }
 
@@ -371,7 +395,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      * with special click event handler
      * Data is the data specified in the component
      */
-    protected void handleDisplayClick(String componentData, ClickData clickData) {
+    protected void handleDisplayClick(String componentData, Widget.ClickData clickData) {
     }
 
     protected ModularUI.Builder createUITemplate(Player entityPlayer) {
@@ -386,7 +410,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
                     4, this::getVoidingMode, this::setVoidingMode)
                     .setTooltipHoverString(this::getVoidingModeTooltip));
         }
-        builder.bindPlayerInventory(entityPlayer.inventory, 134);
+        builder.bindPlayerInventory(entityPlayer.getInventory(), 134);
         return builder;
     }
 
@@ -406,16 +430,16 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
         this.voidingItems = mode == 1 || mode == 3;
 
         // After changing the voiding mode, reset the notified buses in case a recipe can run now that voiding mode has been changed
-        for(IFluidTank tank : this.getAbilities(MultiblockAbility.IMPORT_FLUIDS)) {
+        for(IFluidTank tank : this.getAbilities(GtMultiblockAbilities.IMPORT_FLUIDS.get())) {
             this.getNotifiedFluidInputList().add((IFluidHandler) tank);
         }
-        this.getNotifiedItemInputList().addAll(this.getAbilities(MultiblockAbility.IMPORT_ITEMS));
+        this.getNotifiedItemInputList().addAll(this.getAbilities(GtMultiblockAbilities.IMPORT_ITEMS.get()));
 
         markDirty();
     }
 
     private String getVoidingModeTooltip(int mode) {
-        return VoidingMode.VALUES[mode].getName();
+        return VoidingMode.VALUES[mode].getSerializedName();
     }
 
     @Override
@@ -426,11 +450,11 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setByte("Maintenance", maintenance_problems);
-        data.setInteger("ActiveTimer", timeActive);
-        data.setBoolean(NBT_VOIDING_ITEMS, voidingItems);
-        data.setBoolean(NBT_VOIDING_FLUIDS, voidingFluids);
-        data.setInteger(NBT_VOIDING_MODE, voidingMode.ordinal());
+        data.putByte("Maintenance", maintenance_problems);
+        data.putInt("ActiveTimer", timeActive);
+        data.putBoolean(NBT_VOIDING_ITEMS, voidingItems);
+        data.putBoolean(NBT_VOIDING_FLUIDS, voidingFluids);
+        data.putInt(NBT_VOIDING_MODE, voidingMode.ordinal());
         return data;
     }
 
@@ -438,17 +462,17 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         maintenance_problems = data.getByte("Maintenance");
-        timeActive = data.getInteger("ActiveTimer");
-        if(data.hasKey(NBT_VOIDING_ITEMS)) {
+        timeActive = data.getInt("ActiveTimer");
+        if(data.contains(NBT_VOIDING_ITEMS)) {
             voidingItems = data.getBoolean(NBT_VOIDING_ITEMS);
         }
 
-        if(data.hasKey(NBT_VOIDING_FLUIDS)) {
+        if(data.contains(NBT_VOIDING_FLUIDS)) {
             voidingFluids = data.getBoolean(NBT_VOIDING_FLUIDS);
         }
 
-        if(data.hasKey(NBT_VOIDING_MODE)) {
-            voidingMode = VoidingMode.values()[data.getInteger(NBT_VOIDING_MODE)];
+        if(data.contains(NBT_VOIDING_MODE)) {
+            voidingMode = VoidingMode.values()[data.getInt(NBT_VOIDING_MODE)];
         }
     }
 
@@ -488,10 +512,10 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
             int maxZ;
             maxX = maxY = maxZ = Integer.MIN_VALUE;
 
-            int id = buf.readInt();
+            ResourceKey<Level> id = buf.readRegistryId();
             boolean isActive = buf.readBoolean();
             //the server can send a packet to the client before the map is initialized by the world loading client-side
-            VariantActiveBlock.ACTIVE_BLOCKS.putIfAbsent(getWorld().provider.getDimension(), new ObjectOpenHashSet<>());
+            VariantActiveBlock.ACTIVE_BLOCKS.putIfAbsent(getWorld().dimension(), new ObjectOpenHashSet<>());
             int size = buf.readInt();
             for (int i = 0; i < size; i++) {
                 BlockPos blockPos = buf.readBlockPos();
@@ -508,8 +532,8 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
                 maxZ = Math.max(maxZ, blockPos.getZ());
             }
 
-            if (getWorld().provider.getDimension() == id) {
-                getWorld().markBlockRangeForRenderUpdate(new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ));
+            if (getWorld().dimension() == id) {
+                Minecraft.getInstance().levelRenderer.setBlocksDirty(minX, minY, minZ, maxX, maxY, maxZ);
             }
         }
         if (dataId == IS_WORKING) {
@@ -517,13 +541,15 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
         }
     }
 
+    LazyOptional<IMaintenance> maintenanceLazy = LazyOptional.of(() -> this);
+
     @Override
-    public <T> T getCapability(Capability<T> capability, Direction side) {
-        T capabilityResult = super.getCapability(capability, side);
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
+        LazyOptional<T> capabilityResult = super.getCapability(capability, side);
         if (capabilityResult != null) return capabilityResult;
         if (capability == GregtechTileCapabilities.CAPABILITY_MAINTENANCE) {
             if (this.hasMaintenanceMechanics() && ConfigHolder.machines.enableMaintenance) {
-                return GregtechTileCapabilities.CAPABILITY_MAINTENANCE.cast(this);
+                return maintenanceLazy.cast();
             }
         }
         return null;

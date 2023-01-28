@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import codechicken.lib.util.ServerUtils;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -12,6 +13,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.wrapper.RecipeWrapper;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
@@ -33,7 +35,7 @@ import java.util.List;
 
 import static net.nemezanevem.gregtech.api.GTValues.ULV;
 
-public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable, IParallelableRecipeLogic {
+public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable {
 
     private static final String ALLOW_OVERCLOCKING = "AllowOverclocking";
     private static final String OVERCLOCK_VOLTAGE = "OverclockVoltage";
@@ -431,7 +433,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
         recipe = recipe.trimRecipeOutputs(recipe, getRecipeType(), metaTileEntity.getItemOutputLimit(), metaTileEntity.getFluidOutputLimit());
 
         // Pass in the trimmed recipe to the parallel logic
-        recipe = findParallelRecipe(
+        /*recipe = findParallelRecipe(
                 this,
                 recipe,
                 getInputInventory(),
@@ -439,7 +441,7 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
                 getOutputInventory(),
                 getOutputTank(),
                 getMaxParallelVoltage(),
-                getParallelLimit());
+                getParallelLimit());*/
 
         if (recipe != null && setupAndConsumeRecipeInputs(recipe, getInputInventory())) {
             setupRecipe(recipe);
@@ -463,14 +465,6 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable,
      */
     public void setParallelLimit(int amount) {
         parallelLimit = amount;
-    }
-
-    /**
-     * @return the parallel logic type to use for recipes
-     */
-    @Nonnull
-    public Enum<ParallelLogicType> getParallelLogicType() {
-        return ParallelLogicType.MULTIPLY;
     }
 
     /**
