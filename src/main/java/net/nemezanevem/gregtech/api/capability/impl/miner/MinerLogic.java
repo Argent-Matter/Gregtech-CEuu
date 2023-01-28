@@ -3,32 +3,36 @@ package net.nemezanevem.gregtech.api.capability.impl.miner;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IMiner;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.unification.TagUnifier;
-import gregtech.api.unification.ore.OrePrefix;
-import gregtech.api.util.GTLog;
-import gregtech.api.util.GTTransferUtils;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.common.ConfigHolder;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
-import org.apache.commons.lang3.StringUtils;
+import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -95,26 +99,23 @@ public class MinerLogic {
 
     private BlockState findMiningReplacementBlock() {
 
-        String[] blockDescription = StringUtils.split(ConfigHolder.machines.replaceMinedBlocksWith, ":");
+        String blockDescription = ConfigHolder.machines.replaceMinedBlocksWith;
         Block replacementBlock;
 
-        if(blockDescription.length == 2) {
-            replacementBlock = Block.getBlockFromName(ConfigHolder.machines.replaceMinedBlocksWith);
+        if(blockDescription.matches(".*\\[.*\\]")) {
+            DataResult<Pair<BlockState, JsonElement>> dataResult = BlockState.CODEC.decode(JsonOps.INSTANCE, JsonParser.parseString(blockDescription));
+            if(dataResult.result().isPresent()) {
+                return dataResult.result().get().getFirst();
+            }
         }
-        else {
-            replacementBlock = Block.getBlockFromName(String.format("%s:%s", blockDescription[0], blockDescription[1]));
-        }
+
+        replacementBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockDescription));
         if(replacementBlock == null) {
             GregTech.LOGGER.error("Miner Config Replacement block was null, replacing with Cobblestone");
-            return Blocks.COBBLESTONE.getDefaultState();
+            return Blocks.COBBLESTONE.defaultBlockState();
         }
 
-        // check for meta
-        if(blockDescription.length > 2 && !blockDescription[2].isEmpty()) {
-            return replacementBlock.getDefaultState().getBlock().getStateFromMeta(Integer.parseInt(blockDescription[2]));
-        }
-
-        return replacementBlock.getDefaultState();
+        return replacementBlock.defaultBlockState();
     }
 
     /**
@@ -150,7 +151,7 @@ public class MinerLogic {
         }
 
         // drill a hole beneath the miner and extend the pipe downwards by one
-        WorldServer world = (WorldServer) metaTileEntity.getWorld();
+        ServerLevel world = (ServerLevel) metaTileEntity.getWorld();
         if (mineY.get() < pipeY.get()) {
             world.destroyBlock(new BlockPos(metaTileEntity.getPos().getX(), pipeY.get(), metaTileEntity.getPos().getZ()), false);
             pipeY.decrementAndGet();
@@ -166,13 +167,13 @@ public class MinerLogic {
             BlockState blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
 
             // check to make sure the ore is still there,
-            while(!Util.isOre(Util.toItem(blockState))) {
+            while(!Util.isOre(new ItemStack(blockState.getBlock()))) {
                 blocksToMine.removeFirst();
                 if (blocksToMine.isEmpty()) break;
                 blockState = metaTileEntity.getWorld().getBlockState(blocksToMine.getFirst());
             }
             // When we are here we have an ore to mine! I'm glad we aren't threaded
-            if (!blocksToMine.isEmpty() & Util.isOre(Util.toItem(blockState))) {
+            if (!blocksToMine.isEmpty() & Util.isOre(new ItemStack(blockState.getBlock()))) {
                 // get the small ore drops, if a small ore
                 getSmallOreBlockDrops(blockDrops, world, blocksToMine.getFirst(), blockState);
                 // get the block's drops.
@@ -238,11 +239,11 @@ public class MinerLogic {
     /**
      * called to handle mining small ores
      * @param blockDrops the List of items to fill after the operation
-     * @param world the {@link WorldServer} the miner is in
+     * @param world the {@link ServerLevel} the miner is in
      * @param blockToMine the {@link BlockPos} of the block being mined
      * @param blockState the {@link BlockState} of the block being mined
      */
-    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, BlockState blockState) {
+    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, ServerLevel world, BlockPos blockToMine, BlockState blockState) {
         /*small ores
             if orePrefix of block in blockPos is small
                 applyTieredHammerNoRandomDrops...
@@ -254,12 +255,12 @@ public class MinerLogic {
     /**
      * called to handle mining regular ores and blocks
      * @param blockDrops the List of items to fill after the operation
-     * @param world the {@link WorldServer} the miner is in
+     * @param world the {@link ServerLevel} the miner is in
      * @param blockToMine the {@link BlockPos} of the block being mined
      * @param blockState the {@link BlockState} of the block being mined
      */
-    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull BlockState blockState) {
-        blockState.getBlock().getDrops(blockDrops, world, blockToMine, blockState, 0); // regular ores do not get fortune applied
+    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, ServerLevel world, BlockPos blockToMine, @Nonnull BlockState blockState) {
+        blockDrops.addAll(Block.getDrops(blockState, world, blockToMine, world.getBlockEntity(blockToMine))); // regular ores do not get fortune applied
     }
 
     /**
@@ -267,15 +268,15 @@ public class MinerLogic {
      * marks the inventory as full if the items cannot fit, and not full if it previously was full and items could fit
      *
      * @param blockDrops the List of items to insert
-     * @param world the {@link WorldServer} the miner is in
+     * @param world the {@link ServerLevel} the miner is in
      */
-    private void mineAndInsertItems(NonNullList<ItemStack> blockDrops, WorldServer world) {
+    private void mineAndInsertItems(NonNullList<ItemStack> blockDrops, ServerLevel world) {
         // If the block's drops can fit in the inventory, move the previously mined position to the block
         // replace the ore block with cobblestone instead of breaking it to prevent mob spawning
         // remove the ore block's position from the mining queue
         if (GTTransferUtils.addItemsToItemHandler(metaTileEntity.getExportItems(), true, blockDrops)) {
             GTTransferUtils.addItemsToItemHandler(metaTileEntity.getExportItems(), false, blockDrops);
-            world.setBlockState(blocksToMine.getFirst(), oreReplacementBlock);
+            world.setBlock(blocksToMine.getFirst(), oreReplacementBlock, 3);
             mineX.set(blocksToMine.getFirst().getX());
             mineZ.set(blocksToMine.getFirst().getZ());
             mineY.set(blocksToMine.getFirst().getY());
@@ -360,7 +361,7 @@ public class MinerLogic {
                     if (x.get() <= startX.get() + currentRadius * 2) {
                         BlockPos blockPos = new BlockPos(x.get(), y.get(), z.get());
                         BlockState state = metaTileEntity.getWorld().getBlockState(blockPos);
-                        if (state.getBlock().blockHardness >= 0 && metaTileEntity.getWorld().getTileEntity(blockPos) == null && Util.isOre(Util.toItem(state))) {
+                        if (state.getBlock().defaultDestroyTime() >= 0 && metaTileEntity.getWorld().getBlockEntity(blockPos) == null && Util.isOre(new ItemStack(state.getBlock()))) {
                             blocks.addLast(blockPos);
                         }
                         // move to the next x position
@@ -402,14 +403,14 @@ public class MinerLogic {
      * @param map the recipemap from which to get the drops
      * @param tier the tier at which the operation is performed, used for calculating the chanced output boost
      */
-    protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull RecipeType<?> map, int tier) {
-        ItemStack itemStack = Util.toItem(blockState);
-        Recipe recipe = map.findRecipe(Long.MAX_VALUE, Collections.singletonList(itemStack), Collections.emptyList(), 0);
+    protected static void applyTieredHammerNoRandomDrops(@Nonnull BlockState blockState, List<ItemStack> drops, int fortuneLevel, @Nonnull GTRecipeType<?> map, int tier) {
+        ItemStack itemStack = new ItemStack(blockState.getBlock());
+        GTRecipe recipe = map.findRecipe(Long.MAX_VALUE, Collections.singletonList(itemStack), Collections.emptyList(), 0);
         if (recipe != null && !recipe.getOutputs().isEmpty()) {
             drops.clear();
             for (ItemStack outputStack : recipe.getResultItemOutputs(Util.getTierByVoltage(recipe.getEUt()), tier, map)) {
                 outputStack = outputStack.copy();
-                if (TagUnifier.getPrefix(outputStack) == OrePrefix.crushed) {
+                if (TagUnifier.getPrefix(outputStack.getItem()) == TagPrefix.crushed) {
                     if (fortuneLevel > 0) {
                         outputStack.grow(outputStack.getCount() * fortuneLevel);
                     }
@@ -444,22 +445,22 @@ public class MinerLogic {
      * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(CompoundTag)} method
      */
     public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
-        data.setTag("xPos", new NBTTagInt(x.get()));
-        data.setTag("yPos", new NBTTagInt(y.get()));
-        data.setTag("zPos", new NBTTagInt(z.get()));
-        data.setTag("mxPos", new NBTTagInt(mineX.get()));
-        data.setTag("myPos", new NBTTagInt(mineY.get()));
-        data.setTag("mzPos", new NBTTagInt(mineZ.get()));
-        data.setTag("sxPos", new NBTTagInt(startX.get()));
-        data.setTag("syPos", new NBTTagInt(startY.get()));
-        data.setTag("szPos", new NBTTagInt(startZ.get()));
-        data.setTag("tempY", new NBTTagInt(pipeY.get()));
-        data.setTag("isActive", new NBTTagInt(this.isActive ? 1 : 0));
-        data.setTag("isWorkingEnabled", new NBTTagInt(this.isWorkingEnabled ? 1 : 0));
-        data.setTag("wasActiveAndNeedsUpdate", new NBTTagInt(this.wasActiveAndNeedsUpdate ? 1 : 0));
-        data.setTag("pipeLength", new NBTTagInt(pipeLength));
-        data.setTag("currentRadius", new NBTTagInt(currentRadius));
-        data.setTag("isDone", new NBTTagInt(isDone ? 1 : 0));
+        data.putInt("xPos", this.x.get());
+        data.putInt("yPos", this.y.get());
+        data.putInt("zPos", this.z.get());
+        data.putInt("mxPos", this.mineX.get());
+        data.putInt("myPos", this.mineY.get());
+        data.putInt("mzPos", this.mineZ.get());
+        data.putInt("sxPos", this.startX.get());
+        data.putInt("syPos", this.startY.get());
+        data.putInt("szPos", this.startZ.get());
+        data.putInt("tempY", this.pipeY.get());
+        data.putBoolean("isActive", this.isActive);
+        data.putBoolean("isWorkingEnabled", this.isWorkingEnabled);
+        data.putBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
+        data.putInt("pipeLength", this.pipeLength);
+        data.putInt("currentRadius", this.currentRadius);
+        data.putBoolean("isDone", this.isDone);
         return data;
     }
 
@@ -468,22 +469,22 @@ public class MinerLogic {
      * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#readFromNBT(CompoundTag)} method
      */
     public void readFromNBT(@Nonnull CompoundTag data) {
-        x.set(data.getInteger("xPos"));
-        y.set(data.getInteger("yPos"));
-        z.set(data.getInteger("zPos"));
-        mineX.set(data.getInteger("mxPos"));
-        mineY.set(data.getInteger("myPos"));
-        mineZ.set(data.getInteger("mzPos"));
-        startX.set(data.getInteger("sxPos"));
-        startY.set(data.getInteger("syPos"));
-        startZ.set(data.getInteger("szPos"));
-        pipeY.set(data.getInteger("tempY"));
-        setActive(data.getInteger("isActive") != 0);
-        setWorkingEnabled(data.getInteger("isWorkingEnabled") != 0);
-        setWasActiveAndNeedsUpdate(data.getInteger("wasActiveAndNeedsUpdate") != 0);
-        pipeLength = data.getInteger("pipeLength");
-        this.currentRadius = data.getInteger("currentRadius");
-        this.isDone = data.getInteger("isDone") != 0;
+        x.set(data.getInt("xPos"));
+        y.set(data.getInt("yPos"));
+        z.set(data.getInt("zPos"));
+        mineX.set(data.getInt("mxPos"));
+        mineY.set(data.getInt("myPos"));
+        mineZ.set(data.getInt("mzPos"));
+        startX.set(data.getInt("sxPos"));
+        startY.set(data.getInt("syPos"));
+        startZ.set(data.getInt("szPos"));
+        pipeY.set(data.getInt("tempY"));
+        setActive(data.getBoolean("isActive"));
+        setWorkingEnabled(data.getBoolean("isWorkingEnabled"));
+        setWasActiveAndNeedsUpdate(data.getBoolean("wasActiveAndNeedsUpdate"));
+        pipeLength = data.getInt("pipeLength");
+        this.currentRadius = data.getInt("currentRadius");
+        this.isDone = data.getBoolean("isDone");
     }
 
     /**

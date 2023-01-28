@@ -8,8 +8,19 @@ import gregtech.api.pipenet.block.IPipeType;
 import gregtech.api.pipenet.tile.IPipeTile;
 import gregtech.api.pipenet.tile.TileEntityPipeBase;
 import gregtech.api.unification.material.Material;
-import gregtech.api.unification.ore.OrePrefix;
+import gregtech.api.unification.ore.TagPrefix;
 import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.pipenet.PipeNet;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.common.pipelike.cable.ItemBlockCable;
 
 public abstract class BlockMaterialPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataType> & IMaterialPipeType<NodeDataType>, NodeDataType, WorldPipeNetType extends WorldPipeNet<NodeDataType, ? extends PipeNet<NodeDataType>>> extends BlockPipe<PipeType, NodeDataType, WorldPipeNetType> {
 
@@ -41,10 +52,12 @@ public abstract class BlockMaterialPipe<PipeType extends Enum<PipeType> & IPipeT
     public ItemStack getItem(Material material) {
         if (material == null) return ItemStack.EMPTY;
         int materialId = GregTechAPI.MATERIAL_REGISTRY.getIDForObject(material);
-        return new ItemStack(this, 1, materialId);
+
+        return new ItemStack(this, 1);
     }
 
     public Material getItemMaterial(ItemStack itemStack) {
+        return MaterialRegistry.MATERIALS_BUILTIN.get().getValue(itemStack.getItem() instanceof ItemBlockCable cable ? cable)
         return GregTechAPI.MATERIAL_REGISTRY.getObjectById(itemStack.getMetadata());
     }
 
@@ -61,8 +74,8 @@ public abstract class BlockMaterialPipe<PipeType extends Enum<PipeType> & IPipeT
 
     protected abstract NodeDataType createProperties(PipeType pipeType, Material material);
 
-    public OrePrefix getPrefix() {
-        return pipeType.getOrePrefix();
+    public TagPrefix getPrefix() {
+        return pipeType.getTagPrefix();
     }
 
     public PipeType getItemPipeType(ItemStack is) {

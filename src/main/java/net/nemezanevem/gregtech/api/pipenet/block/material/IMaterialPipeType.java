@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.pipenet.block.material;
 
-import gregtech.api.pipenet.block.IPipeType;
-import gregtech.api.unification.ore.OrePrefix;
+import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 
 public interface IMaterialPipeType<NodeDataType> extends IPipeType<NodeDataType> {
 
@@ -11,5 +11,5 @@ public interface IMaterialPipeType<NodeDataType> extends IPipeType<NodeDataType>
      *
      * @return ore prefix used for this pipe type
      */
-    OrePrefix getOrePrefix();
+    TagPrefix getTagPrefix();
 }

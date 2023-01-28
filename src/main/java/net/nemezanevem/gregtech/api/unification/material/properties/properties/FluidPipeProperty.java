@@ -22,7 +22,7 @@ public class FluidPipeProperty implements IMaterialProperty<FluidPipeProperty> {
     }
 
     /**
-     * Should only be called from {@link gregtech.common.pipelike.fluidpipe.FluidPipeType#modifyProperties(FluidPipeProperties)}
+     * Should only be called from {@link gregtech.common.pipelike.fluidpipe.FluidPipeType#modifyProperties(FluidPipeProperty)}
      */
     public FluidPipeProperty(int maxFluidTemperature, int throughput, boolean gasProof, boolean acidProof, boolean cryoProof, boolean plasmaProof, int tanks) {
         this.maxFluidTemperature = maxFluidTemperature;
@@ -120,7 +120,7 @@ public class FluidPipeProperty implements IMaterialProperty<FluidPipeProperty> {
 
     @Override
     public String toString() {
-        return "FluidPipeProperties{" +
+        return "FluidPipeProperty{" +
                 "maxFluidTemperature=" + maxFluidTemperature +
                 ", throughput=" + throughput +
                 ", gasProof=" + gasProof +

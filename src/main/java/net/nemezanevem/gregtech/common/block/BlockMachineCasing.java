@@ -1,18 +1,11 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.GTValues;
-import gregtech.api.block.VariantBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLiving.SpawnPlacementType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.block.VariantBlock;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -21,30 +14,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class BlockMachineCasing extends VariantBlock<BlockMachineCasing.MachineCasingType> {
 
     public BlockMachineCasing() {
-        super(Material.IRON);
-        setTranslationKey("machine_casing");
-        setHardness(4.0f);
-        setResistance(8.0f);
-        setSoundType(SoundType.METAL);
-        setHarvestLevel(ToolClasses.WRENCH, 2);
-        setDefaultState(getState(MachineCasingType.ULV));
+        super(BlockBehaviour.Properties.of(Material.METAL).sound(SoundType.METAL).strength(4.0f, 8.0f).isValidSpawn(((pState, pLevel, pPos, pValue) -> false)));
+        registerDefaultState(getState(MachineCasingType.ULV));
     }
 
-    @Override
-    public boolean canCreatureSpawn(BlockState state, BlockGetter world, BlockPos pos, SpawnPlacementType type) {
-        return false;
-    }
-
-    @Override
-    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
-        for (MachineCasingType variant : VALUES) {
-            if (variant.ordinal() <= MachineCasingType.UHV.ordinal() || GTValues.HT) {
-                list.add(getItemVariant(variant));
-            }
-        }
-    }
-
-    public enum MachineCasingType implements IStringSerializable {
+    public enum MachineCasingType implements StringRepresentable {
 
         //Voltage-tiered casings
         ULV(makeName(GTValues.VOLTAGE_NAMES[0])),
@@ -71,7 +45,7 @@ public class BlockMachineCasing extends VariantBlock<BlockMachineCasing.MachineC
 
         @Override
         @Nonnull
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 

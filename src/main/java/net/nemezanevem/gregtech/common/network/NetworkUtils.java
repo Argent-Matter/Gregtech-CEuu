@@ -29,7 +29,7 @@ public class NetworkUtils {
         return new FriendlyByteBuf(copiedDataBuffer);
     }
 
-    public static BlockEntity getTileEntityServer(ResourceKey<Level> dimension, BlockPos pos) {
+    public static BlockEntity getBlockEntityServer(ResourceKey<Level> dimension, BlockPos pos) {
         return ServerLifecycleHooks.getCurrentServer().getLevel(dimension).getBlockEntity(pos);
     }
 

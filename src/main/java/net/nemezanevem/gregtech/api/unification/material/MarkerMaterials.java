@@ -31,7 +31,7 @@ public class MarkerMaterials {
 
         /**
          * Can be used only by direct specifying
-         * Means absence of color on OrePrefix
+         * Means absence of color on TagPrefix
          * Often a default value for color prefixes
          */
         public static final RegistryObject<Material> Colorless = MATERIALS.register("colorless", () -> new MarkerMaterial("colorless"));

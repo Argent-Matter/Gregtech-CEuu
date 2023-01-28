@@ -101,7 +101,7 @@ public interface ICoverable {
         for (Direction sideFacing : Direction.values()) {
             CoverBehavior coverBehavior = getCoverAtSide(sideFacing);
             if (coverBehavior == null) continue;
-            Cuboid6 plateBox = getCoverPlateBox(sideFacing, coverPlateThickness);
+            VoxelShape plateBox = getCoverPlateBox(sideFacing, coverPlateThickness);
 
             if (coverBehavior.canRenderInLayer(layer) && coverPlateThickness > 0) {
                 renderState.preRenderWorld(getWorld(), getPos());
@@ -171,20 +171,10 @@ public interface ICoverable {
         return traceCoverSide(result);
     }
 
-    class PrimaryBoxData {
-        public final boolean usePlacementGrid;
-
-        public PrimaryBoxData(boolean usePlacementGrid) {
-            this.usePlacementGrid = usePlacementGrid;
-        }
+    record PrimaryBoxData(boolean usePlacementGrid) {
     }
 
-    class CoverSideData {
-        public final Direction side;
-
-        public CoverSideData(Direction side) {
-            this.side = side;
-        }
+    record CoverSideData(Direction side) {
     }
 
     static Direction traceCoverSide(BlockHitResult result) {
@@ -193,7 +183,7 @@ public interface ICoverable {
             if (rayTraceResult.shape.getData() == null) {
                 return determineGridSideHit(result);
             } else if (rayTraceResult.shape.getData() instanceof CoverSideData) {
-                return ((CoverSideData) rayTraceResult.shape.getData()).side;
+                return ((CoverSideData) rayTraceResult.shape.getData()).side();
             } else if (rayTraceResult.shape.getData() instanceof BlockPipe.PipeConnectionData) {
                 return ((BlockPipe.PipeConnectionData) rayTraceResult.shape.getData()).side;
             } else if (rayTraceResult.shape.getData() instanceof PrimaryBoxData) {

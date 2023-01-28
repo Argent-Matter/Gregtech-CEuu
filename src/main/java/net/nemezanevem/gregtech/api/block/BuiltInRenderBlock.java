@@ -19,16 +19,4 @@ public abstract class BuiltInRenderBlock extends BlockCustomParticle {
         return RenderType.cutoutMipped();
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public boolean isOpaqueCube(@Nonnull BlockState state) {
-        return false;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public boolean isFullCube(@Nonnull BlockState state) {
-        return false;
-    }
-
 }

@@ -738,7 +738,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
         public ExtendedProperties setUnificationData(TagPrefix prefix, @Nullable Material material) {
             if (prefix == null) {
-                throw new IllegalArgumentException("Cannot add null OrePrefix.");
+                throw new IllegalArgumentException("Cannot add null TagPrefix.");
             }
             unificationData.put(prefix, material);
             //TagUnifier.registerTag(getMetaItem(), prefix, material);

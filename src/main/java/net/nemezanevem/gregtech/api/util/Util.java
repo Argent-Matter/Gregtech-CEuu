@@ -50,15 +50,15 @@ import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
 import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialFlag;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconSet;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 
+import javax.annotation.Nonnull;
 import java.text.NumberFormat;
-import java.util.AbstractList;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 
 import static net.nemezanevem.gregtech.api.GTValues.V;
 
@@ -331,6 +331,28 @@ public class Util {
         return start <= value && value <= end;
     }
 
+    /**
+     * @param values to find the mean of
+     * @return the mean value
+     */
+    public static long mean(@Nonnull long[] values) {
+        if (values.length == 0L)
+            return 0L;
+
+        long sum = 0L;
+        for (long v : values)
+            sum += v;
+        return sum / values.length;
+    }
+
+    /**
+     * @param world the {@link Level} to get the average tick time of
+     * @return the mean tick time
+     */
+    public static double getMeanTickTime(@Nonnull Level world) {
+        return mean(Objects.requireNonNull(world.getServer()).tickTimes) * 1.0E-6D;
+    }
+
 
     public static boolean harvestBlock(Level level, BlockPos pos, Player player) {
         BlockState blockState = level.getBlockState(pos);
@@ -464,6 +486,10 @@ public class Util {
         return alphaColor & 0xFFFFFF;
     }
 
+    public static boolean isOre(ItemStack item) {
+        TagPrefix orePrefix = TagUnifier.getPrefix(item.getItem());
+        return orePrefix != null && orePrefix.name().startsWith("ore");
+    }
 
     public static ResourceLocation getId(Material flag) {
         return MaterialRegistry.MATERIALS_BUILTIN.get().getKey(flag);

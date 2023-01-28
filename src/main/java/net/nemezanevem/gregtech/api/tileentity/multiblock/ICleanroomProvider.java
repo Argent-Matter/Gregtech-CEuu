@@ -3,7 +3,7 @@ package net.nemezanevem.gregtech.api.tileentity.multiblock;
 import java.util.Set;
 
 /**
- * Implement this interface in order to make a TileEntity into a block that provides a Cleanroom to other blocks
+ * Implement this interface in order to make a BlockEntity into a block that provides a Cleanroom to other blocks
  */
 public interface ICleanroomProvider {
 

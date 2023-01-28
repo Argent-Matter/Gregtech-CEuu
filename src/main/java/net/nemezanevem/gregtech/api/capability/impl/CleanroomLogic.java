@@ -4,7 +4,7 @@ import net.minecraft.world.level.Level;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.tileentity.MetaBlockEntity;
 import net.nemezanevem.gregtech.api.tileentity.multiblock.ICleanroomProvider;
 import net.nemezanevem.gregtech.api.tileentity.multiblock.IMaintenance;
 import net.nemezanevem.gregtech.common.ConfigHolder;

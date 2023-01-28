@@ -21,6 +21,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
+import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.module.IModuleManager;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredientSerializer;
@@ -35,7 +36,7 @@ import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
-import net.nemezanevem.gregtech.common.block.GtBlocks;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
 import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
@@ -58,6 +59,8 @@ public class GregTech {
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
+
+    public static BlockMachine MACHINE;
 
     public static ISoundManager soundManager;
     public static IModuleManager moduleManager;
@@ -94,7 +97,7 @@ public class GregTech {
         MaterialRegistry.MATERIALS.register(modEventBus);
         GtMaterials.register();
 
-        GtBlocks.init();
+        MetaBlocks.init();
 
         GtItemRegistry.ITEMS.register(modEventBus);
         GtItemRegistry.register();

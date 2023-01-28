@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.block;
 
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -8,6 +9,7 @@ import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 import javax.annotation.Nonnull;
+import java.beans.JavaBean;
 
 /**
  * This class allows lazy initialization of block state of block
@@ -28,5 +30,9 @@ public abstract class DelayedStateBlock extends Block {
     }
 
     protected abstract StateDefinition<Block, BlockState> createStateContainer();
+
+    public RenderType getRenderType() {
+        return RenderType.cutoutMipped();
+    }
 
 }

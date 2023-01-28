@@ -88,7 +88,7 @@ public class BlockPattern {
                     pass = false;
                     break;
                 }
-                BlockEntity cachedTileEntity = entry.getValue().getTileEntity();
+                BlockEntity cachedTileEntity = entry.getValue().getBlockEntity();
                 if (cachedTileEntity != null) {
                     BlockEntity tileEntity = world.getBlockEntity(pos);
                     if (tileEntity != cachedTileEntity) {
@@ -283,7 +283,7 @@ public class BlockPattern {
 
                             List<ItemStack> candidates = Arrays.stream(infos).filter(info -> info.getBlockState().getBlock() != Blocks.AIR).map(info -> {
                                 BlockState blockState = info.getBlockState();
-                                MetaTileEntity metaTileEntity = info.getTileEntity() instanceof IGregTechTileEntity ? ((IGregTechTileEntity) info.getTileEntity()).getMetaTileEntity() : null;
+                                MetaTileEntity metaTileEntity = info.getBlockEntity() instanceof IGregTechTileEntity ? ((IGregTechTileEntity) info.getBlockEntity()).getMetaTileEntity() : null;
                                 if (metaTileEntity != null) {
                                     return metaTileEntity.getStackForm();
                                 } else {
@@ -316,7 +316,7 @@ public class BlockPattern {
                             BlockState state = itemBlock.getBlock().getStateFromMeta(itemBlock.getMetadata(found.getMetadata()));
                             blocks.put(pos, state);
                             world.setBlockState(pos, state);
-                            TileEntity holder = world.getTileEntity(pos);
+                            BlockEntity holder = world.getBlockEntity(pos);
                             if (holder instanceof IGregTechTileEntity) {
                                 MetaTileEntity sampleMetaTileEntity = GregTechAPI.MTE_REGISTRY.getObjectById(found.getItemDamage());
                                 if (sampleMetaTileEntity != null) {
@@ -502,9 +502,9 @@ public class BlockPattern {
                         BlockInfo info = infos == null || infos.length == 0 ? BlockInfo.EMPTY : infos[0];
                         BlockPos pos = setActualRelativeOffset(z, y, x, Direction.NORTH);
                         // TODO
-                        if (info.getTileEntity() instanceof MetaTileEntityHolder) {
+                        if (info.getBlockEntity() instanceof MetaTileEntityHolder) {
                             MetaTileEntityHolder holder = new MetaTileEntityHolder();
-                            holder.setMetaTileEntity(((MetaTileEntityHolder) info.getTileEntity()).getMetaTileEntity());
+                            holder.setMetaTileEntity(((MetaTileEntityHolder) info.getBlockEntity()).getMetaTileEntity());
                             holder.getMetaTileEntity().onPlacement();
                             info = new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder);
                         }
@@ -525,8 +525,8 @@ public class BlockPattern {
         int finalMinY = minY;
         int finalMinZ = minZ;
         blocks.forEach((pos, info) -> {
-            if (info.getTileEntity() instanceof MetaTileEntityHolder) {
-                MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) info.getTileEntity()).getMetaTileEntity();
+            if (info.getBlockEntity() instanceof MetaTileEntityHolder) {
+                MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) info.getBlockEntity()).getMetaTileEntity();
                 boolean find = false;
                 for (Direction Direction : FACINGS) {
                     if (metaTileEntity.isValidFrontFacing(Direction)) {

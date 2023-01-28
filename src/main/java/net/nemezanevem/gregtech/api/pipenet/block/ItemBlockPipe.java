@@ -36,13 +36,13 @@ public class ItemBlockPipe<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
     public InteractionResult place(BlockPlaceContext pContext) {
         InteractionResult superVal = super.place(pContext);
         if (superVal && !world.isClientSide) {
-            IPipeTile selfTile = (IPipeTile) world.getTileEntity(pos);
+            IPipeTile selfTile = (IPipeTile) world.getBlockEntity(pos);
             if (selfTile == null) return superVal;
             if (selfTile.getPipeBlock().canConnect(selfTile, side.getOpposite())) {
                 selfTile.setConnection(side.getOpposite(), true, false);
             }
             for (Direction facing : Direction.values()) {
-                TileEntity te = world.getTileEntity(pos.offset(facing));
+                BlockEntity te = world.getBlockEntity(pos.offset(facing));
                 if (te instanceof IPipeTile) {
                     IPipeTile otherPipe = ((IPipeTile) te);
                     if (otherPipe.isConnected(facing.getOpposite())) {

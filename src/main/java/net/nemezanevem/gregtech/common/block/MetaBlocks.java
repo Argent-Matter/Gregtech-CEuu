@@ -3,14 +3,34 @@ package net.nemezanevem.gregtech.common.block;
 import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.common.block.block.BlockWireCoil;
+import net.nemezanevem.gregtech.common.block.foam.BlockFoam;
+import net.nemezanevem.gregtech.common.block.foam.BlockPetrifiedFoam;
+import net.nemezanevem.gregtech.common.block.wood.BlockGregPlanks;
+import net.nemezanevem.gregtech.common.block.wood.BlockRubberLeaves;
+import net.nemezanevem.gregtech.common.block.wood.BlockRubberLog;
+import net.nemezanevem.gregtech.common.block.wood.BlockRubberSapling;
+import net.nemezanevem.gregtech.common.pipelike.cable.BlockCable;
+import net.nemezanevem.gregtech.common.pipelike.cable.Insulation;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.BlockFluidPipe;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.FluidPipeType;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.BlockItemPipe;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.ItemPipeType;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MetaBlocks {
+
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, GregTech.MODID);
 
     private MetaBlocks() {
     }
@@ -69,16 +89,16 @@ public class MetaBlocks {
     public static final Collection<BlockFluidBase> FLUID_BLOCKS = new ReferenceArrayList<>();
 
     public static void init() {
-        GregTechAPI.MACHINE = MACHINE = new BlockMachine();
-        MACHINE.setRegistryName("machine");
+        GregTech.MACHINE = MACHINE = new BlockMachine();
+        BLOCKS.register("machine", () -> MACHINE);
 
         for (Insulation ins : Insulation.values()) {
             CABLES[ins.ordinal()] = new BlockCable(ins);
-            CABLES[ins.ordinal()].setRegistryName(ins.getName());
+            BLOCKS.register(ins.getSerializedName(), () -> CABLES[ins.ordinal()]);
         }
         for (FluidPipeType type : FluidPipeType.values()) {
             FLUID_PIPES[type.ordinal()] = new BlockFluidPipe(type);
-            FLUID_PIPES[type.ordinal()].setRegistryName(String.format("fluid_pipe_%s", type.name));
+            BLOCKS.register(String.format("fluid_pipe_%s", type.name), () -> FLUID_PIPES[type.ordinal()]);
         }
         for (ItemPipeType type : ItemPipeType.values()) {
             ITEM_PIPES[type.ordinal()] = new BlockItemPipe(type);
@@ -169,7 +189,7 @@ public class MetaBlocks {
 
         createGeneratedBlock(
                 material -> (material.hasProperty(PropertyKey.INGOT) || material.hasProperty(PropertyKey.GEM) || material.hasFlag(FORCE_GENERATE_BLOCK))
-                        && !OrePrefix.block.isIgnored(material),
+                        && !TagPrefix.block.isIgnored(material),
                 MetaBlocks::createCompressedBlock);
 
 
@@ -398,12 +418,12 @@ public class MetaBlocks {
     }
 
     public static void registerOreDict() {
-        OreDictUnifier.registerOre(new ItemStack(RUBBER_LOG, 1, GTValues.W), OrePrefix.log, Materials.Wood);
+        OreDictUnifier.registerOre(new ItemStack(RUBBER_LOG, 1, GTValues.W), TagPrefix.log, Materials.Wood);
         OreDictUnifier.registerOre(new ItemStack(RUBBER_LEAVES, 1, GTValues.W), "treeLeaves");
         OreDictUnifier.registerOre(new ItemStack(RUBBER_SAPLING, 1, GTValues.W), "treeSapling");
-        OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.RUBBER_PLANK), OrePrefix.plank, Materials.Wood);
+        OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.RUBBER_PLANK), TagPrefix.plank, Materials.Wood);
         OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.RUBBER_PLANK), new ItemMaterialInfo(new MaterialStack(Materials.Wood, GTValues.M)));
-        OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.TREATED_PLANK), OrePrefix.plank, Materials.TreatedWood);
+        OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.TREATED_PLANK), TagPrefix.plank, Materials.TreatedWood);
         OreDictUnifier.registerOre(PLANKS.getItemVariant(BlockGregPlanks.BlockType.TREATED_PLANK), new ItemMaterialInfo(new MaterialStack(Materials.TreatedWood, GTValues.M)));
         GameRegistry.addSmelting(RUBBER_LOG, new ItemStack(Items.COAL, 1, 1), 0.15F);
 
@@ -411,14 +431,14 @@ public class MetaBlocks {
             Material material = entry.getKey();
             BlockCompressed block = entry.getValue();
             ItemStack itemStack = block.getItem(material);
-            OreDictUnifier.registerOre(itemStack, OrePrefix.block, material);
+            OreDictUnifier.registerOre(itemStack, TagPrefix.block, material);
         }
 
         for (Entry<Material, BlockFrame> entry : FRAMES.entrySet()) {
             Material material = entry.getKey();
             BlockFrame block = entry.getValue();
             ItemStack itemStack = block.getItem(material);
-            OreDictUnifier.registerOre(itemStack, OrePrefix.frameGt, material);
+            OreDictUnifier.registerOre(itemStack, TagPrefix.frameGt, material);
         }
 
         for (BlockOre blockOre : ORES) {

@@ -13,6 +13,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.MaterialIconType;
 import net.nemezanevem.gregtech.api.unification.stack.MaterialStack;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.util.TriConsumer;
 
@@ -142,8 +143,8 @@ public class TagPrefix {
     // made of 5 Ingots.
     public static final TagPrefix turbineBlade = new TagPrefix("turbine_blades", M * 10, null, GtMaterialIconTypes.turbineBlade.get(), ENABLE_UNIFICATION, hasRotorProperty.and(m -> m.hasFlags(GENERATE_BOLT_SCREW.get(), GENERATE_PLATE.get()) && !m.hasProperty(GtMaterialProperties.GEM.get())));
 
-    public static final TagPrefix paneGlass = new TagPrefix("glass_panes", -1, MarkerMaterials.Color.Colorless, null, SELF_REFERENCING, null);
-    public static final TagPrefix blockGlass = new TagPrefix("glass", -1, MarkerMaterials.Color.Colorless, null, SELF_REFERENCING, null);
+    public static final TagPrefix paneGlass = new TagPrefix("glass_panes", -1, MarkerMaterials.Color.Colorless.get(), null, SELF_REFERENCING, null);
+    public static final TagPrefix blockGlass = new TagPrefix("glass", -1, MarkerMaterials.Color.Colorless.get(), null, SELF_REFERENCING, null);
 
     // Storage Block consisting out of 9 Ingots/Gems/Dusts. Introduced by CovertJaguar
     public static final TagPrefix block = new TagPrefix("storage_blocks", M * 9, null, GtMaterialIconTypes.block.get(), ENABLE_UNIFICATION, null);

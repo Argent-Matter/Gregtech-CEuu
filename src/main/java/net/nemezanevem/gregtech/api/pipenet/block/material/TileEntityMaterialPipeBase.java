@@ -1,22 +1,27 @@
 package net.nemezanevem.gregtech.api.pipenet.block.material;
 
-import gregtech.api.GregTechAPI;
-import gregtech.api.pipenet.block.BlockPipe;
-import gregtech.api.pipenet.block.IPipeType;
-import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.pipenet.tile.TileEntityPipeBase;
-import gregtech.api.unification.material.Material;
-import gregtech.api.unification.material.Materials;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
+import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
-import static gregtech.api.capability.GregtechDataCodes.UPDATE_PIPE_MATERIAL;
+import static codechicken.lib.util.ClientUtils.getWorld;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.UPDATE_PIPE_MATERIAL;
 
 public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> extends TileEntityPipeBase<PipeType, NodeDataType> implements IMaterialPipeTile<PipeType, NodeDataType> {
 
-    private Material pipeMaterial = Materials.Aluminium;
+    private Material pipeMaterial = GtMaterials.Aluminium.get();
 
     @Override
     public Material getPipeMaterial() {
@@ -51,37 +56,37 @@ public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType>
     @Override
     public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
         super.writeToNBT(compound);
-        compound.setString("PipeMaterial", pipeMaterial.toString());
+        compound.putString("PipeMaterial", pipeMaterial.toString());
         return compound;
     }
 
     @Override
     public void readFromNBT(@Nonnull CompoundTag compound) {
         super.readFromNBT(compound);
-        this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObject(compound.getString("PipeMaterial"));
+        this.pipeMaterial = MaterialRegistry.MATERIALS_BUILTIN.get().getValue(new ResourceLocation(compound.getString("PipeMaterial")));
         if (this.pipeMaterial == null) {
-            this.pipeMaterial = Materials.Aluminium; // fallback
+            this.pipeMaterial = GtMaterials.Aluminium.get(); // fallback
         }
     }
 
     private void writePipeMaterial(FriendlyByteBuf buf) {
-        buf.writeVarInt(GregTechAPI.MATERIAL_REGISTRY.getIDForObject(pipeMaterial));
+        buf.writeRegistryId(MaterialRegistry.MATERIALS_BUILTIN.get(), pipeMaterial);
     }
 
     private void readPipeMaterial(FriendlyByteBuf buf) {
-        this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObjectById(buf.readVarInt());
+        this.pipeMaterial = buf.readRegistryId();
     }
 
     @Override
     public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
-        buf.writeVarInt(GregTechAPI.MATERIAL_REGISTRY.getIDForObject(pipeMaterial));
+        buf.writeRegistryId(MaterialRegistry.MATERIALS_BUILTIN.get(), pipeMaterial);
     }
 
     @Override
     public void receiveInitialSyncData(FriendlyByteBuf buf) {
         super.receiveInitialSyncData(buf);
-        this.pipeMaterial = GregTechAPI.MATERIAL_REGISTRY.getObjectById(buf.readVarInt());
+        this.pipeMaterial = buf.readRegistryId();
     }
 
     @Override
@@ -91,5 +96,10 @@ public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType>
             readPipeMaterial(buf);
             scheduleChunkForRenderUpdate();
         }
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
+        return super.getCapability(cap);
     }
 }

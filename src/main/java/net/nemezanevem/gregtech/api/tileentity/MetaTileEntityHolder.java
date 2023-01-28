@@ -33,6 +33,7 @@ import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.particle.GTNameTagParticle;
 import net.nemezanevem.gregtech.client.particle.GTParticleManager;
 import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
+import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,7 +46,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
 
     MetaTileEntity metaTileEntity;
     private boolean needToUpdateLightning = false;
-    private String customName;
+    private Component customName;
     private GTNameTagParticle nameTagParticle;
 
     private final int[] timeStatistics = new int[20];
@@ -108,7 +109,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
     @Override
     public void load(@Nonnull CompoundTag compound) {
         super.load(compound);
-        customName = compound.getString("CustomName");
+        customName = Component.Serializer.fromJson(compound.getString("CustomName"));
         if (compound.contains("MetaId", Tag.TAG_STRING)) {
             String metaTileEntityIdRaw = compound.getString("MetaId");
             ResourceLocation metaTileEntityId = new ResourceLocation(metaTileEntityIdRaw);
@@ -119,8 +120,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
                 /* Note: NBTs need to be read before onAttached is run, since NBTs may contain important information
                 * about the composition of the BlockPattern that onAttached may generate. */
                 this.metaTileEntity.readFromNBT(metaTileEntityData);
-                // TODO remove this method call after v2.5.0. This is a deprecated method is set for removal.
-                this.metaTileEntity.onAttached();
+                this.metaTileEntity.onPlacement();
             } else {
                 GregTech.LOGGER.error("Failed to load MetaTileEntity with invalid ID " + metaTileEntityIdRaw);
             }
@@ -252,7 +252,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
 
     @Override
     public void writeInitialSyncData(FriendlyByteBuf buf) {
-        buf.writeUtf(getName().getString());
+        buf.writeUtf(Component.Serializer.toJson(getName()));
         if (metaTileEntity != null) {
             buf.writeBoolean(true);
             buf.writeRegistryId(MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get(), metaTileEntity);
@@ -262,7 +262,7 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
 
     @Override
     public void receiveInitialSyncData(FriendlyByteBuf buf) {
-        setCustomName(buf.readUtf());
+        setCustomName(Component.Serializer.fromJson(buf.readUtf()));
         if (buf.readBoolean()) {
             receiveMTEInitializationData(buf);
         }
@@ -374,20 +374,20 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
         return new AABB(getBlockPos());
     }
 
-    public void setCustomName(String customName) {
-        String nameString = getName().getString();
-        if (!nameString.equals(customName)) {
+    public void setCustomName(Component customName) {
+        Component name = getName();
+        if (!name.getString().equals(customName.getString())) {
             this.customName = customName;
             if (level.isClientSide) {
                 if (hasCustomName()) {
                     if (nameTagParticle == null) {
-                        nameTagParticle = new GTNameTagParticle((ClientLevel) level, worldPosition.getX() + 0.5, worldPosition.getY() + 1.5, worldPosition.getZ() + 0.5, nameString);
+                        nameTagParticle = new GTNameTagParticle((ClientLevel) level, worldPosition.getX() + 0.5, worldPosition.getY() + 1.5, worldPosition.getZ() + 0.5, name.getString());
                         nameTagParticle.setOnUpdate(p -> {
                             if (isRemoved() || !Util.isPosChunkLoaded(level, worldPosition)) p.remove();
                         });
                         GTParticleManager.INSTANCE.addEffect(nameTagParticle);
                     } else {
-                        nameTagParticle.name = nameString;
+                        nameTagParticle.name = name.getString();
                     }
                 } else {
                     if (nameTagParticle != null) {
@@ -404,12 +404,12 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
     @Nonnull
     @Override
     public Component getName() {
-        return this.customName == null ? Component.empty() : Component.literal(this.customName);
+        return this.customName == null ? Component.empty() : this.customName;
     }
 
     @Override
     public boolean hasCustomName() {
-        return this.customName != null && !this.customName.isEmpty();
+        return this.customName != null;
     }
 
     @Nonnull

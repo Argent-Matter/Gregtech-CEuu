@@ -128,10 +128,10 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
     public static void setFoundInvalidRecipe(boolean foundInvalidRecipe) {
         GTRecipeTypeImpl.foundInvalidRecipe |= foundInvalidRecipe;
-        TagPrefix currentOrePrefix = TagPrefix.getCurrentProcessingPrefix();
-        if (currentOrePrefix != null) {
+        TagPrefix currentTagPrefix = TagPrefix.getCurrentProcessingPrefix();
+        if (currentTagPrefix != null) {
             Material currentMaterial = TagPrefix.getCurrentMaterial();
-            GregTech.LOGGER.error("Error happened during processing ore registration of prefix {} and material {}. " + "Seems like cross-mod compatibility issue. Report to GTCEu github.", currentOrePrefix, currentMaterial);
+            GregTech.LOGGER.error("Error happened during processing ore registration of prefix {} and material {}. " + "Seems like cross-mod compatibility issue. Report to GTCEu github.", currentTagPrefix, currentMaterial);
         }
     }
 

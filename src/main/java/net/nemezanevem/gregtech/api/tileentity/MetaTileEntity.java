@@ -46,6 +46,7 @@ import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
@@ -59,6 +60,7 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.common.ConfigHolder;
@@ -817,7 +819,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     /**
      * @return tool required to dismantle this meta tile entity properly
      */
-    public String getHarvestTool() {
+    public ToolClass getHarvestTool() {
         return ToolClass.WRENCH;
     }
 
@@ -934,7 +936,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         } else if (dataId == UPDATE_SOUND_MUFFLED) {
             this.muffled = buf.readBoolean();
             if (muffled) {
-                GregTechAPI.soundManager.stopTileSound(getPos());
+                GregTech.soundManager.stopTileSound(getPos());
             }
         }
     }
@@ -1262,7 +1264,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
 
     public void invalidate() {
         if (getLevel() != null && getLevel().isClientSide) {
-            GregTechAPI.soundManager.stopTileSound(getPos());
+            GregTech.soundManager.stopTileSound(getPos());
         }
         this.itemHandlerLazy.invalidate();
         this.fluidHandlerLazy.invalidate();

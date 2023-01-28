@@ -312,6 +312,7 @@ public class Textures {
         if (layer != null && op != null && op.layer != null && (op.layer != layer || !op.shouldSideBeRendered(face, bounds))) {
             return;
         }
+
         BlockRenderer.BlockFace blockFace = blockFaces.get();
         blockFace.loadCuboidFace(bounds, face.ordinal());
         UVTransformationList uvList = new UVTransformationList(new IconTransformation(sprite));

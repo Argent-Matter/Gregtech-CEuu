@@ -1,8 +1,16 @@
 package net.nemezanevem.gregtech.common.block;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,7 +23,6 @@ public class FrameItemBlock extends BlockItem {
     public FrameItemBlock(BlockFrame block) {
         super(block, new Properties().tab(GregTech.TAB_GREGTECH));
         this.frameBlock = block;
-        setHasSubtypes(true);
     }
 
     @Override
@@ -29,14 +36,14 @@ public class FrameItemBlock extends BlockItem {
 
     @Nonnull
     @Override
-    public String getItemStackDisplayName(@Nonnull ItemStack stack) {
+    public Component getName(@Nonnull ItemStack stack) {
         Material material = getBlockState(stack).getValue(frameBlock.variantProperty);
-        return OrePrefix.frameGt.getLocalNameForItem(material);
+        return TagPrefix.frameGt.getLocalNameForItem(material);
     }
 
     @Override
-    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
-        super.addInformation(stack, worldIn, tooltip, flagIn);
+    public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn) {
+        super.appendHoverText(stack, worldIn, tooltip, flagIn);
         if (ConfigHolder.misc.debug) {
             tooltip.add("MetaItem Id: frame" + frameBlock.getGtMaterial(stack.getMetadata()).toCamelCaseString());
         }

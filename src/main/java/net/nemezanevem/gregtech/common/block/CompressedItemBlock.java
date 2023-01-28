@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.common.block;
 
 import gregtech.api.unification.material.Material;
-import gregtech.api.unification.ore.OrePrefix;
+import gregtech.api.unification.ore.TagPrefix;
 import gregtech.common.ConfigHolder;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
@@ -36,7 +36,7 @@ public class CompressedItemBlock extends ItemBlock {
     @Override
     public String getItemStackDisplayName(@Nonnull ItemStack stack) {
         Material material = getBlockState(stack).getValue(compressedBlock.variantProperty);
-        return OrePrefix.block.getLocalNameForItem(material);
+        return TagPrefix.block.getLocalNameForItem(material);
     }
 
     @Override

@@ -75,7 +75,7 @@ public class MultiblockShapeInfo {
                     String columnEntry = aisleEntry[y];
                     for (int x = 0; x < columnEntry.length(); x++) {
                         BlockInfo info = symbolMap.getOrDefault(columnEntry.charAt(x), BlockInfo.EMPTY);
-                        TileEntity tileEntity = info.getTileEntity();
+                        BlockEntity tileEntity = info.getBlockEntity();
                         if (tileEntity != null) {
                             MetaTileEntityHolder holder = (MetaTileEntityHolder) tileEntity;
                             final MetaTileEntity mte = holder.getMetaTileEntity();

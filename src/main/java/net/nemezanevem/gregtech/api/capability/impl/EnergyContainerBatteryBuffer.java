@@ -87,7 +87,7 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
         }
 
         Direction outFacing = metaTileEntity.getFrontFacing();
-        TileEntity tileEntity = metaTileEntity.getWorld().getTileEntity(metaTileEntity.getPos().offset(outFacing));
+        BlockEntity tileEntity = metaTileEntity.getWorld().getBlockEntity(metaTileEntity.getPos().offset(outFacing));
         if (tileEntity == null) {
             return;
         }

@@ -17,12 +17,15 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.client.renderer.texture.cube.SimpleSidedCubeRenderer;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -188,18 +191,20 @@ public abstract class CoverBehavior implements IUIHolder {
      * Called on client side to render this cover on the machine's face
      * It will be automatically translated to prevent Z-fighting with machine faces
      */
-    public abstract void renderCover(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, RenderType layer);
+    public abstract void renderCover(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, VoxelShape plateBox, RenderType layer);
 
     public boolean canRenderInLayer(RenderType renderLayer) {
         return renderLayer == RenderType.cutoutMipped() || renderLayer == BloomEffectUtil.getRealBloomLayer();
     }
 
-    public void renderCoverPlate(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, Cuboid6 plateBox, RenderType layer) {
+    public void renderCoverPlate(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline, VoxelShape plateBox, RenderType layer) {
         TextureAtlasSprite casingSide = getPlateSprite();
         for (Direction coverPlateSide : Direction.values()) {
             boolean isAttachedSide = attachedSide.getAxis() == coverPlateSide.getAxis();
             if (isAttachedSide || coverHolder.getCoverAtSide(coverPlateSide) == null) {
-                Textures.renderFace(renderState, translation, pipeline, coverPlateSide, plateBox, casingSide, RenderType.cutoutMipped());
+                for(AABB bounds : plateBox.toAabbs()) {
+                    Textures.renderFace(renderState, translation, pipeline, coverPlateSide, new Cuboid6(bounds), casingSide, RenderType.cutoutMipped());
+                }
             }
         }
     }

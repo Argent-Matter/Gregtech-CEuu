@@ -3,7 +3,7 @@ package net.nemezanevem.gregtech.api.tileentity.multiblock;
 import javax.annotation.Nullable;
 
 /**
- * Implement this interface in order to make a TileEntity into a block that recieves a cleanroom from other blocks
+ * Implement this interface in order to make a BlockEntity into a block that recieves a cleanroom from other blocks
  */
 public interface ICleanroomReceiver {
 

@@ -1,17 +1,17 @@
 package net.nemezanevem.gregtech.api.capability.impl.miner;
 
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.RecipeType;
-import gregtech.client.renderer.ICubeRenderer;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.WorldServer;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 import javax.annotation.Nonnull;
 
@@ -19,7 +19,7 @@ public class MultiblockMinerLogic extends MinerLogic {
 
     private static final int CHUNK_LENGTH = 16;
 
-    private final RecipeType<?> blockDropRecipeType;
+    private final GTRecipeType<?> blockDropRecipeType;
 
     private int voltageTier;
     private int overclockAmount = 0;
@@ -35,7 +35,7 @@ public class MultiblockMinerLogic extends MinerLogic {
      * @param speed          the speed in ticks per block mined
      * @param maximumRadius  the maximum radius (square shaped) the miner can mine in
      */
-    public MultiblockMinerLogic(MetaTileEntity metaTileEntity, int fortune, int speed, int maximumRadius, ICubeRenderer pipeTexture, RecipeType<?> blockDropRecipeType) {
+    public MultiblockMinerLogic(MetaTileEntity metaTileEntity, int fortune, int speed, int maximumRadius, ICubeRenderer pipeTexture, GTRecipeType<?> blockDropRecipeType) {
         super(metaTileEntity, fortune, speed, maximumRadius, pipeTexture);
         this.blockDropRecipeType = blockDropRecipeType;
     }
@@ -46,13 +46,13 @@ public class MultiblockMinerLogic extends MinerLogic {
     }
 
     @Override
-    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, BlockState blockState) {
+    protected void getSmallOreBlockDrops(NonNullList<ItemStack> blockDrops, ServerLevel world, BlockPos blockToMine, BlockState blockState) {
         // Small ores: use (fortune bonus + overclockAmount) value here for fortune, since every overclock increases the yield for small ores
         super.getSmallOreBlockDrops(blockDrops, world, blockToMine, blockState);
     }
 
     @Override
-    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, WorldServer world, BlockPos blockToMine, @Nonnull BlockState blockState) {
+    protected void getRegularBlockDrops(NonNullList<ItemStack> blockDrops, ServerLevel world, BlockPos blockToMine, @Nonnull BlockState blockState) {
         if (!isSilkTouchMode) // 3X the ore compared to the single blocks
             applyTieredHammerNoRandomDrops(blockState, blockDrops, 3, this.blockDropRecipeType, this.voltageTier);
         else
@@ -64,18 +64,18 @@ public class MultiblockMinerLogic extends MinerLogic {
         if (!isChunkMode) {
             super.initPos(pos, currentRadius);
         } else {
-            WorldServer world = (WorldServer) this.metaTileEntity.getWorld();
-            Chunk origin = world.getChunk(this.metaTileEntity.getPos());
-            ChunkPos startPos = (world.getChunk(origin.x - currentRadius / CHUNK_LENGTH, origin.z - currentRadius / CHUNK_LENGTH)).getPos();
-            getX().set(startPos.getXStart());
+            ServerLevel world = (ServerLevel) this.metaTileEntity.getWorld();
+            ChunkAccess origin = world.getChunk(this.metaTileEntity.getPos());
+            ChunkPos startPos = (world.getChunk(origin.getPos().x - currentRadius / CHUNK_LENGTH, origin.getPos().z - currentRadius / CHUNK_LENGTH)).getPos();
+            getX().set(startPos.getMinBlockX());
             getY().set(this.metaTileEntity.getPos().getY() - 1);
-            getZ().set(startPos.getZStart());
-            getStartX().set(startPos.getXStart());
+            getZ().set(startPos.getMinBlockZ());
+            getStartX().set(startPos.getMinBlockX());
             getStartY().set(this.metaTileEntity.getPos().getY());
-            getStartZ().set(startPos.getZStart());
-            getMineX().set(startPos.getXStart());
+            getStartZ().set(startPos.getMinBlockZ());
+            getMineX().set(startPos.getMinBlockX());
             getMineY().set(this.metaTileEntity.getPos().getY() - 1);
-            getMineZ().set(startPos.getZStart());
+            getMineZ().set(startPos.getMinBlockZ());
             getPipeY().set(this.metaTileEntity.getPos().getY() - 1);
         }
     }
@@ -116,8 +116,8 @@ public class MultiblockMinerLogic extends MinerLogic {
 
     @Override
     public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
-        data.setBoolean("isChunkMode", isChunkMode);
-        data.setBoolean("isSilkTouchMode", isSilkTouchMode);
+        data.putBoolean("isChunkMode", isChunkMode);
+        data.putBoolean("isSilkTouchMode", isSilkTouchMode);
         return super.writeToNBT(data);
     }
 

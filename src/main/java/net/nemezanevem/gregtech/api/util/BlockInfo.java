@@ -45,7 +45,7 @@ public class BlockInfo {
         return blockState;
     }
 
-    public BlockEntity getTileEntity() {
+    public BlockEntity getBlockEntity() {
         return tileEntity;
     }
 

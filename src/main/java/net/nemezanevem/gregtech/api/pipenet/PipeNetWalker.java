@@ -1,12 +1,12 @@
 package net.nemezanevem.gregtech.api.pipenet;
 
-import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.util.GTLog;
-import gregtech.common.pipelike.itempipe.net.ItemNetWalker;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.net.ItemNetWalker;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -22,7 +22,7 @@ import java.util.*;
 public abstract class PipeNetWalker {
 
     private PipeNetWalker root;
-    private final World world;
+    private final Level world;
     private final Set<Long> walked = new HashSet<>();
     private final List<Direction> pipes = new ArrayList<>();
     private List<PipeNetWalker> walkers;
@@ -32,10 +32,10 @@ public abstract class PipeNetWalker {
     private boolean running;
     private boolean failed = false;
 
-    protected PipeNetWalker(World world, BlockPos sourcePipe, int walkedBlocks) {
+    protected PipeNetWalker(Level world, BlockPos sourcePipe, int walkedBlocks) {
         this.world = Objects.requireNonNull(world);
         this.walkedBlocks = walkedBlocks;
-        this.currentPos = new BlockPos.MutableBlockPos(Objects.requireNonNull(sourcePipe));
+        this.currentPos = Objects.requireNonNull(sourcePipe).mutable();
         this.root = this;
     }
 
@@ -48,7 +48,7 @@ public abstract class PipeNetWalker {
      * @param walkedBlocks distance from source in blocks
      * @return new sub walker
      */
-    protected abstract PipeNetWalker createSubWalker(World world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks);
+    protected abstract PipeNetWalker createSubWalker(Level world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks);
 
     /**
      * You can increase walking stats here. for example
@@ -65,7 +65,7 @@ public abstract class PipeNetWalker {
      * @param faceToNeighbour face to neighbour
      * @param neighbourTile   neighbour tile
      */
-    protected abstract void checkNeighbour(IPipeTile<?, ?> pipeTile, BlockPos pipePos, Direction faceToNeighbour, @Nullable TileEntity neighbourTile);
+    protected abstract void checkNeighbour(IPipeTile<?, ?> pipeTile, BlockPos pipePos, Direction faceToNeighbour, @Nullable BlockEntity neighbourTile);
 
     /**
      * If the pipe is valid to perform a walk on
@@ -105,7 +105,7 @@ public abstract class PipeNetWalker {
         running = false;
         root.walked.clear();
         if (i >= maxWalks)
-            GregTech.LOGGER.fatal("The walker reached the maximum amount of walks {}", i);
+            GregTech.LOGGER.error("The walker reached the maximum amount of walks {}", i);
         invalid = true;
     }
 
@@ -123,7 +123,7 @@ public abstract class PipeNetWalker {
 
             walkers = new ArrayList<>();
             for (Direction side : pipes) {
-                PipeNetWalker walker = Objects.requireNonNull(createSubWalker(world, side, currentPos.offset(side), walkedBlocks + 1), "Walker can't be null");
+                PipeNetWalker walker = Objects.requireNonNull(createSubWalker(world, side, currentPos.offset(side.getNormal()), walkedBlocks + 1), "Walker can't be null");
                 walker.root = root;
                 walkers.add(walker);
             }
@@ -142,7 +142,7 @@ public abstract class PipeNetWalker {
 
     private void checkPos() {
         pipes.clear();
-        TileEntity thisPipe = world.getTileEntity(currentPos);
+        BlockEntity thisPipe = world.getBlockEntity(currentPos);
         IPipeTile<?, ?> pipeTile = (IPipeTile<?, ?>) thisPipe;
         if (pipeTile == null) {
             if (walkedBlocks == 1) {
@@ -154,17 +154,17 @@ public abstract class PipeNetWalker {
                 throw new IllegalStateException("PipeTile was not null last walk, but now is");
         }
         checkPipe(pipeTile, currentPos);
-        root.walked.add(pipeTile.getPipePos().toLong());
+        root.walked.add(pipeTile.getPipePos().asLong());
 
-        BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
+        BlockPos.MutableBlockPos pos = currentPos.mutable();
         // check for surrounding pipes and item handlers
         for (Direction accessSide : Direction.values()) {
             //skip sides reported as blocked by pipe network
             if (!pipeTile.isConnected(accessSide))
                 continue;
 
-            pos.setPos(currentPos).move(accessSide);
-            TileEntity tile = world.getTileEntity(pos);
+            pos.set(currentPos).move(accessSide);
+            BlockEntity tile = world.getBlockEntity(pos);
             if (tile instanceof IPipeTile) {
                 IPipeTile<?, ?> otherPipe = (IPipeTile<?, ?>) tile;
                 if (!otherPipe.isConnected(accessSide.getOpposite()) || otherPipe.isFaceBlocked(accessSide.getOpposite()) || isWalked(otherPipe))
@@ -176,11 +176,10 @@ public abstract class PipeNetWalker {
             }
             checkNeighbour(pipeTile, currentPos, accessSide, tile);
         }
-        pos.release();
     }
 
     protected boolean isWalked(IPipeTile<?, ?> pipe) {
-        return root.walked.contains(pipe.getPipePos().toLong());
+        return root.walked.contains(pipe.getPipePos().asLong());
     }
 
     /**
@@ -194,7 +193,7 @@ public abstract class PipeNetWalker {
         return root.running;
     }
 
-    public World getWorld() {
+    public Level getWorld() {
         return world;
     }
 

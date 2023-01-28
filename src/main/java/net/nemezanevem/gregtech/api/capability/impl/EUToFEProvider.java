@@ -198,7 +198,7 @@ public class EUToFEProvider extends CapabilityCompatProvider {
         }
 
         /**
-         * Hide this TileEntity EU-capability in TOP. Allows FE-machines to
+         * Hide this BlockEntity EU-capability in TOP. Allows FE-machines to
          * "silently" accept EU without showing their charge in EU in TOP.
          * Let the machine display it in FE instead, however it chooses to.
          */

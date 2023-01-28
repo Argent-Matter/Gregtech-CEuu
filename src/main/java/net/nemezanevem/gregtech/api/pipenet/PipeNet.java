@@ -388,7 +388,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<Compound
 
     protected void deserializeAllNodeList(CompoundTag compound) {
         ListTag allNodesList = compound.getList("NodeIndexes", Tag.TAG_COMPOUND);
-        ListTag wirePropertiesList = compound.getList("WireProperties", Tag.TAG_COMPOUND);
+        ListTag wirePropertiesList = compound.getList("WireProperty", Tag.TAG_COMPOUND);
         BiMap<Integer, NodeDataType> readProperties = HashBiMap.create(10);
 
         for (int i = 0; i < wirePropertiesList.size(); i++) {
@@ -455,7 +455,7 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<Compound
         }
 
         compound.put("NodeIndexes", allNodesList);
-        compound.put("WireProperties", wirePropertiesList);
+        compound.put("WireProperty", wirePropertiesList);
         return compound;
     }
 

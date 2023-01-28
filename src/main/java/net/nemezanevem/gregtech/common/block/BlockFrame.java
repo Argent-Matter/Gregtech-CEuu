@@ -24,10 +24,12 @@ import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
@@ -36,12 +38,15 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.BlockGetter;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.World;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -50,8 +55,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -68,9 +78,9 @@ import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.client.model.IModelSupplier;
 import net.nemezanevem.gregtech.common.block.properties.PropertyMaterial;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class BlockFrame extends DelayedStateBlock implements IModelSupplier {
 
@@ -81,33 +91,9 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     // todo wood?
     public BlockFrame(Material[] materials) {
-        super(net.minecraft.block.material.Material.IRON);
-        setTranslationKey("frame");
-        setHardness(3.0f);
-        setResistance(6.0f);
-        setCreativeTab(GregTechAPI.TAB_GREGTECH_MATERIALS);
+        super(BlockBehaviour.Properties.of(net.minecraft.world.level.material.Material.METAL).strength(3.0f, 6.0f));
         this.variantProperty = PropertyMaterial.create("variant", materials);
         initBlockState();
-    }
-
-    @Override
-    public int damageDropped(@Nonnull BlockState state) {
-        return getMetaFromState(state);
-    }
-
-    @Nonnull
-    @Override
-    @SuppressWarnings("deprecation")
-    public BlockState getStateFromMeta(int meta) {
-        if (meta >= variantProperty.getPossibleValues().size()) {
-            meta = 0;
-        }
-        return defaultBlockState().setValue(variantProperty, variantProperty.getPossibleValues().get(meta));
-    }
-
-    @Override
-    public int getMetaFromState(BlockState state) {
-        return variantProperty.getPossibleValues().indexOf(state.getValue(variantProperty));
     }
 
     @Override
@@ -121,7 +107,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     @Nonnull
     @Override
-    public SoundType getSoundType(BlockState state, @Nonnull Level world, @Nonnull BlockPos pos, @Nullable Entity entity) {
+    public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
         Material material = state.getValue(variantProperty);
         if (ModHandler.isMaterialWood(material)) {
             return SoundType.WOOD;
@@ -158,7 +144,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     }
 
     public ItemStack getItem(Material material) {
-        return getItem(defaultBlockState().withProperty(variantProperty, material));
+        return getItem(stateDefinition.any().setValue(variantProperty, material));
     }
 
     public BlockState getBlock(Material material) {
@@ -169,7 +155,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
         return variantProperty.getPossibleValues().get(meta);
     }
 
-    public boolean replaceWithFramedPipe(Level worldIn, BlockPos pos, BlockState state, Player playerIn, ItemStack stackInHand, Direction facing) {
+    public InteractionResult replaceWithFramedPipe(Level worldIn, BlockPos pos, BlockState state, Player playerIn, ItemStack stackInHand, Direction facing) {
         BlockPipe<?, ?, ?> blockPipe = (BlockPipe<?, ?, ?>) ((ItemBlockPipe<?, ?>) stackInHand.getItem()).getBlock();
         if (blockPipe.getItemPipeType(stackInHand).getThickness() < 1) {
             BlockItem itemBlock = (BlockItem) stackInHand.getItem();
@@ -181,23 +167,23 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
                 ((TileEntityPipeBase<?, ?>) pipeTile).setFrameMaterial(getGtMaterial(getMetaFromState(state)));
             } else {
                 GregTech.LOGGER.error("Pipe was not placed!");
-                return false;
+                return InteractionResult.PASS;
             }
             SoundType type = blockPipe.getSoundType(state, worldIn, pos, playerIn);
-            worldIn.playSound(playerIn, pos, type.getPlaceSound(), SoundCategory.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
-            if (!playerIn.capabilities.isCreativeMode) {
+            worldIn.playSound(playerIn, pos, type.getPlaceSound(), SoundSource.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
+            if (!playerIn.isCreative()) {
                 stackInHand.shrink(1);
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        return false;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
-        ItemStack stackInHand = playerIn.getHeldItem(hand);
+    public InteractionResult onBlockActivated(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
+        ItemStack stackInHand = playerIn.getItemInHand(hand);
         if (stackInHand.isEmpty()) {
-            return false;
+            return InteractionResult.PASS;
         }
         // replace frame with pipe and set the frame material to this frame
         if (stackInHand.getItem() instanceof ItemBlockPipe) {
@@ -205,81 +191,80 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
         }
 
         if (!(stackInHand.getItem() instanceof FrameItemBlock)) {
-            return false;
+            return InteractionResult.PASS;
         }
-        BlockPos.PooledMutableBlockPos blockPos = BlockPos.PooledMutableBlockPos.retain();
-        blockPos.setPos(pos);
+        BlockPos.MutableBlockPos blockPos = pos.mutable();
+        blockPos.set(pos);
         for (int i = 0; i < 32; i++) {
             if (worldIn.getBlockState(blockPos).getBlock() instanceof BlockFrame) {
                 blockPos.move(Direction.UP);
                 continue;
             }
-            TileEntity te = worldIn.getTileEntity(blockPos);
+            BlockEntity te = worldIn.getBlockEntity(blockPos);
             if (te instanceof IPipeTile && ((IPipeTile<?, ?>) te).getFrameMaterial() != null) {
                 blockPos.move(Direction.UP);
                 continue;
             }
             if (canPlaceBlockAt(worldIn, blockPos)) {
-                worldIn.setBlockState(blockPos, ((FrameItemBlock) stackInHand.getItem()).getBlockState(stackInHand));
+                worldIn.setBlock(blockPos, ((FrameItemBlock) stackInHand.getItem()).getBlockState(stackInHand), 3);
                 SoundType type = getSoundType(stackInHand);
-                worldIn.playSound(null, pos, type.getPlaceSound(), SoundCategory.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
-                if (!playerIn.capabilities.isCreativeMode) {
+                worldIn.playSound(null, pos, type.getPlaceSound(), SoundSource.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
+                if (!playerIn.isCreative()) {
                     stackInHand.shrink(1);
                 }
-                blockPos.release();
-                return true;
+                return InteractionResult.SUCCESS;
             } else if (te instanceof TileEntityPipeBase && ((TileEntityPipeBase<?, ?>) te).getFrameMaterial() == null) {
                 Material material = ((BlockFrame) ((FrameItemBlock) stackInHand.getItem()).getBlock()).getGtMaterial(stackInHand.getMetadata());
                 ((TileEntityPipeBase<?, ?>) te).setFrameMaterial(material);
                 SoundType type = getSoundType(stackInHand);
-                worldIn.playSound(null, pos, type.getPlaceSound(), SoundCategory.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
-                if (!playerIn.capabilities.isCreativeMode) {
+                worldIn.playSound(null, pos, type.getPlaceSound(), SoundSource.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
+                if (!playerIn.isCreative()) {
                     stackInHand.shrink(1);
                 }
-                blockPos.release();
-                return true;
+                return InteractionResult.SUCCESS;
             } else {
-                blockPos.release();
-                return false;
+                return InteractionResult.PASS;
             }
         }
-        blockPos.release();
-        return false;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public void onEntityCollision(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Entity entityIn) {
-        entityIn.motionX = MathHelper.clamp(entityIn.motionX, -0.15, 0.15);
-        entityIn.motionZ = MathHelper.clamp(entityIn.motionZ, -0.15, 0.15);
+    public void onEntityCollision(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Entity entityIn) {
+        Vec3 movement = entityIn.getDeltaMovement();
+        movement = new Vec3(
+                Mth.clamp(movement.x, -0.15, 0.15),
+                movement.y,
+                Mth.clamp(movement.z, -0.15, 0.15));
         entityIn.fallDistance = 0.0F;
-        if (entityIn.motionY < -0.15D) {
-            entityIn.motionY = -0.15D;
+        if (entityIn.getDeltaMovement().y < -0.15D) {
+            movement = new Vec3(movement.x, movement.y - 0.15D, movement.z);
         }
-        if (entityIn.isSneaking() && entityIn.motionY < 0.0D) {
-            entityIn.motionY = 0.0D;
+        if (entityIn.isCrouching() && entityIn.getDeltaMovement().y < 0.0D) {
+            movement = new Vec3(movement.x, 0, movement.z);
         }
-        if (entityIn.collidedHorizontally) {
-            entityIn.motionY = 0.3;
+        if (entityIn.horizontalCollision) {
+            movement = new Vec3(movement.x, 0.3D, movement.z);
         }
+        entityIn.setDeltaMovement(movement);
     }
 
     @Nonnull
     @Override
     @SuppressWarnings("deprecation")
-    public EnumPushReaction getPushReaction(@Nonnull BlockState state) {
-        return EnumPushReaction.DESTROY;
+    public PushReaction getPistonPushReaction(@Nonnull BlockState state) {
+        return PushReaction.DESTROY;
     }
 
     @Override
     @SuppressWarnings("deprecation")
-    public AxisAlignedBB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
+    public AABB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
         return COLLISION_BOX;
     }
 
     @Nonnull
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT_MIPPED;
+    public RenderType getRenderType() {
+        return RenderType.cutoutMipped();
     }
 
     @Override
