@@ -4,7 +4,7 @@ import gregtech.api.GTValues;
 import gregtech.api.pipenet.block.material.BlockMaterialPipe;
 import gregtech.api.pipenet.block.material.ItemBlockMaterialPipe;
 import gregtech.api.unification.material.properties.WireProperty;
-import gregtech.api.util.GTUtility;
+import gregtech.api.util.Util;
 import gregtech.common.ConfigHolder;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;

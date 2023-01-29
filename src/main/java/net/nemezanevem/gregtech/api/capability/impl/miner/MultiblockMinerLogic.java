@@ -10,7 +10,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 import javax.annotation.Nonnull;

@@ -5,7 +5,7 @@ import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.nemezanevem.gregtech.api.capability.impl.AbstractRecipeLogic;
 import net.minecraftforge.common.capabilities.Capability;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.IMaintenance;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IMaintenance;
 
 public class GregtechTileCapabilities {
 

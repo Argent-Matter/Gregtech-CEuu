@@ -3,8 +3,8 @@ package net.nemezanevem.gregtech.common.pipelike.itempipe.net;
 import gregtech.api.cover.CoverBehavior;
 import gregtech.api.pipenet.PipeNetWalker;
 import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.unification.material.properties.ItemPipeProperties;
-import gregtech.api.util.GTUtility;
+import gregtech.api.unification.material.properties.ItemPipeProperty;
+import gregtech.api.util.Util;
 import gregtech.common.covers.CoverItemFilter;
 import gregtech.common.covers.CoverShutter;
 import gregtech.common.covers.ItemFilterMode;
@@ -25,7 +25,7 @@ import java.util.function.Predicate;
 
 public class ItemNetWalker extends PipeNetWalker {
 
-    public static List<ItemPipeNet.Inventory> createNetData(World world, BlockPos sourcePipe, Direction faceToSourceHandler) {
+    public static List<ItemPipeNet.Inventory> createNetData(Level world, BlockPos sourcePipe, Direction faceToSourceHandler) {
         ItemNetWalker walker = new ItemNetWalker(world, sourcePipe, 1, new ArrayList<>(), null);
         walker.sourcePipe = sourcePipe;
         walker.facingToHandler = faceToSourceHandler;
@@ -33,21 +33,21 @@ public class ItemNetWalker extends PipeNetWalker {
         return walker.isFailed() ? null : walker.inventories;
     }
 
-    private ItemPipeProperties minProperties;
+    private ItemPipeProperty minProperties;
     private final List<ItemPipeNet.Inventory> inventories;
     private final List<Predicate<ItemStack>> filters = new ArrayList<>();
     private final EnumMap<Direction, List<Predicate<ItemStack>>> nextFilters = new EnumMap<>(Direction.class);
     private BlockPos sourcePipe;
     private Direction facingToHandler;
 
-    protected ItemNetWalker(World world, BlockPos sourcePipe, int distance, List<ItemPipeNet.Inventory> inventories, ItemPipeProperties properties) {
+    protected ItemNetWalker(Level world, BlockPos sourcePipe, int distance, List<ItemPipeNet.Inventory> inventories, ItemPipeProperty properties) {
         super(world, sourcePipe, distance);
         this.inventories = inventories;
         this.minProperties = properties;
     }
 
     @Override
-    protected PipeNetWalker createSubWalker(World world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks) {
+    protected PipeNetWalker createSubWalker(Level world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks) {
         ItemNetWalker walker = new ItemNetWalker(world, nextPos, walkedBlocks, inventories, minProperties);
         walker.facingToHandler = facingToHandler;
         walker.sourcePipe = sourcePipe;
@@ -67,17 +67,17 @@ public class ItemNetWalker extends PipeNetWalker {
             }
         }
         nextFilters.clear();
-        ItemPipeProperties pipeProperties = ((TileEntityItemPipe) pipeTile).getNodeData();
+        ItemPipeProperty pipeProperties = ((TileEntityItemPipe) pipeTile).getNodeData();
         if (minProperties == null) {
             minProperties = pipeProperties;
         } else {
-            minProperties = new ItemPipeProperties(minProperties.getPriority() + pipeProperties.getPriority(), Math.min(minProperties.getTransferRate(), pipeProperties.getTransferRate()));
+            minProperties = new ItemPipeProperty(minProperties.getPriority() + pipeProperties.getPriority(), Math.min(minProperties.getTransferRate(), pipeProperties.getTransferRate()));
         }
     }
 
     @Override
     protected void checkNeighbour(IPipeTile<?, ?> pipeTile, BlockPos pipePos, Direction faceToNeighbour, @Nullable BlockEntity neighbourTile) {
-        if (neighbourTile == null || (GTUtility.arePosEqual(pipePos, sourcePipe) && faceToNeighbour == facingToHandler)) {
+        if (neighbourTile == null || (Util.arePosEqual(pipePos, sourcePipe) && faceToNeighbour == facingToHandler)) {
             return;
         }
         IItemHandler handler = neighbourTile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, faceToNeighbour.getOpposite());

@@ -6,7 +6,6 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
 
 import java.util.function.Supplier;
 

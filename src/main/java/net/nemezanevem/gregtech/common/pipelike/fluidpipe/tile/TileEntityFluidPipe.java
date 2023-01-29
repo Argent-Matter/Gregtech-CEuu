@@ -1,18 +1,10 @@
 package net.nemezanevem.gregtech.common.pipelike.fluidpipe.tile;
 
-import gregtech.api.GTValues;
-import gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
-import gregtech.api.unification.material.properties.FluidPipeProperty;
-import gregtech.common.pipelike.fluidpipe.FluidPipeType;
-import gregtech.common.pipelike.fluidpipe.net.FluidPipeNet;
-import gregtech.common.pipelike.fluidpipe.net.WorldFluidPipeNet;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.Direction;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
+import net.nemezanevem.gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.FluidPipeProperty;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.FluidPipeType;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.net.FluidPipeNet;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.net.WorldFluidPipeNet;
 
 import java.lang.ref.WeakReference;
 
@@ -36,7 +28,7 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
     }
 
     public FluidPipeNet getFluidPipeNet() {
-        if (world == null || world.isRemote)
+        if (level == null || level.isClientSide)
             return null;
         FluidPipeNet currentPipeNet = this.currentPipeNet.get();
         if (currentPipeNet != null && currentPipeNet.isValid() &&
@@ -50,7 +42,7 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
         return currentPipeNet;
     }
 
-    public static void setNeighboursToFire(World world, BlockPos selfPos) {
+    public static void setNeighboursToFire(Level world, BlockPos selfPos) {
         for (Direction side : Direction.VALUES) {
             if (!GTValues.RNG.nextBoolean()) continue;
             BlockPos blockPos = selfPos.offset(side);
@@ -62,7 +54,7 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
         }
     }
 
-    public static void spawnParticles(World worldIn, BlockPos pos, Direction direction, EnumParticleTypes particleType, int particleCount) {
+    public static void spawnParticles(Level worldIn, BlockPos pos, Direction direction, EnumParticleTypes particleType, int particleCount) {
         if (worldIn instanceof WorldServer) {
             ((WorldServer) worldIn).spawnParticle(particleType,
                     pos.getX() + 0.5,

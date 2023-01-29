@@ -22,7 +22,7 @@ public class BlockWorldState {
     public TraceabilityPredicate predicate;
     protected PatternError error;
 
-    public void update(Level worldIn, BlockPos posIn, PatternMatchContext matchContext, Map<TraceabilityPredicate.SimplePredicate, Integer> globalCount, Map<TraceabilityPredicate.SimplePredicate, Integer> layerCount, TraceabilityPredicate predicate) {
+    public void tick(Level worldIn, BlockPos posIn, PatternMatchContext matchContext, Map<TraceabilityPredicate.SimplePredicate, Integer> globalCount, Map<TraceabilityPredicate.SimplePredicate, Integer> layerCount, TraceabilityPredicate predicate) {
         this.world = worldIn;
         this.pos = posIn;
         this.state = null;

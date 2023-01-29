@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import codechicken.lib.util.ServerUtils;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -13,18 +12,20 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.wrapper.RecipeWrapper;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.logic.IParallelableRecipeLogic;
 import net.nemezanevem.gregtech.api.recipe.property.CleanroomProperty;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
-import net.nemezanevem.gregtech.api.tileentity.MTETrait;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.CleanroomType;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.ICleanroomProvider;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.ICleanroomReceiver;
+import net.nemezanevem.gregtech.api.blockentity.MTETrait;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.CleanroomType;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomProvider;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomReceiver;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
@@ -34,8 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static net.nemezanevem.gregtech.api.GTValues.ULV;
+import static net.nemezanevem.gregtech.api.recipe.logic.OverclockingLogic.*;
 
-public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable {
+public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable, IParallelableRecipeLogic {
 
     private static final String ALLOW_OVERCLOCKING = "AllowOverclocking";
     private static final String OVERCLOCK_VOLTAGE = "OverclockVoltage";
@@ -465,6 +467,14 @@ public abstract class AbstractRecipeLogic extends MTETrait implements IWorkable 
      */
     public void setParallelLimit(int amount) {
         parallelLimit = amount;
+    }
+
+    /**
+     * @return the parallel logic type to use for recipes
+     */
+    @Nonnull
+    public Enum<ParallelLogicType> getParallelLogicType() {
+        return ParallelLogicType.MULTIPLY;
     }
 
     /**

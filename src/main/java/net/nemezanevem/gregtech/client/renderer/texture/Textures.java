@@ -5,6 +5,7 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.texture.AtlasRegistrar;
 import codechicken.lib.texture.IIconRegister;
+import codechicken.lib.texture.SpriteRegistryHelper;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.TransformationList;
@@ -31,7 +32,7 @@ import java.util.Map;
 
 import static net.nemezanevem.gregtech.client.renderer.texture.cube.OrientedOverlayRenderer.OverlayFace.*;
 
-public class Textures {
+public class Textures implements IIconRegister {
 
     public static final Map<String, ICubeRenderer> CUBE_RENDERER_REGISTRY = new HashMap<>();
 
@@ -285,11 +286,15 @@ public class Textures {
         }
     }
 
-    public static void register(AtlasRegistrar textureMap) {
-        GregTech.LOGGER.info("Loading meta tile entity texture sprites...");
+    public static void registerIconRegisters(SpriteRegistryHelper helper) {
         for (IIconRegister iconRegister : iconRegisters) {
-            iconRegister.registerIcons(textureMap);
+            helper.addIIconRegister(iconRegister);
         }
+        helper.addIIconRegister(new Textures());
+    }
+
+    public void registerIcons(AtlasRegistrar textureMap) {
+        GregTech.LOGGER.info("Loading meta tile entity texture sprites...");
 
         textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_restrictive"), val -> RESTRICTIVE_OVERLAY = val);
         textureMap.registerSprite(new ResourceLocation(GregTech.MODID, "blocks/pipe/pipe_blocked"), val -> PIPE_BLOCKED_OVERLAY = val);

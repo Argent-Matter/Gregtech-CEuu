@@ -1,22 +1,20 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.google.common.base.Preconditions;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.SizedTextureArea;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import gregtech.api.util.function.BooleanConsumer;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.SizedTextureArea;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
@@ -70,31 +68,31 @@ public class ToggleButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         if (!isVisible) return;
         Position pos = getPosition();
         Size size = getSize();
         if (shouldUseBaseBackground) {
-            GuiTextures.TOGGLE_BUTTON_BACK.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0, isPressed ? 0.5 : 0.0, 1.0, 0.5);
-            RenderSystem.color(1, 1, 1, 1);
+            GuiTextures.TOGGLE_BUTTON_BACK.drawSubArea(pos.x, pos.y, size.width, size.height, 0, isPressed ? 0.5f : 0.0f, 1, 0.5f);
+            RenderSystem.setShaderColor(1, 1, 1, 1);
             buttonTexture.draw(pos.x, pos.y, size.width, size.height);
         } else {
             if (buttonTexture instanceof SizedTextureArea) {
                 ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, isPressed ? 0.5 : 0.0, 0.5);
             } else {
-                buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0, isPressed ? 0.5 : 0.0, 1.0, 0.5);
+                buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0, isPressed ? 0.5f : 0.0f, 1, 0.5f);
             }
         }
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (!isVisible) return;
         if (isMouseOverElement(mouseX, mouseY) && tooltipText != null) {
             String postfix = isPressed ? ".enabled" : ".disabled";
             String tooltipHoverString = tooltipText + postfix;
-            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString, tooltipArgs).split("/n"));
-            drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            List<Component> hoverList = List.of(Component.translatable(tooltipHoverString, tooltipArgs));
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
 
@@ -122,7 +120,7 @@ public class ToggleButtonWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         super.mouseClicked(mouseX, mouseY, button);
         if (isVisible && isMouseOverElement(mouseX, mouseY)) {
             this.isPressed = !this.isPressed;
@@ -139,7 +137,7 @@ public class ToggleButtonWidget extends Widget {
         super.handleClientAction(id, buffer);
         if (id == 1) {
             this.isPressed = buffer.readBoolean();
-            setPressedExecutor.apply(isPressed);
+            setPressedExecutor.accept(isPressed);
         }
     }
 

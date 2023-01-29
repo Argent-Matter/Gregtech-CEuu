@@ -25,11 +25,6 @@ public class FrameItemBlock extends BlockItem {
         this.frameBlock = block;
     }
 
-    @Override
-    public int getMetadata(int damage) {
-        return damage;
-    }
-
     public BlockState getBlockState(ItemStack stack) {
         return frameBlock.getStateFromMeta(getMetadata(stack.getItemDamage()));
     }

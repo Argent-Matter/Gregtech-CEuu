@@ -12,7 +12,7 @@ import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
-import net.nemezanevem.gregtech.api.tileentity.IVoidable;
+import net.nemezanevem.gregtech.api.blockentity.IVoidable;
 import net.nemezanevem.gregtech.api.util.GTHashMaps;
 import net.nemezanevem.gregtech.api.util.ItemStackKey;
 import net.nemezanevem.gregtech.api.util.OverlayedFluidHandler;

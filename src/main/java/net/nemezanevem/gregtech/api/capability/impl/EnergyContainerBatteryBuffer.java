@@ -1,19 +1,20 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.GTValues;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.capability.FeCompat;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IElectricItem;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.util.Util;
-import gregtech.common.ConfigHolder;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,14 +88,15 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
         }
 
         Direction outFacing = metaTileEntity.getFrontFacing();
-        BlockEntity tileEntity = metaTileEntity.getWorld().getBlockEntity(metaTileEntity.getPos().offset(outFacing));
+        BlockEntity tileEntity = metaTileEntity.getWorld().getBlockEntity(metaTileEntity.getPos().offset(outFacing.getNormal()));
         if (tileEntity == null) {
             return;
         }
-        IEnergyContainer energyContainer = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, outFacing.getOpposite());
-        if (energyContainer == null) {
+        LazyOptional<IEnergyContainer> energyContainerLazy = tileEntity.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, outFacing.getOpposite());
+        if (!energyContainerLazy.isPresent()) {
             return;
         }
+        IEnergyContainer energyContainer = energyContainerLazy.resolve().get();
 
         long voltage = getOutputVoltage();
         List<IElectricItem> batteries = getNonEmptyBatteries();
@@ -138,9 +140,10 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
                     batteries.add(electricItem);
                 }
             } else if (ConfigHolder.compat.energy.nativeEUToFE) {
-                IEnergyStorage energyStorage = batteryStack.getCapability(CapabilityEnergy.ENERGY, null);
-                if (energyStorage != null) {
-                    if (energyStorage.getEnergyStored() < energyStorage.getMaxEnergyStored()) {
+                LazyOptional<IEnergyStorage> energyStorage = batteryStack.getCapability(ForgeCapabilities.ENERGY, null);
+                if (energyStorage.isPresent()) {
+                    IEnergyStorage storage = energyStorage.resolve().get();
+                    if (storage.getEnergyStored() < storage.getMaxEnergyStored()) {
                         batteries.add(energyStorage);
                     }
                 }
@@ -173,9 +176,10 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
             if (electricItem != null) {
                 energyCapacity += electricItem.getMaxCharge();
             } else if (ConfigHolder.compat.energy.nativeEUToFE) {
-                IEnergyStorage energyStorage = batteryStack.getCapability(CapabilityEnergy.ENERGY, null);
-                if (energyStorage != null) {
-                    energyCapacity += FeCompat.toEu(energyStorage.getMaxEnergyStored(), FeCompat.ratio(false));
+                LazyOptional<IEnergyStorage> energyStorage = batteryStack.getCapability(ForgeCapabilities.ENERGY, null);
+                if (energyStorage.isPresent()) {
+                    IEnergyStorage storage = energyStorage.resolve().get();
+                    energyCapacity += FeCompat.toEu(storage.getMaxEnergyStored(), FeCompat.ratio(false));
                 }
             }
         }
@@ -192,9 +196,10 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
             if (electricItem != null) {
                 energyStored += electricItem.getCharge();
             } else if (ConfigHolder.compat.energy.nativeEUToFE) {
-                IEnergyStorage energyStorage = batteryStack.getCapability(CapabilityEnergy.ENERGY, null);
-                if (energyStorage != null) {
-                    energyStored += FeCompat.toEu(energyStorage.getEnergyStored(), FeCompat.ratio(false));
+                LazyOptional<IEnergyStorage> energyStorage = batteryStack.getCapability(ForgeCapabilities.ENERGY, null);
+                if (energyStorage.isPresent()) {
+                    IEnergyStorage storage = energyStorage.resolve().get();
+                    energyStored += FeCompat.toEu(storage.getEnergyStored(), FeCompat.ratio(false));
                 }
             }
         }
@@ -211,9 +216,9 @@ public class EnergyContainerBatteryBuffer extends EnergyContainerHandler {
     }
 
     public IElectricItem getBatteryContainer(ItemStack itemStack) {
-        IElectricItem electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-        if (electricItem != null && getTier() >= electricItem.getTier())
-            return electricItem;
+        LazyOptional<IElectricItem> electricItem = itemStack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+        if (electricItem.isPresent() && getTier() >= electricItem.resolve().get().getTier())
+            return electricItem.resolve().get();
         return null;
     }
 

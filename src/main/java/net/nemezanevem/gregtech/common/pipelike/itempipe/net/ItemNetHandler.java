@@ -26,7 +26,7 @@ public class ItemNetHandler implements IItemHandler {
     private ItemPipeNet net;
     private TileEntityItemPipe pipe;
     private TileEntityItemPipeTickable tickingPipe;
-    private final World world;
+    private final Level world;
     private final Direction facing;
     private final Map<FacingPos, Integer> simulatedTransfersGlobalRoundRobin = new HashMap<>();
     private int simulatedTransfers = 0;

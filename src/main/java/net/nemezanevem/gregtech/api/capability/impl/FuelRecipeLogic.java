@@ -1,18 +1,18 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.multiblock.ParallelLogicType;
-import gregtech.api.recipes.RecipeBuilder;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
+import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class FuelRecipeLogic extends RecipeLogicEnergy {
 
-    public FuelRecipeLogic(MetaTileEntity tileEntity, RecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
+    public FuelRecipeLogic(MetaTileEntity tileEntity, GTRecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
         super(tileEntity, recipeMap, energyContainer);
     }
 
@@ -36,9 +36,9 @@ public class FuelRecipeLogic extends RecipeLogicEnergy {
     }
 
     @Override
-    public void applyParallelBonus(@Nonnull RecipeBuilder<?> builder) {
+    public void applyParallelBonus(@Nonnull GTRecipeBuilder<?> builder) {
         // the builder automatically multiplies by -1, so nothing extra is needed here
-        builder.EUt(builder.getEUt());
+        builder.setEUt(builder.getEUt());
     }
 
     @Override

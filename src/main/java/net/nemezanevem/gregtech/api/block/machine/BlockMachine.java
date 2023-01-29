@@ -21,7 +21,6 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -33,9 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
@@ -46,17 +43,15 @@ import net.nemezanevem.gregtech.api.cover.IFacadeCover;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
 import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
-import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
-import net.nemezanevem.gregtech.common.block.properties.StringProperty;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
 import net.nemezanevem.gregtech.integration.IFacadeWrapper;
-import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.tools.Tool;
 import java.util.*;
 
 import static net.nemezanevem.gregtech.api.util.Util.getMetaTileEntity;
@@ -327,7 +322,7 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
     @Nullable
     @Override
     public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState blockState) {
-        return new MetaTileEntityHolder(TileEntities.MACHINE, pos, blockState);
+        return new MetaTileEntityHolder(MetaBlocks.MACHINE.get(), pos, blockState);
     }
 
     @Nonnull
@@ -408,10 +403,11 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
         return !((entity instanceof WitherBoss || entity instanceof WitherSkull) && metaTileEntity.getWitherProof());
     }
 
+
     @Override
-    public void randomDisplayTick(@Nonnull BlockState stateIn, @Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull RandomSource rand) {
-        super.randomDisplayTick(stateIn, worldIn, pos, rand);
-        MetaTileEntity metaTileEntity = getMetaTileEntity(worldIn, pos);
+    public void animateTick(BlockState pState, Level pLevel, BlockPos pPos, RandomSource pRandom) {
+        super.animateTick(pState, pLevel, pPos, pRandom);
+        MetaTileEntity metaTileEntity = getMetaTileEntity(pLevel, pPos);
         if (metaTileEntity != null) metaTileEntity.randomDisplayTick();
     }
 }

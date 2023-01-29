@@ -28,7 +28,7 @@ public abstract class TickableWorldPipeNet<NodeDataType, T extends PipeNet<NodeD
 
     protected abstract int getUpdateRate();
 
-    public void update() {
+    public void tick() {
         if (getWorld().getGameTime() % getUpdateRate() == 0L) {
             tickingPipeNets.forEach(PipeNet::onPipeConnectionsUpdate);
         }

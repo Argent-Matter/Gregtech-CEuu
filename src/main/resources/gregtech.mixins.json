@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "sas.refmap.json",
   "mixins": [
+    "MixinBlock",
     "MixinFluidType"
   ],
   "client": [

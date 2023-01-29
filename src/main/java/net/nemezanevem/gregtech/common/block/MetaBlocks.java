@@ -3,13 +3,28 @@ package net.nemezanevem.gregtech.common.block;
 import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
+import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.util.SizedHashMap;
 import net.nemezanevem.gregtech.common.block.block.BlockWireCoil;
 import net.nemezanevem.gregtech.common.block.foam.BlockFoam;
 import net.nemezanevem.gregtech.common.block.foam.BlockPetrifiedFoam;
@@ -19,6 +34,8 @@ import net.nemezanevem.gregtech.common.block.wood.BlockRubberLog;
 import net.nemezanevem.gregtech.common.block.wood.BlockRubberSapling;
 import net.nemezanevem.gregtech.common.pipelike.cable.BlockCable;
 import net.nemezanevem.gregtech.common.pipelike.cable.Insulation;
+import net.nemezanevem.gregtech.common.pipelike.cable.tile.TileEntityCable;
+import net.nemezanevem.gregtech.common.pipelike.cable.tile.TileEntityCableTickable;
 import net.nemezanevem.gregtech.common.pipelike.fluidpipe.BlockFluidPipe;
 import net.nemezanevem.gregtech.common.pipelike.fluidpipe.FluidPipeType;
 import net.nemezanevem.gregtech.common.pipelike.itempipe.BlockItemPipe;
@@ -26,93 +43,95 @@ import net.nemezanevem.gregtech.common.pipelike.itempipe.ItemPipeType;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags.*;
 
 public class MetaBlocks {
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, GregTech.MODID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, GregTech.MODID);
 
     private MetaBlocks() {
     }
 
-    public static BlockMachine MACHINE;
-    public static final BlockCable[] CABLES = new BlockCable[10];
-    public static final BlockFluidPipe[] FLUID_PIPES = new BlockFluidPipe[7];
-    public static final BlockItemPipe[] ITEM_PIPES = new BlockItemPipe[8];
+    public static final RegistryObject<BlockMachine> MACHINE = BLOCKS.register("machine", BlockMachine::new);
+    public static final List<RegistryObject<BlockCable>> CABLES = new ArrayList<>(10);
+    public static final List<RegistryObject<BlockFluidPipe>> FLUID_PIPES = new ArrayList<>(7);
+    public static final List<RegistryObject<BlockItemPipe>> ITEM_PIPES = new ArrayList<>(8);
 
-    public static BlockBoilerCasing BOILER_CASING;
-    public static BlockFireboxCasing BOILER_FIREBOX_CASING;
-    public static BlockMetalCasing METAL_CASING;
-    public static BlockTurbineCasing TURBINE_CASING;
-    public static BlockMachineCasing MACHINE_CASING;
-    public static BlockSteamCasing STEAM_CASING;
-    public static BlockMultiblockCasing MULTIBLOCK_CASING;
-    public static BlockGlassCasing TRANSPARENT_CASING;
-    public static BlockWireCoil WIRE_COIL;
-    public static BlockFusionCasing FUSION_CASING;
-    public static BlockWarningSign WARNING_SIGN;
-    public static BlockWarningSign1 WARNING_SIGN_1;
-    public static BlockHermeticCasing HERMETIC_CASING;
-    public static BlockCleanroomCasing CLEANROOM_CASING;
+    public static final RegistryObject<BlockBoilerCasing> BOILER_CASING = BLOCKS.register("boiler_casing", BlockBoilerCasing::new);
+    public static final RegistryObject<BlockFireboxCasing> BOILER_FIREBOX_CASING = BLOCKS.register("boiler_firebox_casing", BlockFireboxCasing::new);
+    public static final RegistryObject<BlockMetalCasing> METAL_CASING = BLOCKS.register("metal_casing", BlockMetalCasing::new);
+    public static final RegistryObject<BlockTurbineCasing> TURBINE_CASING = BLOCKS.register("turbine_casing", BlockTurbineCasing::new);
+    public static final RegistryObject<BlockMachineCasing> MACHINE_CASING;
+    public static final RegistryObject<BlockSteamCasing> STEAM_CASING;
+    public static final RegistryObject<BlockMultiblockCasing> MULTIBLOCK_CASING;
+    public static final RegistryObject<BlockGlassCasing> TRANSPARENT_CASING;
+    public static final RegistryObject<BlockWireCoil> WIRE_COIL;
+    public static final RegistryObject<BlockFusionCasing> FUSION_CASING;
+    public static final RegistryObject<BlockWarningSign> WARNING_SIGN;
+    public static final RegistryObject<BlockWarningSign1> WARNING_SIGN_1;
+    public static final RegistryObject<BlockHermeticCasing> HERMETIC_CASING;
+    public static final RegistryObject<BlockCleanroomCasing> CLEANROOM_CASING;
 
-    public static BlockAsphalt ASPHALT;
+    public static RegistryObject<BlockAsphalt> ASPHALT;
 
-    public static BlockStoneSmooth STONE_SMOOTH;
-    public static BlockStoneCobble STONE_COBBLE;
-    public static BlockStoneCobbleMossy STONE_COBBLE_MOSSY;
-    public static BlockStonePolished STONE_POLISHED;
-    public static BlockStoneBricks STONE_BRICKS;
-    public static BlockStoneBricksCracked STONE_BRICKS_CRACKED;
-    public static BlockStoneBricksMossy STONE_BRICKS_MOSSY;
-    public static BlockStoneChiseled STONE_CHISELED;
-    public static BlockStoneTiled STONE_TILED;
-    public static BlockStoneTiledSmall STONE_TILED_SMALL;
-    public static BlockStoneBricksSmall STONE_BRICKS_SMALL;
-    public static BlockStoneWindmillA STONE_WINDMILL_A;
-    public static BlockStoneWindmillB STONE_WINDMILL_B;
-    public static BlockStoneBricksSquare STONE_BRICKS_SQUARE;
+    public static final RegistryObject<BlockStoneSmooth> STONE_SMOOTH;
+    public static final RegistryObject<BlockStoneCobble> STONE_COBBLE;
+    public static final RegistryObject<BlockStoneCobbleMossy> STONE_COBBLE_MOSSY;
+    public static final RegistryObject<BlockStonePolished> STONE_POLISHED;
+    public static final RegistryObject<BlockStoneBricks> STONE_BRICKS;
+    public static final RegistryObject<BlockStoneBricksCracked> STONE_BRICKS_CRACKED;
+    public static final RegistryObject<BlockStoneBricksMossy> STONE_BRICKS_MOSSY;
+    public static final RegistryObject<BlockStoneChiseled> STONE_CHISELED;
+    public static final RegistryObject<BlockStoneTiled> STONE_TILED;
+    public static final RegistryObject<BlockStoneTiledSmall> STONE_TILED_SMALL;
+    public static final RegistryObject<BlockStoneBricksSmall> STONE_BRICKS_SMALL;
+    public static final RegistryObject<BlockStoneWindmillA> STONE_WINDMILL_A;
+    public static final RegistryObject<BlockStoneWindmillB> STONE_WINDMILL_B;
+    public static final RegistryObject<BlockStoneBricksSquare> STONE_BRICKS_SQUARE;
 
-    public static BlockFoam FOAM;
-    public static BlockFoam REINFORCED_FOAM;
-    public static BlockPetrifiedFoam PETRIFIED_FOAM;
-    public static BlockPetrifiedFoam REINFORCED_PETRIFIED_FOAM;
+    public static final RegistryObject<BlockFoam> FOAM;
+    public static final RegistryObject<BlockFoam> REINFORCED_FOAM;
+    public static final RegistryObject<BlockPetrifiedFoam> PETRIFIED_FOAM;
+    public static final RegistryObject<BlockPetrifiedFoam> REINFORCED_PETRIFIED_FOAM;
 
-    public static BlockRubberLog RUBBER_LOG;
-    public static BlockRubberLeaves RUBBER_LEAVES;
-    public static BlockRubberSapling RUBBER_SAPLING;
-    public static BlockGregPlanks PLANKS;
+    public static final RegistryObject<BlockRubberLog> RUBBER_LOG;
+    public static final RegistryObject<BlockRubberLeaves> RUBBER_LEAVES;
+    public static final RegistryObject<BlockRubberSapling> RUBBER_SAPLING;
+    public static final RegistryObject<BlockGregPlanks> PLANKS;
 
-    public static final Map<Material, BlockCompressed> COMPRESSED = new HashMap<>();
+    public static final Map<Material, RegistryObject<BlockCompressed>> COMPRESSED = new HashMap<>();
     public static final Map<Material, BlockFrame> FRAMES = new HashMap<>();
     public static final Collection<BlockOre> ORES = new ReferenceArrayList<>();
     public static final Map<Material, BlockSurfaceRock> SURFACE_ROCK = new HashMap<>();
     public static final Collection<BlockFluidBase> FLUID_BLOCKS = new ReferenceArrayList<>();
 
-    public static void init() {
-        GregTech.MACHINE = MACHINE = new BlockMachine();
-        BLOCKS.register("machine", () -> MACHINE);
+    public static final RegistryObject<BlockEntityType<MetaTileEntityHolder>> MACHINE_BE = BLOCK_ENTITIES.register("machine", () -> BlockEntityType.Builder.of(MetaTileEntityHolder::new).build(null));
+    public static final RegistryObject<BlockEntityType<TileEntityCable>> CABLE_BE = BLOCK_ENTITIES.register("machine", () -> BlockEntityType.Builder.of(TileEntityCable::new).build(null));
+    public static final RegistryObject<BlockEntityType<TileEntityCableTickable>> CABLE_TICKABLE_BE = BLOCK_ENTITIES.register("machine", () -> BlockEntityType.Builder.of(TileEntityCableTickable::new).build(null));
 
+
+    public static void init() {
         for (Insulation ins : Insulation.values()) {
-            CABLES[ins.ordinal()] = new BlockCable(ins);
-            BLOCKS.register(ins.getSerializedName(), () -> CABLES[ins.ordinal()]);
+            CABLES.add(BLOCKS.register(ins.getSerializedName(), () -> new BlockCable(ins)));
         }
         for (FluidPipeType type : FluidPipeType.values()) {
-            FLUID_PIPES[type.ordinal()] = new BlockFluidPipe(type);
-            BLOCKS.register(String.format("fluid_pipe_%s", type.name), () -> FLUID_PIPES[type.ordinal()]);
+            FLUID_PIPES.add(BLOCKS.register(String.format("fluid_pipe_%s", type.name), () -> new BlockFluidPipe(type)));
+
         }
         for (ItemPipeType type : ItemPipeType.values()) {
+            ITEM_PIPES.add(BLOCKS.register(String.format("item_pipe_%s", type.name), () -> new BlockItemPipe(type)));
             ITEM_PIPES[type.ordinal()] = new BlockItemPipe(type);
-            ITEM_PIPES[type.ordinal()].setRegistryName(String.format("item_pipe_%s", type.name));
+            ITEM_PIPES[type.ordinal()].setRegistryName();
         }
 
-        BOILER_CASING = new BlockBoilerCasing();
-        BOILER_CASING.setRegistryName("boiler_casing");
-        BOILER_FIREBOX_CASING = new BlockFireboxCasing();
-        BOILER_FIREBOX_CASING.setRegistryName("boiler_firebox_casing");
         METAL_CASING = new BlockMetalCasing();
-        METAL_CASING.setRegistryName("metal_casing");
         TURBINE_CASING = new BlockTurbineCasing();
-        TURBINE_CASING.setRegistryName("turbine_casing");
+        TURBINE_CASING.setRegistryName();
         MACHINE_CASING = new BlockMachineCasing();
         MACHINE_CASING.setRegistryName("machine_casing");
         STEAM_CASING = new BlockSteamCasing();
@@ -184,11 +203,11 @@ public class MetaBlocks {
         PLANKS = new BlockGregPlanks();
         PLANKS.setRegistryName("planks");
 
-        createGeneratedBlock(m -> m.hasProperty(PropertyKey.DUST) && m.hasFlag(GENERATE_FRAME), MetaBlocks::createFrameBlock);
-        createGeneratedBlock(m -> m.hasProperty(PropertyKey.ORE) && m.hasProperty(PropertyKey.DUST), MetaBlocks::createSurfaceRockBlock);
+        createGeneratedBlock(m -> m.hasProperty(GtMaterialProperties.DUST.get()) && m.hasFlag(GENERATE_FRAME), MetaBlocks::createFrameBlock);
+        createGeneratedBlock(m -> m.hasProperty(GtMaterialProperties.ORE.get()) && m.hasProperty(GtMaterialProperties.DUST.get()), MetaBlocks::createSurfaceRockBlock);
 
         createGeneratedBlock(
-                material -> (material.hasProperty(PropertyKey.INGOT) || material.hasProperty(PropertyKey.GEM) || material.hasFlag(FORCE_GENERATE_BLOCK))
+                material -> (material.hasProperty(GtMaterialProperties.INGOT.get()) || material.hasProperty(GtMaterialProperties.GEM.get()) || material.hasFlag(FORCE_GENERATE_BLOCK))
                         && !TagPrefix.block.isIgnored(material),
                 MetaBlocks::createCompressedBlock);
 
@@ -210,31 +229,31 @@ public class MetaBlocks {
      *                          MetaBlock should have within its category.
      */
     protected static void createGeneratedBlock(Predicate<Material> materialPredicate,
-                                               BiConsumer<Material[], Integer> blockGenerator) {
+                                               Consumer<Map<String, Material>> blockGenerator) {
 
-        Map<Integer, Material[]> blocksToGenerate = new TreeMap<>();
+        Map<ResourceLocation, Map<String, Material>> blocksToGenerate = new TreeMap<>();
 
-        for (Material material : GregTechAPI.MATERIAL_REGISTRY) {
+        for (Material material : GregTechRegistries.MATERIAL.get()) {
             if (materialPredicate.test(material)) {
-                int id = material.getId();
-                int metaBlockID = id / 16;
-                int subBlockID = id % 16;
+                ResourceLocation id = Util.getId(material);
+                String subBlockID =
 
-                if (!blocksToGenerate.containsKey(metaBlockID)) {
+                if (!blocksToGenerate.containsKey(id)) {
+                    Map<String, Material> materialMap = new SizedHashMap<>(Map<String, Material>16);
                     Material[] materials = new Material[16];
-                    Arrays.fill(materials, Materials.NULL);
-                    blocksToGenerate.put(metaBlockID, materials);
+                    Arrays.fill(materials, GtMaterials.NULL.get());
+                    blocksToGenerate.put(id, materials);
                 }
 
-                blocksToGenerate.get(metaBlockID)[subBlockID] = material;
+                blocksToGenerate.get(id)[subBlockID] = material;
             }
         }
 
-        blocksToGenerate.forEach((key, value) -> blockGenerator.accept(value, key));
+        blocksToGenerate.forEach((key, value) -> blockGenerator.accept(value));
     }
 
-    private static void createCompressedBlock(Material[] materials, int index) {
-        BlockCompressed block = new BlockCompressed(materials);
+    private static void createCompressedBlock(Map<String, Material> materials) {
+        BlockCompressed block = new BlockCompressed(materials.values());
         block.setRegistryName("meta_block_compressed_" + index);
         for (Material material : materials) {
             COMPRESSED.put(material, block);
@@ -258,16 +277,14 @@ public class MetaBlocks {
     }
 
     public static void registerTileEntity() {
-        GameRegistry.registerTileEntity(MetaTileEntityHolder.class, new ResourceLocation(GTValues.MODID, "machine"));
-        GameRegistry.registerTileEntity(TileEntityCable.class, new ResourceLocation(GTValues.MODID, "cable"));
-        GameRegistry.registerTileEntity(TileEntityCableTickable.class, new ResourceLocation(GTValues.MODID, "cable_tickable"));
-        GameRegistry.registerTileEntity(TileEntityFluidPipe.class, new ResourceLocation(GTValues.MODID, "fluid_pipe"));
-        GameRegistry.registerTileEntity(TileEntityItemPipe.class, new ResourceLocation(GTValues.MODID, "item_pipe"));
-        GameRegistry.registerTileEntity(TileEntityFluidPipeTickable.class, new ResourceLocation(GTValues.MODID, "fluid_pipe_active"));
-        GameRegistry.registerTileEntity(TileEntityItemPipeTickable.class, new ResourceLocation(GTValues.MODID, "item_pipe_active"));
+        GameRegistry.registerTileEntity(TileEntityCable.class, new ResourceLocation(GregTech.MODID, "cable"));
+        GameRegistry.registerTileEntity(TileEntityCableTickable.class, new ResourceLocation(GregTech.MODID, "cable_tickable"));
+        GameRegistry.registerTileEntity(TileEntityFluidPipe.class, new ResourceLocation(GregTech.MODID, "fluid_pipe"));
+        GameRegistry.registerTileEntity(TileEntityItemPipe.class, new ResourceLocation(GregTech.MODID, "item_pipe"));
+        GameRegistry.registerTileEntity(TileEntityFluidPipeTickable.class, new ResourceLocation(GregTech.MODID, "fluid_pipe_active"));
+        GameRegistry.registerTileEntity(TileEntityItemPipeTickable.class, new ResourceLocation(GregTech.MODID, "item_pipe_active"));
     }
 
-    @SideOnly(Side.CLIENT)
     public static void registerItemModels() {
         ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(MACHINE), stack -> MetaTileEntityRenderer.MODEL_LOCATION);
         for (BlockCable cable : CABLES)
@@ -307,18 +324,11 @@ public class MetaBlocks {
                 new ModelResourceLocation(RUBBER_SAPLING.getRegistryName(), "inventory"));
         registerItemModel(PLANKS);
 
-        BOILER_FIREBOX_CASING.onModelRegister();
-        WIRE_COIL.onModelRegister();
-        FUSION_CASING.onModelRegister();
-        MULTIBLOCK_CASING.onModelRegister();
-        TRANSPARENT_CASING.onModelRegister();
-
         COMPRESSED.values().stream().distinct().forEach(IModelSupplier::onModelRegister);
         FRAMES.values().stream().distinct().forEach(IModelSupplier::onModelRegister);
         ORES.forEach(IModelSupplier::onModelRegister);
     }
 
-    @SideOnly(Side.CLIENT)
     private static void registerItemModel(Block block) {
         for (BlockState state : block.getBlockState().getValidStates()) {
             //noinspection ConstantConditions
@@ -329,12 +339,12 @@ public class MetaBlocks {
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    private static void registerItemModelWithOverride(Block block, Map<IProperty<?>, Comparable<?>> stateOverrides) {
-        for (BlockState state : block.getBlockState().getValidStates()) {
-            HashMap<IProperty<?>, Comparable<?>> stringProperties = new HashMap<>(state.getProperties());
+    private static void registerItemModelWithOverride(Block block, Map<Property<?>, Comparable<?>> stateOverrides) {
+        for (BlockState state : block.stateDefinition.getPossibleStates()) {
+            HashMap<Property<?>, Comparable<?>> stringProperties = new HashMap<>(state.getValues());
             stringProperties.putAll(stateOverrides);
             //noinspection ConstantConditions
+            Minecraft.getInstance().getModelManager().reg
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(block),
                     block.getMetaFromState(state),
                     new ModelResourceLocation(block.getRegistryName(),

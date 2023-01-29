@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.ITag;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.stack.*;
@@ -212,12 +213,21 @@ public class TagUnifier {
         return keys.size() > 0 ? keys.get(0) : null;
     }
 
-    public static Item get(TagPrefix TagPrefix, Material material) {
-        UnificationEntry unificationEntry = new UnificationEntry(TagPrefix, material);
+    public static Item get(TagPrefix tagPrefix, Material material) {
+        UnificationEntry unificationEntry = new UnificationEntry(tagPrefix, material);
         if (!stackUnificationItems.containsKey(unificationEntry))
             return null;
         ArrayList<Item> keys = stackUnificationItems.get(unificationEntry);
         return keys.size() > 0 ? keys.get(0) : null;
+    }
+
+    public static TagKey<Item> getTag(TagPrefix tagPrefix, Material material) {
+        UnificationEntry unificationEntry = new UnificationEntry(tagPrefix, material);
+        return TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), new ResourceLocation("forge", material.toLowerUnderscoreString()));
+    }
+
+    public static ITag<Item> getTagValue(TagPrefix tagPrefix, Material material) {
+        return ForgeRegistries.ITEMS.tags().getTag(getTag(tagPrefix, material));
     }
 
     public static ItemStack get(TagPrefix orePrefix, Material material, int stackSize) {

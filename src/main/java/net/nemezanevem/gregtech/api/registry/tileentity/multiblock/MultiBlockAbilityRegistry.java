@@ -5,8 +5,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.MultiblockAbility;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockAbility;
 
 import java.util.function.Supplier;
 

@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
 import net.nemezanevem.gregtech.api.unification.material.Material;
@@ -68,9 +69,9 @@ public interface IPipeTile<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     boolean canPlaceCoverOnSide(Direction side);
 
-    <T> T getCapability(Capability<T> capability, Direction side);
+    <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side);
 
-    <T> T getCapabilityInternal(Capability<T> capability, Direction side);
+    <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, Direction side);
 
     void notifyBlockUpdate();
 

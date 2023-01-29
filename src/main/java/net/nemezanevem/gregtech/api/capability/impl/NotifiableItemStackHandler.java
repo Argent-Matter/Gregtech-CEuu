@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.capability.INotifiableHandler;
-import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 

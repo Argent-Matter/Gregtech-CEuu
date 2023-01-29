@@ -14,7 +14,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.client.particle.GTParticleManager;
 import net.nemezanevem.gregtech.client.util.TooltipHelper;

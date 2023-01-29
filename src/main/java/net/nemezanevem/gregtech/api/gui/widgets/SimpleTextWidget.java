@@ -1,13 +1,15 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,17 +68,17 @@ public class SimpleTextWidget extends Widget {
     }
 
     private void updateSize() {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        int stringWidth = fontRenderer.getStringWidth(lastText);
-        setSize(new Size(stringWidth, fontRenderer.FONT_HEIGHT));
+        Font fontRenderer = Minecraft.getInstance().font;
+        int stringWidth = fontRenderer.width(lastText);
+        setSize(new Size(stringWidth, fontRenderer.lineHeight));
         if (uiAccess != null) {
             uiAccess.notifySizeChange();
         }
     }
 
     @Override
-    public void updateScreen() {
-        super.updateScreen();
+    public void updateScreenOnFrame() {
+        super.updateScreenOnFrame();
         if (clientWidget && textSupplier != null) {
             String newString = textSupplier.get();
             if (!newString.equals(lastText)) {
@@ -88,23 +90,23 @@ public class SimpleTextWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        String text = formatLocale.isEmpty() ? (I18n.hasKey(lastText) ? Component.translatable(lastText) : lastText) : Component.translatable(formatLocale, lastText);
-        List<String> texts;
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        Component text = formatLocale.isEmpty() ? Component.translatable(lastText) : Component.translatable(formatLocale, lastText);
+        List<FormattedCharSequence> texts;
         if (this.width > 0) {
-            texts = Minecraft.getMinecraft().fontRenderer.listFormattedStringToWidth(text, (int) (width * (1 / scale)));
+            texts = Minecraft.getInstance().font.split(text, (int) (width * (1 / scale)));
         } else {
-            texts = Collections.singletonList(text);
+            texts = Collections.singletonList(text.getVisualOrderText());
         }
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;
         Position pos = getPosition();
-        float height = fontRenderer.FONT_HEIGHT * scale * texts.size();
+        float height = fontRenderer.lineHeight * scale * texts.size();
         for (int i = 0; i < texts.size(); i++) {
-            String resultText = texts.get(i);
-            float width = fontRenderer.getStringWidth(resultText) * scale;
+            FormattedCharSequence resultText = texts.get(i);
+            float width = fontRenderer.width(resultText) * scale;
             float x = pos.x - (isCentered ? width / 2f : 0);
-            float y = pos.y - (isCentered ? height / 2f : 0) + i * fontRenderer.FONT_HEIGHT;
-            drawText(resultText, x, y, scale, color, isShadow);
+            float y = pos.y - (isCentered ? height / 2f : 0) + i * fontRenderer.lineHeight;
+            drawText(poseStack, resultText, x, y, scale, color, isShadow);
         }
     }
 
@@ -112,14 +114,14 @@ public class SimpleTextWidget extends Widget {
     public void detectAndSendChanges() {
         if (!textSupplier.get().equals(lastText)) {
             this.lastText = textSupplier.get();
-            writeUpdateInfo(1, buffer -> buffer.writeString(lastText));
+            writeUpdateInfo(1, buffer -> buffer.writeUtf(lastText));
         }
     }
 
     @Override
     public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
         if (id == 1) {
-            this.lastText = buffer.readString(Short.MAX_VALUE);
+            this.lastText = buffer.readUtf();
             updateSize();
         }
     }

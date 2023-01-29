@@ -4,17 +4,22 @@ import gregtech.api.GTValues;
 import gregtech.api.metatileentity.multiblock.RecipeTypePrimitiveMultiblockController;
 import gregtech.api.recipes.RecipeType;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypePrimitiveMultiblockController;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 
 import javax.annotation.Nonnull;
 
 import static gregtech.api.recipes.logic.OverclockingLogic.standardOverclockingLogic;
+import static net.nemezanevem.gregtech.api.recipe.logic.OverclockingLogic.standardOverclockingLogic;
 
 /**
  * Recipe Logic for a Multiblock that does not require power.
  */
 public class PrimitiveRecipeLogic extends AbstractRecipeLogic {
 
-    public PrimitiveRecipeLogic(RecipeTypePrimitiveMultiblockController tileEntity, RecipeType<?> recipeMap) {
+    public PrimitiveRecipeLogic(RecipeTypePrimitiveMultiblockController tileEntity, GTRecipeType<?> recipeMap) {
         super(tileEntity, recipeMap);
     }
 

@@ -7,7 +7,7 @@ import net.minecraft.block.IGrowable;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockState;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.AABB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
@@ -20,7 +20,7 @@ import static net.minecraft.block.BlockSapling.STAGE;
 
 public class BlockRubberSapling extends BlockBush implements IGrowable {
 
-    protected static final AxisAlignedBB SAPLING_AABB = new AxisAlignedBB(0.1, 0.0D, 0.1, 0.9, 0.8, 0.9);
+    protected static final AABB SAPLING_AABB = new AABB(0.1, 0.0D, 0.1, 0.9, 0.8, 0.9);
 
     public BlockRubberSapling() {
         this.setDefaultState(this.blockState.getBaseState()
@@ -38,7 +38,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public void updateTick(World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Random rand) {
+    public void updateTick(Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Random rand) {
         if (!worldIn.isClientSide) {
             super.updateTick(worldIn, pos, state, rand);
             if (!worldIn.isAreaLoaded(pos, 1))
@@ -66,17 +66,17 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
     @Nonnull
     @Override
     @SuppressWarnings("deprecation")
-    public AxisAlignedBB getBoundingBox(@Nonnull BlockState state, @Nonnull BlockGetter source, @Nonnull BlockPos pos) {
+    public AABB getBoundingBox(@Nonnull BlockState state, @Nonnull BlockGetter source, @Nonnull BlockPos pos) {
         return SAPLING_AABB;
     }
 
     @Override
-    public boolean canGrow(@Nonnull World world, @Nonnull BlockPos blockPos, @Nonnull BlockState BlockState, boolean b) {
+    public boolean canGrow(@Nonnull Level world, @Nonnull BlockPos blockPos, @Nonnull BlockState BlockState, boolean b) {
         return true;
     }
 
     @Override
-    public boolean canUseBonemeal(@Nonnull World world, @Nonnull Random random, @Nonnull BlockPos blockPos, @Nonnull BlockState BlockState) {
+    public boolean canUseBonemeal(@Nonnull Level world, @Nonnull Random random, @Nonnull BlockPos blockPos, @Nonnull BlockState BlockState) {
         return true;
     }
 
@@ -86,7 +86,7 @@ public class BlockRubberSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public void grow(@Nonnull World worldIn, @Nonnull Random rand, @Nonnull BlockPos pos, @Nonnull BlockState state) {
+    public void grow(@Nonnull Level worldIn, @Nonnull Random rand, @Nonnull BlockPos pos, @Nonnull BlockState state) {
         WorldGenRubberTree.TREE_GROW_INSTANCE.grow(worldIn, pos, rand);
     }
 

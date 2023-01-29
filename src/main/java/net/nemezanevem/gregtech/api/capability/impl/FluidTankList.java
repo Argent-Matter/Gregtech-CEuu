@@ -22,9 +22,7 @@ import java.util.*;
 public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTSerializable<CompoundTag> {
 
     protected final List<IFluidTank> fluidTanks;
-    protected IFluidTankProperties[] properties;
     private final boolean allowSameFluidFill;
-    private IFluidTankProperties[] fluidTankProperties;
     private final int hashCode;
 
     public FluidTankList(boolean allowSameFluidFill, IFluidTank... fluidTanks) {
@@ -87,21 +85,6 @@ public class FluidTankList implements IFluidHandler, IMultipleTankHandler, INBTS
     @Override
     public IFluidTank getTankAt(int index) {
         return fluidTanks.get(index);
-    }
-
-    @Override
-    public IFluidTankProperties[] getTankProperties() {
-        if (fluidTankProperties == null) {
-            ArrayList<IFluidTankProperties> propertiesList = new ArrayList<>();
-            for (IFluidTank fluidTank : fluidTanks) {
-                if (fluidTank instanceof IFluidHandler) {
-                    IFluidHandler fluidHandler = (IFluidHandler) fluidTank;
-                    propertiesList.addAll(Arrays.asList(fluidHandler.getTankProperties()));
-                }
-            }
-            this.fluidTankProperties = propertiesList.toArray(new IFluidTankProperties[0]);
-        }
-        return fluidTankProperties;
     }
 
     @Override

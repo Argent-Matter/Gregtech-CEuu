@@ -19,7 +19,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.InteractionHand;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.AABB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
@@ -45,7 +45,7 @@ public class BlockFoam extends BlockColored {
     }
 
     @Override
-    public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
+    public boolean onBlockActivated(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Player playerIn, @Nonnull InteractionHand hand, @Nonnull Direction facing, float hitX, float hitY, float hitZ) {
         ItemStack stackInHand = playerIn.getHeldItem(hand);
         if (!stackInHand.isEmpty() && OreDictUnifier.getOreDictionaryNames(stackInHand).contains("sand")) {
             worldIn.setBlockState(pos, getPetrifiedBlock(state));
@@ -58,7 +58,7 @@ public class BlockFoam extends BlockColored {
     }
 
     @Override
-    public void randomTick(World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Random random) {
+    public void randomTick(Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state, Random random) {
         int lightLevel = (worldIn.canSeeSky(pos) && worldIn.isDaytime()) ? 16 : worldIn.getLight(pos);
         if (random.nextInt(20 - lightLevel) == 0) {
             worldIn.setBlockState(pos, getPetrifiedBlock(state));
@@ -80,7 +80,7 @@ public class BlockFoam extends BlockColored {
     @Nullable
     @Override
     @SuppressWarnings("deprecation")
-    public AxisAlignedBB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
+    public AABB getCollisionBoundingBox(@Nonnull BlockState blockState, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos) {
         return null;
     }
 

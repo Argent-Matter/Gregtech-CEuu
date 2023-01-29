@@ -5,6 +5,8 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidType;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidType;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
@@ -21,15 +23,15 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
      */
     private Fluid fluid;
 
-    private final FluidType fluidType;
+    private final GTFluidType fluidType;
 
     private boolean hasBlock;
     private boolean isGas;
     private int fluidTemperature = BASE_TEMP;
 
-    public FluidProperty(@Nonnull FluidType fluidType, boolean hasBlock) {
+    public FluidProperty(@Nonnull GTFluidType fluidType, boolean hasBlock) {
         this.fluidType = fluidType;
-        this.isGas = fluidType.isLighterThanAir();
+        this.isGas = fluidType == GTFluidTypes.GAS;
         this.hasBlock = hasBlock;
     }
 
@@ -37,7 +39,7 @@ public class FluidProperty implements IMaterialProperty<FluidProperty> {
      * Default values of: no Block, not Gas.
      */
     public FluidProperty() {
-        this(ForgeMod.WATER_TYPE.get(), false);
+        this(GTFluidTypes.LIQUID, false);
     }
 
     public boolean isGas() {

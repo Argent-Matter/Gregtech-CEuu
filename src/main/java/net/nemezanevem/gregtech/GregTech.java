@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech;
 
+import codechicken.lib.texture.SpriteRegistryHelper;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +21,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
+import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.module.IModuleManager;
@@ -31,13 +33,14 @@ import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegist
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconTypeRegistry;
 import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
 import net.nemezanevem.gregtech.api.sound.ISoundManager;
-import net.nemezanevem.gregtech.api.tileentity.GtMetaTileEntities;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntities;
 import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
 import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIOpen;
@@ -60,10 +63,11 @@ public class GregTech {
             PROTOCOL_VERSION::equals
     );
 
-    public static BlockMachine MACHINE;
+    public static RegistryObject<BlockMachine> MACHINE;
 
     public static ISoundManager soundManager;
     public static IModuleManager moduleManager;
+    public static SpriteRegistryHelper spriteRegistryHelper;
 
     public static final Object2ObjectOpenHashMap<BlockState, IHeatingCoilBlockStats> HEATING_COILS = new Object2ObjectOpenHashMap<>();
 
@@ -79,7 +83,8 @@ public class GregTech {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::commonSetup);
-
+        modEventBus.addListener(this::register);
+        spriteRegistryHelper = new SpriteRegistryHelper(modEventBus);
 
         MaterialFlagRegistry.init();
         MaterialFlagRegistry.MATERIAL_FLAGS.register(modEventBus);
@@ -97,14 +102,14 @@ public class GregTech {
         MaterialRegistry.MATERIALS.register(modEventBus);
         GtMaterials.register();
 
+        MetaTileEntityRegistry.init();
+        MetaTileEntityRegistry.META_TILE_ENTITIES.register(modEventBus);
+        MetaTileEntities.init();
+
         MetaBlocks.init();
 
         GtItemRegistry.ITEMS.register(modEventBus);
         GtItemRegistry.register();
-
-        MetaTileEntityRegistry.init();
-        MetaTileEntityRegistry.META_TILE_ENTITIES.register(modEventBus);
-        GtMetaTileEntities.init();
 
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -112,6 +117,8 @@ public class GregTech {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        Textures.registerIconRegisters(spriteRegistryHelper);
+
         int packetIndex = 0;
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketUIWidgetUpdate.class, PacketUIWidgetUpdate::encode, PacketUIWidgetUpdate::decode, PacketUIWidgetUpdate::handle);
@@ -119,6 +126,7 @@ public class GregTech {
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketBlockParticle.class, PacketBlockParticle::encode, PacketBlockParticle::decode, PacketBlockParticle::handle);
         NETWORK_HANDLER.registerMessage(packetIndex++, PacketRecoverMTE.class, PacketRecoverMTE::encode, PacketRecoverMTE::decode, PacketRecoverMTE::handle);
     }
+
 
     private void register(RegisterEvent event) {
         if (event.getRegistryKey().equals(ForgeRegistries.Keys.RECIPE_SERIALIZERS))
@@ -142,8 +150,9 @@ public class GregTech {
     public static class ClientModEvents
     {
         @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
+        private void clientSetup(final FMLClientSetupEvent event) {
 
         }
+
     }
 }

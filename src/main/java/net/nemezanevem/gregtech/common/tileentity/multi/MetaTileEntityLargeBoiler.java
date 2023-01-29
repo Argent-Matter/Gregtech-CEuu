@@ -9,7 +9,7 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.capability.impl.BoilerRecipeLogic;
 import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
 import net.nemezanevem.gregtech.api.capability.impl.ItemHandlerList;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.MultiblockWithDisplayBase;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
 
 import java.util.List;
 
@@ -66,16 +66,16 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
         super.addDisplayText(textList);
         if (isStructureFormed()) {
             int efficiency = recipeLogic.getHeatScaled();
-            textList.add(new TextComponentTranslation("gregtech.multiblock.large_boiler.efficiency",
+            textList.add(Component.translatable("gregtech.multiblock.large_boiler.efficiency",
                     (efficiency == 0 ? DARK_RED : efficiency <= 40 ? RED : efficiency == 100 ? GREEN : YELLOW).toString() + efficiency + "%"));
-            textList.add(new TextComponentTranslation("gregtech.multiblock.large_boiler.steam_output", recipeLogic.getLastTickSteam()));
+            textList.add(Component.translatable("gregtech.multiblock.large_boiler.steam_output", recipeLogic.getLastTickSteam()));
 
-            ITextComponent throttleText = new TextComponentTranslation("gregtech.multiblock.large_boiler.throttle",
+            Component throttleText = Component.translatable("gregtech.multiblock.large_boiler.throttle",
                     AQUA.toString() + getThrottle() + "%");
             withHoverTextTranslate(throttleText, "gregtech.multiblock.large_boiler.throttle.tooltip");
             textList.add(throttleText);
 
-            ITextComponent buttonText = new TextComponentTranslation("gregtech.multiblock.large_boiler.throttle_modify");
+            Component buttonText = Component.translatable("gregtech.multiblock.large_boiler.throttle_modify");
             buttonText.appendText(" ");
             buttonText.appendSibling(withButton(new TextComponentString("[-]"), "sub"));
             buttonText.appendText(" ");
@@ -115,16 +115,16 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
 
     @Override
     public String[] getDescription() {
-        return new String[]{I18n.format("gregtech.multiblock.large_boiler.description")};
+        return new String[]{Component.translatable("gregtech.multiblock.large_boiler.description")};
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<String> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
-        tooltip.add(I18n.format("gregtech.multiblock.large_boiler.rate_tooltip", (int) (boilerType.steamPerTick() * 20 * boilerType.runtimeBoost(20) / 20.0)));
-        tooltip.add(I18n.format("gregtech.multiblock.large_boiler.heat_time_tooltip", boilerType.getTicksToBoiling() / 20));
-        tooltip.add(I18n.format("gregtech.universal.tooltip.base_production_fluid", boilerType.steamPerTick()));
-        tooltip.add(TooltipHelper.BLINKING_RED + I18n.format("gregtech.multiblock.large_boiler.explosion_tooltip"));
+        tooltip.add(Component.translatable("gregtech.multiblock.large_boiler.rate_tooltip", (int) (boilerType.steamPerTick() * 20 * boilerType.runtimeBoost(20) / 20.0)));
+        tooltip.add(Component.translatable("gregtech.multiblock.large_boiler.heat_time_tooltip", boilerType.getTicksToBoiling() / 20));
+        tooltip.add(Component.translatable("gregtech.universal.tooltip.base_production_fluid", boilerType.steamPerTick()));
+        tooltip.add(TooltipHelper.BLINKING_RED + Component.translatable("gregtech.multiblock.large_boiler.explosion_tooltip"));
     }
 
     @Override

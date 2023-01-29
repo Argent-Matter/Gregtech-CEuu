@@ -1,15 +1,15 @@
 package net.nemezanevem.gregtech.common.pipelike.cable.tile;
 
 import codechicken.lib.vec.Cuboid6;
-import io.netty.util.concurrent.ThreadPerTaskExecutor;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import net.nemezanevem.gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
-import net.nemezanevem.gregtech.api.tileentity.IDataInfoProvider;
+import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.WireProperty;
 import net.nemezanevem.gregtech.api.util.PerTickLongCounter;
 import net.nemezanevem.gregtech.api.util.TaskScheduler;
@@ -25,7 +25,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, WireProperty> implements IDataInfoProvider {
 
@@ -42,6 +41,10 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     private int temperature = 293;
     private final int meltTemp = 3000;
     private boolean isTicking = false;
+
+    public TileEntityCable(BlockPos pPos, BlockState pBlockState) {
+        super(MetaBlocks.CABLE_BE.get(), pPos, pBlockState);
+    }
 
     @Override
     public Class<Insulation> getPipeTypeClass() {
@@ -168,7 +171,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     public void setTemperature(int temperature) {
         this.temperature = temperature;
         world.checkLight(pos);
-        if (!world.isRemote) {
+        if (!world.isClientSide) {
             writeCustomData(100, buf -> buf.writeVarInt(temperature));
         } else {
             if (temperature <= 293) {
@@ -231,9 +234,9 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
 
     @Nullable
     @Override
-    public <T> T getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
+    public <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
         if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
-            if (world.isRemote)
+            if (world.isClientSide)
                 return GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(clientCapability);
             if (handlers.size() == 0)
                 initHandlers();
@@ -257,7 +260,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     }
 
     private EnergyNet getEnergyNet() {
-        if (world == null || world.isRemote)
+        if (world == null || world.isClientSide)
             return null;
         EnergyNet currentEnergyNet = this.currentEnergyNet.get();
         if (currentEnergyNet != null && currentEnergyNet.isValid() &&
@@ -277,7 +280,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     }
 
     @Override
-    public void receiveCustomData(int discriminator, PacketBuffer buf) {
+    public void receiveCustomData(int discriminator, FriendlyByteBuf buf) {
         if (discriminator == 100) {
             setTemperature(buf.readVarInt());
         } else {
@@ -308,27 +311,27 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
 
     @Nonnull
     @Override
-    public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
+    public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
         super.writeToNBT(compound);
         compound.setInteger("Temp", temperature);
         return compound;
     }
 
     @Override
-    public void readFromNBT(@Nonnull NBTTagCompound compound) {
+    public void readFromNBT(@Nonnull CompoundTag compound) {
         super.readFromNBT(compound);
         temperature = compound.getInteger("Temp");
     }
 
     @Nonnull
     @Override
-    public List<ITextComponent> getDataInfo() {
-        List<ITextComponent> list = new ArrayList<>();
-        list.add(new TextComponentTranslation("behavior.tricorder.eut_per_sec",
-                new TextComponentTranslation(GTUtility.formatNumbers(this.getAverageVoltage())).setStyle(new Style().setColor(TextFormatting.RED))
+    public List<Component> getDataInfo() {
+        List<Component> list = new ArrayList<>();
+        list.add(Component.translatable("behavior.tricorder.eut_per_sec",
+                Component.translatable(Util.formatNumbers(this.getAverageVoltage())).setStyle(new Style().setColor(TextFormatting.RED))
         ));
-        list.add(new TextComponentTranslation("behavior.tricorder.amp_per_sec",
-                new TextComponentTranslation(GTUtility.formatNumbers(this.getAverageAmperage())).setStyle(new Style().setColor(TextFormatting.RED))
+        list.add(Component.translatable("behavior.tricorder.amp_per_sec",
+                Component.translatable(Util.formatNumbers(this.getAverageAmperage())).setStyle(new Style().setColor(TextFormatting.RED))
         ));
         return list;
     }

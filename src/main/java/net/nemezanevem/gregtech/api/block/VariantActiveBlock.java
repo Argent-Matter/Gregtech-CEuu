@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -29,7 +28,6 @@ import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.model.IModelSupplier;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,10 +61,11 @@ public class VariantActiveBlock<T extends Enum<T> & StringRepresentable> extends
     }
 
     @Override
-    public void onModelRegister() {
+    public void onModelRegister(ModelEvent.RegisterAdditional event) {
         for (BlockState state : this.getStateDefinition().getPossibleStates()) {
             //ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(this), this.getMetaFromState(state), new ModelResourceLocation(this.getRegistryName(), "active=true," + statePropertiesToString(state.getProperties())));
             //ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(this), this.getMetaFromState(state), new ModelResourceLocation(this.getRegistryName(), "active=false," + statePropertiesToString(state.getProperties())));
+            event.register(new ResourceLocation());
             ModelLoader.setCustomModelResourceLocation(this, this.getMetaFromState(state), new ModelResourceLocation(this.getRegistryName(), statePropertiesToString(state.getProperties())));
         }
     }

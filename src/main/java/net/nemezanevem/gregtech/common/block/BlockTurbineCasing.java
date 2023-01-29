@@ -1,15 +1,13 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.IStateHarvestLevel;
-import gregtech.api.block.VariantBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLiving.SpawnPlacementType;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.block.IStateHarvestLevel;
+import net.nemezanevem.gregtech.api.block.VariantBlock;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,20 +16,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class BlockTurbineCasing extends VariantBlock<BlockTurbineCasing.TurbineCasingType> {
 
     public BlockTurbineCasing() {
-        super(Material.IRON);
-        setTranslationKey("turbine_casing");
-        setHardness(5.0f);
-        setResistance(10.0f);
-        setSoundType(SoundType.METAL);
-        setDefaultState(getState(TurbineCasingType.BRONZE_GEARBOX));
+        super(BlockBehaviour.Properties.of(Material.METAL).sound(SoundType.METAL).strength(5.0f, 10.0f).isValidSpawn(((pState, pLevel, pPos, pValue) -> false)));
+        registerDefaultState(getState(TurbineCasingType.BRONZE_GEARBOX));
     }
 
-    @Override
-    public boolean canCreatureSpawn(BlockState state, BlockGetter world, BlockPos pos, SpawnPlacementType type) {
-        return false;
-    }
-
-    public enum TurbineCasingType implements IStringSerializable, IStateHarvestLevel {
+    public enum TurbineCasingType implements StringRepresentable, IStateHarvestLevel {
 
         BRONZE_GEARBOX("bronze_gearbox", 1),
         STEEL_GEARBOX("steel_gearbox", 2),
@@ -54,7 +43,7 @@ public class BlockTurbineCasing extends VariantBlock<BlockTurbineCasing.TurbineC
 
         @Override
         @Nonnull
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 
@@ -64,8 +53,8 @@ public class BlockTurbineCasing extends VariantBlock<BlockTurbineCasing.TurbineC
         }
 
         @Override
-        public String getHarvestTool(BlockState state) {
-            return ToolClasses.WRENCH;
+        public ToolClass getHarvestTool(BlockState state) {
+            return ToolClass.WRENCH;
         }
     }
 

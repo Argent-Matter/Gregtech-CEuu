@@ -1,9 +1,13 @@
 package net.nemezanevem.gregtech.api.unification.tag;
 
 import com.google.common.base.Preconditions;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.MarkerMaterials;
 import net.nemezanevem.gregtech.api.unification.material.Material;

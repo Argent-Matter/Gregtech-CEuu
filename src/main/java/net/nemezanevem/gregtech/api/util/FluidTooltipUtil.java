@@ -5,8 +5,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidType;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
@@ -22,7 +24,7 @@ public class FluidTooltipUtil {
     /**
      * Registry Mapping of <Fluid, Tooltip>
      */
-    private static final Map<Fluid, List<Component>> tooltips = new HashMap<>();
+    private static final Map<FluidType, List<Component>> tooltips = new HashMap<>();
 
     /**
      * Used to register a tooltip to a Fluid.
@@ -30,7 +32,7 @@ public class FluidTooltipUtil {
      * @param fluid   The fluid to register a tooltip for.
      * @param tooltip The tooltip.
      */
-    public static void registerTooltip(Fluid fluid, Component tooltip) {
+    public static void registerTooltip(FluidType fluid, Component tooltip) {
         if (fluid != null && tooltip != null) {
             tooltips.computeIfAbsent(fluid, k -> new ArrayList<>()).add(tooltip);
         }
@@ -42,7 +44,7 @@ public class FluidTooltipUtil {
      * @param fluid   The fluid to register a tooltip for.
      * @param tooltip The tooltip.
      */
-    public static void registerTooltip(Fluid fluid, List<Component> tooltip) {
+    public static void registerTooltip(FluidType fluid, List<Component> tooltip) {
         if (fluid != null && tooltip != null && !tooltip.isEmpty()) {
             tooltips.put(fluid, tooltip);
         }

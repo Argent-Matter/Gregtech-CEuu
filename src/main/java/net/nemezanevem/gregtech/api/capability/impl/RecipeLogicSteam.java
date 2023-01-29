@@ -35,12 +35,12 @@ import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.Direction;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.AABB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fluids.IFluidTank;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 

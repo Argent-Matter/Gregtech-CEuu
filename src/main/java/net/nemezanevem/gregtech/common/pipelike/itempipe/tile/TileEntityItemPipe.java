@@ -2,17 +2,26 @@ package net.nemezanevem.gregtech.common.pipelike.itempipe.tile;
 
 import gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
 import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.unification.material.properties.ItemPipeProperties;
+import gregtech.api.unification.material.properties.ItemPipeProperty;
 import gregtech.api.util.FacingPos;
 import gregtech.common.pipelike.itempipe.ItemPipeType;
 import gregtech.common.pipelike.itempipe.net.ItemNetHandler;
 import gregtech.common.pipelike.itempipe.net.ItemPipeNet;
 import gregtech.common.pipelike.itempipe.net.WorldItemPipeNet;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.ItemPipeProperty;
+import net.nemezanevem.gregtech.api.util.FacingPos;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.ItemPipeType;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.net.ItemNetHandler;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.net.ItemPipeNet;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -20,13 +29,13 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TileEntityItemPipe extends TileEntityMaterialPipeBase<ItemPipeType, ItemPipeProperties> {
+public class TileEntityItemPipe extends TileEntityMaterialPipeBase<ItemPipeType, ItemPipeProperty> {
 
     private final EnumMap<Direction, ItemNetHandler> handlers = new EnumMap<>(Direction.class);
     private final Map<FacingPos, Integer> transferred = new HashMap<>();
     private ItemNetHandler defaultHandler;
     // the ItemNetHandler can only be created on the server so we have a empty placeholder for the client
-    private final IItemHandler clientCapability = new ItemStackHandler(0);
+    private final LazyOptional<IItemHandler> clientCapability = LazyOptional.of(() -> new ItemStackHandler(0));
     private WeakReference<ItemPipeNet> currentPipeNet = new WeakReference<>(null);
 
     @Override
@@ -52,11 +61,11 @@ public class TileEntityItemPipe extends TileEntityMaterialPipeBase<ItemPipeType,
 
     @Nullable
     @Override
-    public <T> T getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+    public <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
 
-            if (world.isRemote)
-                return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(clientCapability);
+            if (level.isClientSide)
+                return ForgeCapabilities.ITEM_HANDLER.cast(clientCapability);
 
             if (handlers.size() == 0)
                 initHandlers();
@@ -79,7 +88,7 @@ public class TileEntityItemPipe extends TileEntityMaterialPipeBase<ItemPipeType,
     }
 
     public ItemPipeNet getItemPipeNet() {
-        if (world == null || world.isRemote)
+        if (world == null || world.isClientSide)
             return null;
         ItemPipeNet currentPipeNet = this.currentPipeNet.get();
         if (currentPipeNet != null && currentPipeNet.isValid() &&
@@ -102,7 +111,7 @@ public class TileEntityItemPipe extends TileEntityMaterialPipeBase<ItemPipeType,
     }
 
     @Override
-    public void transferDataFrom(IPipeTile<ItemPipeType, ItemPipeProperties> tileEntity) {
+    public void transferDataFrom(IPipeTile<ItemPipeType, ItemPipeProperty> tileEntity) {
         super.transferDataFrom(tileEntity);
         if (getItemPipeNet() == null)
             return;

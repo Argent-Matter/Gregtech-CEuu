@@ -15,6 +15,6 @@ public class FluidFuelInfo extends AbstractFuelInfo {
     }
 
     public String getFuelName() {
-        return fluidStack.getUnlocalizedName();
+        return fluidStack.getTranslationKey();
     }
 }

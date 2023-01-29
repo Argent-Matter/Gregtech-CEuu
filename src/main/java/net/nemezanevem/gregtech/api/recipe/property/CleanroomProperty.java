@@ -7,7 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
 import net.nemezanevem.gregtech.api.registry.recipe.property.RecipePropertyRegistry;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.CleanroomType;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.CleanroomType;
 
 import javax.annotation.Nonnull;
 

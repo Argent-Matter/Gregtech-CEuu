@@ -1,26 +1,23 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.SizedTextureArea;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import gregtech.api.util.function.BooleanConsumer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.SizedTextureArea;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
 
 public class ImageCycleButtonWidget extends Widget {
 
@@ -46,7 +43,7 @@ public class ImageCycleButtonWidget extends Widget {
         super(new Position(xPosition, yPosition), new Size(width, height));
         this.buttonTexture = buttonTexture;
         this.currentOptionSupplier = () -> supplier.getAsBoolean() ? 1 : 0;
-        this.setOptionExecutor = (value) -> updater.apply(value >= 1);
+        this.setOptionExecutor = (value) -> updater.accept(value >= 1);
         this.optionCount = 2;
         this.currentOption = currentOptionSupplier.getAsInt();
     }
@@ -67,21 +64,21 @@ public class ImageCycleButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
             ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, (float) currentOption / optionCount, (float) 1 / optionCount);
         } else {
-            buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0, (float) currentOption / optionCount, 1.0, (float) 1 / optionCount);
+            buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0, (float) currentOption / optionCount, 1, (float) 1 / optionCount);
         }
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY) && tooltipHoverString != null) {
-            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString.apply(currentOption)).split("/n"));
-            drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            List<Component> hoverList = List.of(Component.translatable(tooltipHoverString.apply(currentOption)));
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
         }
     }
 
@@ -104,7 +101,7 @@ public class ImageCycleButtonWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         super.mouseClicked(mouseX, mouseY, button);
         if (isMouseOverElement(mouseX, mouseY)) {
             //Allow only the RMB to reverse cycle
@@ -128,7 +125,7 @@ public class ImageCycleButtonWidget extends Widget {
     public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
-            this.currentOption = MathHelper.clamp(buffer.readVarInt(), 0, optionCount);
+            this.currentOption = Mth.clamp(buffer.readVarInt(), 0, optionCount);
             setOptionExecutor.accept(currentOption);
         }
     }

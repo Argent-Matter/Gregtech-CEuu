@@ -1,32 +1,43 @@
 package net.nemezanevem.gregtech.common.pipelike.fluidpipe.net;
 
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.pipenet.tickable.TickableWorldPipeNet;
-import gregtech.api.unification.material.properties.FluidPipeProperty;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.FluidPipeProperty;
 
 public class WorldFluidPipeNet extends WorldPipeNet<FluidPipeProperty, FluidPipeNet> {
 
     private static final String DATA_ID_BASE = "gregtech.fluid_pipe_net";
 
-    public static WorldFluidPipeNet getWorldPipeNet(World world) {
-        String DATA_ID = getDataID(DATA_ID_BASE, world);
-        WorldFluidPipeNet netWorldData = (WorldFluidPipeNet) world.loadData(WorldFluidPipeNet.class, DATA_ID);
-        if (netWorldData == null) {
-            netWorldData = new WorldFluidPipeNet(DATA_ID);
-            world.setData(DATA_ID, netWorldData);
+    public static WorldFluidPipeNet getWorldPipeNet(Level level) {
+        String DATA_ID = getDataID(DATA_ID_BASE, level);
+        if(!level.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) level;
+            WorldFluidPipeNet netWorldData = serverLevel.getDataStorage().computeIfAbsent(WorldFluidPipeNet::load, WorldFluidPipeNet::new, DATA_ID);
+            if (netWorldData == null) {
+                netWorldData = new WorldFluidPipeNet();
+                serverLevel.getDataStorage().set(DATA_ID, netWorldData);
+            }
+            netWorldData.setWorldAndInit(level);
+            return netWorldData;
         }
-        netWorldData.setWorldAndInit(world);
-        return netWorldData;
+        return null;
     }
 
-    public WorldFluidPipeNet(String name) {
-        super(name);
+    public WorldFluidPipeNet() {
+        super();
     }
 
     @Override
     protected FluidPipeNet createNetInstance() {
         return new FluidPipeNet(this);
+    }
+
+    public static WorldFluidPipeNet load(CompoundTag tag) {
+        WorldFluidPipeNet instance = new WorldFluidPipeNet();
+        instance.readFromNBT(tag);
+        return instance;
     }
 
 }

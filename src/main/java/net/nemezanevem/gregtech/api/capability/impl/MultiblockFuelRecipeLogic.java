@@ -1,5 +1,9 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeMultiblockController;
 import net.nemezanevem.gregtech.api.capability.IMaintenanceHatch;
 import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
@@ -8,6 +12,9 @@ import gregtech.api.metatileentity.multiblock.RecipeTypeMultiblockController;
 import gregtech.api.recipes.RecipeBuilder;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 import gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import javax.annotation.Nonnull;
 
@@ -57,9 +64,9 @@ public class MultiblockFuelRecipeLogic extends MultiblockRecipeLogic {
     }
 
     @Override
-    public void applyParallelBonus(@Nonnull RecipeBuilder<?> builder) {
+    public void applyParallelBonus(@Nonnull GTRecipeBuilder<?> builder) {
         // the builder automatically multiplies by -1, so nothing extra is needed here
-        builder.EUt(builder.getEUt());
+        builder.setEUt(builder.getEUt());
     }
 
     @Override

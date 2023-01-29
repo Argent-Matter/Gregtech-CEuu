@@ -100,7 +100,7 @@ public class CapesRegistry {
         registerDevCapes();
     }
 
-    public static void checkAdvancements(World world) {
+    public static void checkAdvancements(Level world) {
         registerCape(new ResourceLocation(GregTech.MODID, "ultimate_voltage/74_wetware_mainframe"), Textures.GREGTECH_CAPE_TEXTURE, world);
         registerCape(new ResourceLocation(GregTech.MODID, "steam/12_electronic_circuit"), Textures.RED_CAPE_TEXTURE, world);
         registerCape(new ResourceLocation(GregTech.MODID, "high_voltage/82_large_chemical_reactor"), Textures.YELLOW_CAPE_TEXTURE, world);
@@ -127,7 +127,7 @@ public class CapesRegistry {
      * @param cape        The ResourceLocation that points to the cape that can be unlocked through the advancement.
      * @param world       The world that may contain the advancement used for getting a cape.
      */
-    public static void registerCape(ResourceLocation advancement, ResourceLocation cape, World world) {
+    public static void registerCape(ResourceLocation advancement, ResourceLocation cape, Level world) {
         if (!world.isClientSide) {
             AdvancementManager advManager = ObfuscationReflectionHelper.getPrivateValue(World.class, world, "field_191951_C");
             Advancement advObject = advManager.getAdvancement(advancement);
@@ -164,7 +164,7 @@ public class CapesRegistry {
     public static void unlockCapeOnAdvancement(Player player, Advancement advancement) {
         if (CAPE_ADVANCEMENTS.containsKey(advancement)) {
             unlockCape(player.getPersistentID(), CAPE_ADVANCEMENTS.get(advancement));
-            player.sendMessage(Component.translatable("gregtech.chat.cape"));
+            player.sendSystemMessage(Component.translatable("gregtech.chat.cape"));
             save();
         }
     }

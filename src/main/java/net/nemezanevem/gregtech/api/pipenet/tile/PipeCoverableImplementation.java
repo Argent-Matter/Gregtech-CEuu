@@ -224,7 +224,7 @@ public class PipeCoverableImplementation implements ICoverable {
         return highestSignal;
     }
 
-    public void update() {
+    public void tick() {
         if (!getWorld().isClientSide) {
             for (CoverBehavior coverBehavior : coverBehaviors) {
                 if (coverBehavior instanceof ITickable) {
@@ -356,7 +356,7 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     @Override
-    public <T> T getCapability(Capability<T> capability, Direction side) {
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         return holder.getCapabilityInternal(capability, side);
     }
 }

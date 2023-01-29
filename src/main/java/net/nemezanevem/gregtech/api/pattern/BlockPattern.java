@@ -7,7 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 import net.nemezanevem.gregtech.api.util.RelativeDirection;
 
@@ -187,7 +187,7 @@ public class BlockPattern {
     }
 
     public void autoBuild(Player player, MultiblockControllerBase controllerBase) {
-        World world = player.world;
+        Level world = player.world;
         BlockWorldState worldState = new BlockWorldState();
         int minZ = -centerOffset[4];
         Direction facing = controllerBase.getFrontFacing().getOpposite();

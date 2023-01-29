@@ -22,10 +22,10 @@ public class PlayerInventoryUIFactory extends UIFactory<PlayerInventoryHolder> {
     @Override
     protected PlayerInventoryHolder readHolderFromSyncData(FriendlyByteBuf syncData) {
         Player Player = Minecraft.getInstance().player;
-        InteractionHand enumHand = InteractionHand.values()[syncData.readByte()];
+        InteractionHand InteractionHand = InteractionHand.values()[syncData.readByte()];
         ItemStack itemStack;
         itemStack = syncData.readItem();
-        return new PlayerInventoryHolder(Player, enumHand, itemStack);
+        return new PlayerInventoryHolder(Player, InteractionHand, itemStack);
     }
 
     @Override

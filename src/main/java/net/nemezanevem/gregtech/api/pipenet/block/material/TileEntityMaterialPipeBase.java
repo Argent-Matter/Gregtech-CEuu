@@ -1,8 +1,11 @@
 package net.nemezanevem.gregtech.api.pipenet.block.material;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
@@ -22,6 +25,10 @@ import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.UPDATE_P
 public abstract class TileEntityMaterialPipeBase<PipeType extends Enum<PipeType> & IPipeType<NodeDataType>, NodeDataType> extends TileEntityPipeBase<PipeType, NodeDataType> implements IMaterialPipeTile<PipeType, NodeDataType> {
 
     private Material pipeMaterial = GtMaterials.Aluminium.get();
+
+    public TileEntityMaterialPipeBase(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
+        super(pType, pPos, pBlockState);
+    }
 
     @Override
     public Material getPipeMaterial() {

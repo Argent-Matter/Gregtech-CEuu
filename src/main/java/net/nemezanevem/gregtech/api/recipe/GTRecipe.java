@@ -111,7 +111,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      * Trims the recipe outputs, chanced outputs, and fluid outputs based on the performing MetaTileEntity's trim limit.
      *
      * @param currentRecipe  The recipe to perform the output trimming upon
-     * @param recipeMap      The RecipeMap that the recipe is from
+     * @param recipeMap      The RecipeType that the recipe is from
      * @param itemTrimLimit  The Limit to which item outputs should be trimmed to, -1 for no trimming
      * @param fluidTrimLimit The Limit to which fluid outputs should be trimmed to, -1 for no trimming
      * @return A new Recipe whose outputs have been trimmed.
@@ -359,7 +359,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      *
      * @param recipeTier  The Voltage Tier of the Recipe, used for chanced output calculation
      * @param machineTier The Voltage Tier of the Machine, used for chanced output calculation
-     * @param recipeType   The RecipeMap that the recipe is being performed upon, used for chanced output calculation
+     * @param recipeType   The RecipeType that the recipe is being performed upon, used for chanced output calculation
      * @return A list of all resulting ItemStacks from the recipe, after chance has been applied to any chanced outputs
      */
     public List<ItemStack> getResultItemOutputs(int recipeTier, int machineTier, GTRecipeType<?> recipeType) {

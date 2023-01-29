@@ -2,13 +2,13 @@ package net.nemezanevem.gregtech.common.pipelike.cable.tile;
 
 import net.minecraft.util.ITickable;
 
-public class TileEntityCableTickable extends TileEntityCable implements ITickable {
+public class TileEntityCableTickable extends TileEntityCable implements  {
 
     public TileEntityCableTickable() {
     }
 
     @Override
-    public void update() {
+    public void tick() {
         getCoverableImplementation().update();
     }
 

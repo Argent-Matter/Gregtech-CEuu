@@ -4,7 +4,7 @@ import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.nemezanevem.gregtech.api.capability.INotifiableHandler;
 import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraftforge.fluids.FluidTank;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 
 import java.util.ArrayList;
 import java.util.List;

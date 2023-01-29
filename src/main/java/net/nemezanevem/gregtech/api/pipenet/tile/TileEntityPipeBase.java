@@ -3,19 +3,25 @@ package net.nemezanevem.gregtech.api.pipenet.tile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.pipenet.PipeNet;
 import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
-import net.nemezanevem.gregtech.api.tileentity.SyncedTileEntityBase;
+import net.nemezanevem.gregtech.api.blockentity.SyncedTileEntityBase;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 
 import javax.annotation.Nonnull;
@@ -276,7 +282,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         return connections;
     }
 
-    public <T> T getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
+    public <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
         if (capability == GregtechTileCapabilities.CAPABILITY_COVERABLE) {
             return GregtechTileCapabilities.CAPABILITY_COVERABLE.cast(getCoverableImplementation());
         }
@@ -285,10 +291,10 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Nullable
     @Override
-    public final <T> T getCapability(@Nonnull Capability<T> capability, @Nullable Direction facing) {
+    public final <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction facing) {
         boolean isCoverable = capability == GregtechTileCapabilities.CAPABILITY_COVERABLE;
         CoverBehavior coverBehavior = facing == null ? null : coverableImplementation.getCoverAtSide(facing);
-        T defaultValue;
+        LazyOptional<T> defaultValue;
         if (getPipeBlock() == null)
             defaultValue = null;
         else
@@ -306,59 +312,54 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         return defaultValue;
     }
 
-    @Override
-    public final boolean hasCapability(@Nonnull Capability<?> capability, @Nullable Direction facing) {
-        return getCapability(capability, facing) != null;
-    }
-
     @Nonnull
     @Override
-    public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
-        super.writeToNBT(compound);
+    public void saveAdditional(@Nonnull CompoundTag compound) {
+        super.saveAdditional(compound);
         BlockPipe<PipeType, NodeDataType, ?> pipeBlock = getPipeBlock();
         if (pipeBlock != null) {
             //noinspection ConstantConditions
-            compound.setString("PipeBlock", pipeBlock.getRegistryName().toString());
+            compound.putString("PipeBlock", ForgeRegistries.BLOCKS.getKey(pipeBlock).toString());
         }
-        compound.setInteger("PipeType", pipeType.ordinal());
-        compound.setInteger("Connections", connections);
-        compound.setInteger("BlockedConnections", blockedConnections);
+        compound.putInt("PipeType", pipeType.ordinal());
+        compound.putInt("Connections", connections);
+        compound.putInt("BlockedConnections", blockedConnections);
         if (isPainted()) {
-            compound.setInteger("InsulationColor", paintingColor);
+            compound.putInt("InsulationColor", paintingColor);
         }
-        compound.setString("FrameMaterial", frameMaterial == null ? "" : frameMaterial.toString());
+        compound.putString("FrameMaterial", frameMaterial == null ? "" : frameMaterial.toString());
         this.coverableImplementation.writeToNBT(compound);
         return compound;
     }
 
     @Override
-    public void readFromNBT(@Nonnull CompoundTag compound) {
-        super.readFromNBT(compound);
-        if (compound.hasKey("PipeBlock", NBT.TAG_STRING)) {
-            Block block = Block.REGISTRY.getObject(new ResourceLocation(compound.getString("PipeBlock")));
+    public void load(@Nonnull CompoundTag compound) {
+        super.load(compound);
+        if (compound.contains("PipeBlock", Tag.TAG_STRING)) {
+            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(compound.getString("PipeBlock")));
             //noinspection unchecked
             this.pipeBlock = block instanceof BlockPipe ? (BlockPipe<PipeType, NodeDataType, ?>) block : null;
         }
-        this.pipeType = getPipeTypeClass().getEnumConstants()[compound.getInteger("PipeType")];
+        this.pipeType = getPipeTypeClass().getEnumConstants()[compound.getInt("PipeType")];
 
-        if (compound.hasKey("Connections")) {
-            connections = compound.getInteger("Connections");
-        } else if (compound.hasKey("BlockedConnectionsMap")) {
+        if (compound.contains("Connections")) {
+            connections = compound.getInt("Connections");
+        } else if (compound.contains("BlockedConnectionsMap")) {
             connections = 0;
-            CompoundTag blockedConnectionsTag = compound.getCompoundTag("BlockedConnectionsMap");
-            for (String attachmentTypeKey : blockedConnectionsTag.getKeySet()) {
-                int blockedConnections = blockedConnectionsTag.getInteger(attachmentTypeKey);
+            CompoundTag blockedConnectionsTag = compound.getCompound("BlockedConnectionsMap");
+            for (String attachmentTypeKey : blockedConnectionsTag.getAllKeys()) {
+                int blockedConnections = blockedConnectionsTag.getInt(attachmentTypeKey);
                 connections |= blockedConnections;
             }
         }
-        blockedConnections = compound.getInteger("BlockedConnections");
+        blockedConnections = compound.getInt("BlockedConnections");
 
-        if (compound.hasKey("InsulationColor")) {
-            this.paintingColor = compound.getInteger("InsulationColor");
+        if (compound.contains("InsulationColor")) {
+            this.paintingColor = compound.getInt("InsulationColor");
         }
         String frameMaterialName = compound.getString("FrameMaterial");
         if (!frameMaterialName.isEmpty()) {
-            this.frameMaterial = GregTechAPI.MATERIAL_REGISTRY.getObject(frameMaterialName);
+            this.frameMaterial = MaterialRegistry.MATERIALS_BUILTIN.get().getValue(new ResourceLocation(frameMaterialName));
         }
         this.coverableImplementation.readFromNBT(compound);
     }

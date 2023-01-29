@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.NetworkEvent;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
 import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
-import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 
 import java.util.function.Supplier;
 

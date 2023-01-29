@@ -20,11 +20,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.nemezanevem.gregtech.api.tileentity.MTETrait;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MTETrait;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
@@ -97,7 +96,7 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
     }
 
     @Override
-    public <T> T getCapability(Capability<T> capability) {
+    public <T> LazyOptional<T> getCapability(Capability<T> capability) {
         if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
             return GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(this);
         }

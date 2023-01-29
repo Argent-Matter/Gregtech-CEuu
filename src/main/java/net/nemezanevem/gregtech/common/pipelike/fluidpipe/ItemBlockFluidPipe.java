@@ -25,23 +25,23 @@ public class ItemBlockFluidPipe extends ItemBlockMaterialPipe<FluidPipeType, Flu
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flagIn) {
+    public void addInformation(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> tooltip, @Nonnull ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         FluidPipeProperty pipeProperties = blockPipe.createItemProperties(stack);
-        tooltip.add(I18n.format("gregtech.universal.tooltip.fluid_transfer_rate", pipeProperties.getThroughput()));
-        tooltip.add(I18n.format("gregtech.fluid_pipe.capacity", pipeProperties.getThroughput() * 20));
-        tooltip.add(I18n.format("gregtech.fluid_pipe.max_temperature", pipeProperties.getMaxFluidTemperature()));
-        if (pipeProperties.getTanks() > 1) tooltip.add(I18n.format("gregtech.fluid_pipe.channels", pipeProperties.getTanks()));
+        tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_transfer_rate", pipeProperties.getThroughput()));
+        tooltip.add(Component.translatable("gregtech.fluid_pipe.capacity", pipeProperties.getThroughput() * 20));
+        tooltip.add(Component.translatable("gregtech.fluid_pipe.max_temperature", pipeProperties.getMaxFluidTemperature()));
+        if (pipeProperties.getTanks() > 1) tooltip.add(Component.translatable("gregtech.fluid_pipe.channels", pipeProperties.getTanks()));
 
         if (TooltipHelper.isShiftDown()) {
-            if (pipeProperties.isGasProof()) tooltip.add(I18n.format("gregtech.fluid_pipe.gas_proof"));
+            if (pipeProperties.isGasProof()) tooltip.add(Component.translatable("gregtech.fluid_pipe.gas_proof"));
             else if (ModHandler.isMaterialWood(((BlockMaterialPipe<?, ?, ?>) blockPipe).getItemMaterial(stack)))
-                tooltip.add(I18n.format("gregtech.fluid_pipe.not_gas_proof"));
-            if (pipeProperties.isAcidProof()) tooltip.add(I18n.format("gregtech.fluid_pipe.acid_proof"));
-            if (pipeProperties.isCryoProof()) tooltip.add(I18n.format("gregtech.fluid_pipe.cryo_proof"));
-            if (pipeProperties.isPlasmaProof()) tooltip.add(I18n.format("gregtech.fluid_pipe.plasma_proof"));
+                tooltip.add(Component.translatable("gregtech.fluid_pipe.not_gas_proof"));
+            if (pipeProperties.isAcidProof()) tooltip.add(Component.translatable("gregtech.fluid_pipe.acid_proof"));
+            if (pipeProperties.isCryoProof()) tooltip.add(Component.translatable("gregtech.fluid_pipe.cryo_proof"));
+            if (pipeProperties.isPlasmaProof()) tooltip.add(Component.translatable("gregtech.fluid_pipe.plasma_proof"));
         } else {
-            tooltip.add(I18n.format("gregtech.tooltip.fluid_pipe_hold_shift"));
+            tooltip.add(Component.translatable("gregtech.tooltip.fluid_pipe_hold_shift"));
         }
 
         if (ConfigHolder.misc.debug) {

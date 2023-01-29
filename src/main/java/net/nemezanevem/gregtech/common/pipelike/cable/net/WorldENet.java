@@ -8,7 +8,7 @@ public class WorldENet extends WorldPipeNet<WireProperty, EnergyNet> {
 
     private static final String DATA_ID_BASE = "gregtech.e_net";
 
-    public static WorldENet getWorldENet(World world) {
+    public static WorldENet getWorldENet(Level world) {
         final String DATA_ID = getDataID(DATA_ID_BASE, world);
         WorldENet eNetWorldData = (WorldENet) world.loadData(WorldENet.class, DATA_ID);
         if (eNetWorldData == null) {

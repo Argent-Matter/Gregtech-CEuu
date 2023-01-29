@@ -6,8 +6,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 
 import java.util.*;
@@ -95,7 +95,7 @@ public class TraceabilityPredicate {
      */
     public TraceabilityPredicate addTooltips(String... tips) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT && tips.length > 0) {
-            List<String> tooltips = Arrays.stream(tips).collect(Collectors.toList());
+            List<Component> tooltips = Arrays.stream(tips).collect(Collectors.toList());
             common.forEach(predicate -> {
                 if (predicate.candidates == null) return;
                 if (predicate.toolTips == null) {

@@ -1,35 +1,28 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.VariantActiveBlock;
 import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.block.VariantActiveBlock;
 
 import javax.annotation.Nonnull;
 
 public class BlockMultiblockCasing extends VariantActiveBlock<BlockMultiblockCasing.MultiblockCasingType> {
 
     public BlockMultiblockCasing() {
-        super(Material.IRON);
-        setTranslationKey("multiblock_casing");
-        setHardness(5.0f);
-        setResistance(10.0f);
-        setSoundType(SoundType.METAL);
+        super(BlockBehaviour.Properties.of(Material.METAL).strength(5.0f, 10.0f).sound(SoundType.METAL).isValidSpawn(((pState, pLevel, pPos, pValue) -> false)));
         setHarvestLevel(ToolClasses.WRENCH, 2);
-        setDefaultState(getState(MultiblockCasingType.ENGINE_INTAKE_CASING));
+        registerDefaultState(getState(MultiblockCasingType.ENGINE_INTAKE_CASING));
     }
 
-    @Override
-    public boolean canCreatureSpawn(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull SpawnPlacementType type) {
-        return false;
-    }
-
-    public enum MultiblockCasingType implements IStringSerializable {
+    public enum MultiblockCasingType implements StringRepresentable {
 
         ENGINE_INTAKE_CASING("engine_intake"),
         EXTREME_ENGINE_INTAKE_CASING("extreme_engine_intake"),
@@ -45,7 +38,7 @@ public class BlockMultiblockCasing extends VariantActiveBlock<BlockMultiblockCas
 
         @Nonnull
         @Override
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 

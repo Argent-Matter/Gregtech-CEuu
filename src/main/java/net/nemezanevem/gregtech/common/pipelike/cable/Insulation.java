@@ -8,17 +8,17 @@ import javax.annotation.Nonnull;
 
 public enum Insulation implements IMaterialPipeType<WireProperty> {
 
-    WIRE_SINGLE("wire_single", 0.125f, 1, 2, TagPrefix.wireGtSingle, -1),
-    WIRE_DOUBLE("wire_double", 0.25f, 2, 2, TagPrefix.wireGtDouble, -1),
-    WIRE_QUADRUPLE("wire_quadruple", 0.375f, 4, 3, TagPrefix.wireGtQuadruple, -1),
-    WIRE_OCTAL("wire_octal", 0.5f, 8, 3, TagPrefix.wireGtOctal, -1),
-    WIRE_HEX("wire_hex", 0.75f, 16, 3, TagPrefix.wireGtHex, -1),
+    WIRE_SINGLE("wires/single", 0.125f, 1, 2, TagPrefix.wireGtSingle, -1),
+    WIRE_DOUBLE("wires/double", 0.25f, 2, 2, TagPrefix.wireGtDouble, -1),
+    WIRE_QUADRUPLE("wires/quadruple", 0.375f, 4, 3, TagPrefix.wireGtQuadruple, -1),
+    WIRE_OCTAL("wires/octal", 0.5f, 8, 3, TagPrefix.wireGtOctal, -1),
+    WIRE_HEX("wires/hex", 0.75f, 16, 3, TagPrefix.wireGtHex, -1),
 
-    CABLE_SINGLE("cable_single", 0.25f, 1, 1, TagPrefix.cableGtSingle, 0),
-    CABLE_DOUBLE("cable_double", 0.375f, 2, 1, TagPrefix.cableGtDouble, 1),
-    CABLE_QUADRUPLE("cable_quadruple", 0.5f, 4, 1, TagPrefix.cableGtQuadruple, 2),
-    CABLE_OCTAL("cable_octal", 0.75f, 8, 1, TagPrefix.cableGtOctal, 3),
-    CABLE_HEX("cable_hex", 1.0f, 16, 1, TagPrefix.cableGtHex, 4);
+    CABLE_SINGLE("cables/single", 0.25f, 1, 1, TagPrefix.cableGtSingle, 0),
+    CABLE_DOUBLE("cables/double", 0.375f, 2, 1, TagPrefix.cableGtDouble, 1),
+    CABLE_QUADRUPLE("cables/quadruple", 0.5f, 4, 1, TagPrefix.cableGtQuadruple, 2),
+    CABLE_OCTAL("cables/octal", 0.75f, 8, 1, TagPrefix.cableGtOctal, 3),
+    CABLE_HEX("cables/hex", 1.0f, 16, 1, TagPrefix.cableGtHex, 4);
 
     public final String name;
     public final float thickness;

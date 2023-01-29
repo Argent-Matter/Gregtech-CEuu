@@ -3,9 +3,7 @@ package net.nemezanevem.gregtech.api.recipe.property;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraftforge.registries.RegistryObject;
-import net.nemezanevem.gregtech.api.tileentity.multiblock.CleanroomType;
-
-import java.util.List;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.CleanroomType;
 
 import static net.nemezanevem.gregtech.api.registry.recipe.property.RecipePropertyRegistry.RECIPE_PROPERTIES;
 

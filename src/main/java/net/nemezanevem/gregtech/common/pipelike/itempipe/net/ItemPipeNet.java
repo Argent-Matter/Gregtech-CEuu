@@ -3,10 +3,10 @@ package net.nemezanevem.gregtech.common.pipelike.itempipe.net;
 import gregtech.api.pipenet.Node;
 import gregtech.api.pipenet.PipeNet;
 import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.unification.material.properties.ItemPipeProperties;
+import gregtech.api.unification.material.properties.ItemPipeProperty;
 import gregtech.api.util.FacingPos;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -17,11 +17,11 @@ import net.minecraftforge.items.IItemHandler;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class ItemPipeNet extends PipeNet<ItemPipeProperties> {
+public class ItemPipeNet extends PipeNet<ItemPipeProperty> {
 
     private final Map<BlockPos, List<Inventory>> NET_DATA = new HashMap<>();
 
-    public ItemPipeNet(WorldPipeNet<ItemPipeProperties, ? extends PipeNet<ItemPipeProperties>> world) {
+    public ItemPipeNet(WorldPipeNet<ItemPipeProperty, ? extends PipeNet<ItemPipeProperty>> world) {
         super(world);
     }
 
@@ -50,31 +50,31 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperties> {
     }
 
     @Override
-    protected void transferNodeData(Map<BlockPos, Node<ItemPipeProperties>> transferredNodes, PipeNet<ItemPipeProperties> parentNet) {
+    protected void transferNodeData(Map<BlockPos, Node<ItemPipeProperty>> transferredNodes, PipeNet<ItemPipeProperty> parentNet) {
         super.transferNodeData(transferredNodes, parentNet);
         NET_DATA.clear();
         ((ItemPipeNet) parentNet).NET_DATA.clear();
     }
 
     @Override
-    protected void writeNodeData(ItemPipeProperties nodeData, NBTTagCompound tagCompound) {
+    protected void writeNodeData(ItemPipeProperty nodeData, CompoundTag tagCompound) {
         tagCompound.setInteger("Resistance", nodeData.getPriority());
         tagCompound.setFloat("Rate", nodeData.getTransferRate());
     }
 
     @Override
-    protected ItemPipeProperties readNodeData(NBTTagCompound tagCompound) {
-        return new ItemPipeProperties(tagCompound.getInteger("Range"), tagCompound.getFloat("Rate"));
+    protected ItemPipeProperty readNodeData(CompoundTag tagCompound) {
+        return new ItemPipeProperty(tagCompound.getInteger("Range"), tagCompound.getFloat("Rate"));
     }
 
     public static class Inventory {
         private final BlockPos pipePos;
         private final Direction faceToHandler;
         private final int distance;
-        private final ItemPipeProperties properties;
+        private final ItemPipeProperty properties;
         private final List<Predicate<ItemStack>> filters;
 
-        public Inventory(BlockPos pipePos, Direction facing, int distance, ItemPipeProperties properties, List<Predicate<ItemStack>> filters) {
+        public Inventory(BlockPos pipePos, Direction facing, int distance, ItemPipeProperty properties, List<Predicate<ItemStack>> filters) {
             this.pipePos = pipePos;
             this.faceToHandler = facing;
             this.distance = distance;
@@ -94,7 +94,7 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperties> {
             return distance;
         }
 
-        public ItemPipeProperties getProperties() {
+        public ItemPipeProperty getProperties() {
             return properties;
         }
 
@@ -115,7 +115,7 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperties> {
             return pipePos.offset(faceToHandler);
         }
 
-        public IItemHandler getHandler(World world) {
+        public IItemHandler getHandler(Level world) {
             BlockEntity tile = world.getBlockEntity(getHandlerPos());
             if (tile != null)
                 return tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, faceToHandler.getOpposite());

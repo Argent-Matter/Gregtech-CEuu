@@ -2,8 +2,8 @@ package net.nemezanevem.gregtech.api.pattern;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
 

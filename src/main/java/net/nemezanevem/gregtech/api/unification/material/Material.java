@@ -11,6 +11,8 @@ import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidType;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.IMaterialProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.MaterialProperties;
@@ -26,7 +28,6 @@ import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class Material implements Comparable<Material> {
 
@@ -360,7 +361,7 @@ public class Material implements Comparable<Material> {
 
         /**
          * Add a {@link FluidProperty} to this Material.<br>
-         * Will be created as a {@link GtFluidTypes#LIQUID}, without a Fluid Block.
+         * Will be created as a {@link GTFluidTypes#LIQUID}, without a Fluid Block.
          *
          * @throws IllegalArgumentException If a {@link FluidProperty} has already been added to this Material.
          */
@@ -376,7 +377,7 @@ public class Material implements Comparable<Material> {
          * @param type The {@link FluidType} of this Material, either Fluid or Gas.
          * @throws IllegalArgumentException If a {@link FluidProperty} has already been added to this Material.
          */
-        public Builder fluid(FluidType type) {
+        public Builder fluid(GTFluidType type) {
             return fluid(type, false);
         }
 
@@ -387,7 +388,7 @@ public class Material implements Comparable<Material> {
          * @param hasBlock If true, create a Fluid Block for this Material.
          * @throws IllegalArgumentException If a {@link FluidProperty} has already been added to this Material.
          */
-        public Builder fluid(FluidType type, boolean hasBlock) {
+        public Builder fluid(GTFluidType type, boolean hasBlock) {
             properties.setProperty(GtMaterialProperties.FLUID.get(), new FluidProperty(type, hasBlock));
             return this;
         }

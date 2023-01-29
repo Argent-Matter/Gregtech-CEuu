@@ -14,20 +14,20 @@ import java.util.function.Predicate;
 public class PipeGatherer extends PipeNetWalker {
 
     @Nullable
-    public static IPipeTile<?, ?> findFirstMatching(World world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate) {
+    public static IPipeTile<?, ?> findFirstMatching(Level world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate) {
         PipeGatherer gatherer = new PipeGatherer(world, sourcePipe, 1, pipePredicate, new ArrayList<>());
         gatherer.returnAfterFirst = true;
         gatherer.traversePipeNet();
         return gatherer.pipes.size() > 0 ? gatherer.pipes.get(0) : null;
     }
 
-    public static List<IPipeTile<?, ?>> gatherPipes(World world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate) {
+    public static List<IPipeTile<?, ?>> gatherPipes(Level world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate) {
         PipeGatherer gatherer = new PipeGatherer(world, sourcePipe, 1, pipePredicate, new ArrayList<>());
         gatherer.traversePipeNet();
         return gatherer.pipes;
     }
 
-    public static List<IPipeTile<?, ?>> gatherPipesInDistance(World world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate, int distance) {
+    public static List<IPipeTile<?, ?>> gatherPipesInDistance(Level world, BlockPos sourcePipe, Predicate<IPipeTile<?, ?>> pipePredicate, int distance) {
         PipeGatherer gatherer = new PipeGatherer(world, sourcePipe, 1, pipePredicate, new ArrayList<>());
         gatherer.traversePipeNet(distance);
         return gatherer.pipes;
@@ -37,14 +37,14 @@ public class PipeGatherer extends PipeNetWalker {
     private final List<IPipeTile<?, ?>> pipes;
     private boolean returnAfterFirst = false;
 
-    protected PipeGatherer(World world, BlockPos sourcePipe, int walkedBlocks, Predicate<IPipeTile<?, ?>> pipePredicate, List<IPipeTile<?, ?>> pipes) {
+    protected PipeGatherer(Level world, BlockPos sourcePipe, int walkedBlocks, Predicate<IPipeTile<?, ?>> pipePredicate, List<IPipeTile<?, ?>> pipes) {
         super(world, sourcePipe, walkedBlocks);
         this.pipePredicate = pipePredicate;
         this.pipes = pipes;
     }
 
     @Override
-    protected PipeNetWalker createSubWalker(World world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks) {
+    protected PipeNetWalker createSubWalker(Level world, Direction facingToNextPos, BlockPos nextPos, int walkedBlocks) {
         return new PipeGatherer(world, nextPos, walkedBlocks, pipePredicate, pipes);
     }
 

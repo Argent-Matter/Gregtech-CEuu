@@ -15,6 +15,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.phys.Vec2;
@@ -273,8 +274,8 @@ public abstract class Widget {
         double scaledTextWidth = center ? fontRenderer.width(text) * scale : 0.0;
         poseStack.translate(x - scaledTextWidth / 2.0, y, 0.0f);
         poseStack.scale(scale, scale, scale);
-        fontRenderer.draw(poseStack, text, 0, 0, color);
         if(dropShadow) fontRenderer.drawShadow(poseStack, text, 0, 0, color);
+        else fontRenderer.draw(poseStack, text, 0, 0, color);
         poseStack.popPose();
     }
 
@@ -295,8 +296,20 @@ public abstract class Widget {
         poseStack.pushPose();
         poseStack.scale(scale, scale, 0f);
         float sf = 1 / scale;
-        fontRenderer.draw(poseStack, text, x * sf, y * sf, color);
         if(shadow) fontRenderer.drawShadow(poseStack, text, 0, 0, color);
+        else fontRenderer.draw(poseStack, text, x * sf, y * sf, color);
+        poseStack.popPose();
+        RenderSystem.enableBlend();
+    }
+
+    public static void drawText(PoseStack poseStack, FormattedCharSequence text, float x, float y, float scale, int color, boolean shadow) {
+        Font fontRenderer = Minecraft.getInstance().font;
+        RenderSystem.disableBlend();
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, 0f);
+        float sf = 1 / scale;
+        if(shadow) fontRenderer.drawShadow(poseStack, text, 0, 0, color);
+        else fontRenderer.draw(poseStack, text, x * sf, y * sf, color);
         poseStack.popPose();
         RenderSystem.enableBlend();
     }

@@ -16,6 +16,21 @@ public class MixinFluidType implements IMixinFluidType {
     @Shadow
     private int temperature;
 
+    @Mutable
+    @Final
+    @Shadow
+    private int density;
+
+    @Mutable
+    @Final
+    @Shadow
+    private int viscosity;
+
+    @Mutable
+    @Final
+    @Shadow
+    private int lightLevel;
+
     @Override
     public boolean isAcid() {
         return isAcid;
@@ -28,5 +43,17 @@ public class MixinFluidType implements IMixinFluidType {
 
     public void setTemperature(int temperature) {
         this.temperature = temperature;
+    }
+
+    public void setDensity(int density) {
+        this.density = density;
+    }
+
+    public void setViscosity(int viscosity) {
+        this.viscosity = viscosity;
+    }
+
+    public void setLightLevel(int lightLevel) {
+        this.lightLevel = lightLevel;
     }
 }

@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -32,8 +31,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.nemezanevem.gregtech.api.block.BuiltInRenderBlock;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
@@ -59,7 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.nemezanevem.gregtech.api.tileentity.MetaTileEntity.FULL_CUBE_COLLISION;
+import static net.nemezanevem.gregtech.api.blockentity.MetaTileEntity.FULL_CUBE_COLLISION;
 
 @ParametersAreNonnullByDefault
 @SuppressWarnings("deprecation")
@@ -71,34 +68,34 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
         super(BlockBehaviour.Properties.of(net.minecraft.world.level.material.Material.METAL).sound(SoundType.METAL).strength(2.0f, 3.0f).dynamicShape().isViewBlocking((state, level, pos) -> false));
     }
 
-    public static VoxelShape getSideBox(Direction side, float thickness) {
+    public static Cuboid6 getSideBox(@Nullable Direction side, float thickness) {
         float min = (1.0f - thickness) / 2.0f, max = min + thickness;
         float faceMin = 0f, faceMax = 1f;
 
         if (side == null)
-            return Shapes.box(min, min, min, max, max, max);
-        VoxelShape cuboid;
+            return new Cuboid6(min, min, min, max, max, max);
+        Cuboid6 cuboid;
         switch (side) {
             case WEST:
-                cuboid = Shapes.box(faceMin, min, min, min, max, max);
+                cuboid = new Cuboid6(faceMin, min, min, min, max, max);
                 break;
             case EAST:
-                cuboid = Shapes.box(max, min, min, faceMax, max, max);
+                cuboid = new Cuboid6(max, min, min, faceMax, max, max);
                 break;
             case NORTH:
-                cuboid = Shapes.box(min, min, faceMin, max, max, min);
+                cuboid = new Cuboid6(min, min, faceMin, max, max, min);
                 break;
             case SOUTH:
-                cuboid = Shapes.box(min, min, max, max, max, faceMax);
+                cuboid = new Cuboid6(min, min, max, max, max, faceMax);
                 break;
             case UP:
-                cuboid = Shapes.box(min, max, min, max, faceMax, max);
+                cuboid = new Cuboid6(min, max, min, max, faceMax, max);
                 break;
             case DOWN:
-                cuboid = Shapes.box(min, faceMin, min, max, min, max);
+                cuboid = new Cuboid6(min, faceMin, min, max, min, max);
                 break;
             default:
-                cuboid = Shapes.box(min, min, min, max, max, max);
+                cuboid = new Cuboid6(min, min, min, max, max, max);
         }
         return cuboid;
     }
@@ -106,16 +103,10 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     /**
      * @return the pipe cuboid for that side but with a offset one the facing with the cover to prevent z fighting.
      */
-    public static VoxelShape getCoverSideBox(Direction side, float thickness) {
-        VoxelShape cuboid = getSideBox(side, thickness);
-        cuboid.forAllBoxes(((pMinX, pMinY, pMinZ, pMaxX, pMaxY, pMaxZ) -> {
-            pMinX -= 0.001;
-            pMinY -= 0.001;
-            pMinZ -= 0.001;
-            pMaxX += 0.001;
-            pMaxY += 0.001;
-            pMaxZ += 0.001;
-        }))
+    public static Cuboid6 getCoverSideBox(Direction side, float thickness) {
+        Cuboid6 cuboid = getSideBox(side, thickness);
+        if(cuboid != null)
+            cuboid.setSide(side, side.getAxisDirection() == Direction.AxisDirection.NEGATIVE ? 0.001 : 0.999);
         return cuboid;
     }
 
@@ -360,7 +351,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             BlockFrame blockFrame = MetaBlocks.FRAMES.get(pipeTile.getFrameMaterial());
             return blockFrame.onBlockActivated(world, pos, state, entityPlayer, hand, hit.getDirection(), (float) hit.getLocation().x, (float) hit.getLocation().y, (float) hit.getLocation().z);
         }
-        return false;
+        return InteractionResult.PASS;
     }
 
     /**
@@ -441,18 +432,18 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public void addCollisionBoxToList(@Nonnull BlockState state, @Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull AxisAlignedBB entityBox, @Nonnull List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
+    public void addCollisionBoxToList(@Nonnull BlockState state, @Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull AABB entityBox, @Nonnull List<AABB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
         // This iterator causes some heap memory overhead
         IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
         if (pipeTile != null && pipeTile.getFrameMaterial() != null) {
-            AxisAlignedBB box = BlockFrame.COLLISION_BOX.offset(pos);
+            AABB box = BlockFrame.COLLISION_BOX.offset(pos);
             if (box.intersects(entityBox)) {
                 collidingBoxes.add(box);
             }
             return;
         }
         for (Cuboid6 axisAlignedBB : getCollisionBox(worldIn, pos, entityIn)) {
-            AxisAlignedBB offsetBox = axisAlignedBB.aabb().offset(pos);
+            AABB offsetBox = axisAlignedBB.aabb().offset(pos);
             if (offsetBox.intersects(entityBox)) collidingBoxes.add(offsetBox);
         }
     }
@@ -467,7 +458,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @SideOnly(Side.CLIENT)
-    public RayTraceResult getClientCollisionRayTrace(World worldIn, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
+    public RayTraceResult getClientCollisionRayTrace(Level worldIn, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
         return RayTracer.rayTraceCuboidsClosest(start, end, pos, getCollisionBox(worldIn, pos, Minecraft.getMinecraft().player));
     }
 
@@ -478,7 +469,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public boolean recolorBlock(World world, @Nonnull BlockPos pos, @Nonnull Direction side, @Nonnull EnumDyeColor color) {
+    public boolean recolorBlock(Level world, @Nonnull BlockPos pos, @Nonnull Direction side, @Nonnull EnumDyeColor color) {
         IPipeTile<PipeType, NodeDataType> tileEntityPipe = (IPipeTile<PipeType, NodeDataType>) world.getBlockEntity(pos);
         if (tileEntityPipe != null && tileEntityPipe.getPipeType() != null &&
                 tileEntityPipe.getPipeType().isPaintable() &&

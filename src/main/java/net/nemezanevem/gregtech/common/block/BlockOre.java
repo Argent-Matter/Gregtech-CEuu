@@ -18,10 +18,13 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
@@ -29,24 +32,32 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockGetter;
 import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.common.block.properties.PropertyStoneType;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class BlockOre extends Block implements IBlockOre, IModelSupplier {
 
-    public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GTValues.MODID, "ore_block"), "normal");
+    public static final ModelResourceLocation MODEL_LOCATION = new ModelResourceLocation(new ResourceLocation(GregTech.MODID, "ore_block"), "normal");
 
     public final PropertyStoneType STONE_TYPE;
     public final Material material;
 
     public BlockOre(Material material, StoneType[] allowedValues) {
-        super(net.minecraft.block.material.Material.ROCK);
+        super(Material.STONE);
         setTranslationKey("ore_block");
         setSoundType(SoundType.STONE);
         setHardness(3.0f);
@@ -59,12 +70,12 @@ public class BlockOre extends Block implements IBlockOre, IModelSupplier {
     @Nonnull
     @SuppressWarnings("deprecation")
     @Override
-    public net.minecraft.block.material.Material getMaterial(@Nonnull BlockState state) {
+    public net.minecraft.world.level.material.Material getMaterial(@Nonnull BlockState state) {
         String harvestTool = getHarvestTool(state);
         if (harvestTool != null && harvestTool.equals(ToolClasses.SHOVEL)) {
-            return net.minecraft.block.material.Material.GROUND;
+            return net.minecraft.world.level.material.Material.DIRT;
         }
-        return net.minecraft.block.material.Material.ROCK;
+        return net.minecraft.world.level.material.Material.STONE;
     }
 
     @Nonnull
@@ -86,7 +97,7 @@ public class BlockOre extends Block implements IBlockOre, IModelSupplier {
 
     @Nonnull
     @Override
-    public SoundType getSoundType(BlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nullable Entity entity) {
+    public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
         StoneType stoneType = state.getValue(STONE_TYPE);
         return stoneType.soundType;
     }
@@ -136,7 +147,7 @@ public class BlockOre extends Block implements IBlockOre, IModelSupplier {
     @Override
     @Nonnull
     @SuppressWarnings("deprecation")
-    public ItemStack getItem(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state) {
+    public ItemStack getItem(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state) {
         StoneType stoneType = state.getValue(STONE_TYPE);
         if (stoneType.shouldBeDroppedAsItem) {
             return super.getItem(worldIn, pos, state);
@@ -155,7 +166,7 @@ public class BlockOre extends Block implements IBlockOre, IModelSupplier {
     }
 
     @Override
-    public boolean isFireSource(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull Direction side) {
+    public boolean isFireSource(@Nonnull Level world, @Nonnull BlockPos pos, @Nonnull Direction side) {
         if (side != Direction.UP) return false;
 
         // if the stone type of the ore block is flammable, it will burn forever like Netherrack
@@ -187,13 +198,11 @@ public class BlockOre extends Block implements IBlockOre, IModelSupplier {
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public void onTextureStitch(TextureStitchEvent.Pre event) {
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void onModelRegister() {
+    public void onModelRegister(ModelEvent.RegisterAdditional event) {
         ModelLoader.setCustomStateMapper(this, new SimpleStateMapper(MODEL_LOCATION));
         for (BlockState state : this.getBlockState().getValidStates()) {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(this), this.getMetaFromState(state), MODEL_LOCATION);

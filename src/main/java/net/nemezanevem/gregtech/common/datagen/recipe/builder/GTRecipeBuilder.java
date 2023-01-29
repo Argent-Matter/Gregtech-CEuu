@@ -21,7 +21,6 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
@@ -30,7 +29,7 @@ import net.nemezanevem.gregtech.api.recipe.property.EmptyRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
 import net.nemezanevem.gregtech.api.recipe.property.RecipePropertyStorage;
-import net.nemezanevem.gregtech.api.util.ValidationResult;
+import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,66 +37,99 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
+public class GTRecipeBuilder<T extends GTRecipeBuilder<T, R>, R extends GTRecipe> implements RecipeBuilder {
 
     private final NonNullList<ExtendedIngredient> inputs = NonNullList.createWithCapacity(6);
     private final NonNullList<ItemStack> outputs = NonNullList.createWithCapacity(1);
     private final NonNullList<GTRecipe.ChanceEntry> chancedOutputs = NonNullList.create();
     private final NonNullList<FluidIngredient> fluidInputs = NonNullList.create();
-    private final NonNullList<FluidStack> fluidOutputs = NonNullList.create();
+    private NonNullList<FluidStack> fluidOutputs = NonNullList.create();
     private int duration, EUt;
     private boolean hidden = false;
     protected int parallel = 0;
 
-    private final IRecipePropertyStorage recipePropertyStorage = new RecipePropertyStorage();
+    private IRecipePropertyStorage recipePropertyStorage = new RecipePropertyStorage();
 
-    private GTRecipeType<T> type;
+    private GTRecipeType<R> type;
 
     private final Advancement.Builder advancement = Advancement.Builder.advancement();
 
-    public GTRecipeBuilder(GTRecipeType<T> type) {
+    public GTRecipeBuilder(GTRecipeType<R> type) {
         this.type = type;
+    }
+
+    public GTRecipeBuilder(R recipe, GTRecipeType<R> type) {
+        this.type = type;
+
+        this.inputs.addAll(recipe.getInputs());
+        this.outputs.addAll(Util.copyStackList(recipe.getOutputs()));
+        this.chancedOutputs.addAll(recipe.getChancedOutputs());
+        this.fluidInputs.addAll(recipe.getFluidInputs());
+        this.fluidOutputs = Util.copyFluidList(recipe.getFluidOutputs());
+        this.duration = recipe.getDuration();
+        this.EUt = recipe.getEUt();
+        this.hidden = recipe.isHidden();
+        this.recipePropertyStorage = recipe.getRecipePropertyStorage().copy();
+        if (this.recipePropertyStorage != null) {
+            this.recipePropertyStorage.freeze(false);
+        }
+    }
+
+    protected GTRecipeBuilder(GTRecipeBuilder<T, R> recipeBuilder) {
+        this.type = recipeBuilder.type;
+        this.inputs.addAll(recipeBuilder.getInputs());
+        this.outputs.addAll(Util.copyStackList(recipeBuilder.getOutputs()));
+        this.chancedOutputs.addAll(recipeBuilder.chancedOutputs);
+        this.fluidInputs.addAll(recipeBuilder.getFluidInputs());
+        this.fluidOutputs = Util.copyFluidList(recipeBuilder.getFluidOutputs());
+        this.duration = recipeBuilder.duration;
+        this.EUt = recipeBuilder.EUt;
+        this.hidden = recipeBuilder.hidden;
+        this.recipePropertyStorage = recipeBuilder.recipePropertyStorage;
+        if (this.recipePropertyStorage != null) {
+            this.recipePropertyStorage = this.recipePropertyStorage.copy();
+        }
     }
 
     /**
      * Adds an ingredient that can be any item in the given tag.
      */
-    public GTRecipeBuilder<T> input(TagKey<Item> pTag) {
+    public GTRecipeBuilder<T, R> input(TagKey<Item> pTag) {
         return this.input(pTag, true);
     }
 
     /**
      * Adds an ingredient that can be any item in the given tag.
      */
-    public GTRecipeBuilder<T> input(TagKey<Item> pTag, boolean isConsumable) {
+    public GTRecipeBuilder<T, R> input(TagKey<Item> pTag, boolean isConsumable) {
         return this.input(ExtendedIngredient.of(pTag, isConsumable));
     }
 
     /**
      * Adds an ingredient of the given item.
      */
-    public GTRecipeBuilder<T> inputMany(ItemLike pItem) {
+    public GTRecipeBuilder<T, R> inputMany(ItemLike pItem) {
         return this.input(pItem, true);
     }
 
     /**
      * Adds an ingredient of the given item.
      */
-    public GTRecipeBuilder<T> input(ItemLike pItem, boolean isConsumable) {
+    public GTRecipeBuilder<T, R> input(ItemLike pItem, boolean isConsumable) {
         return this.input(pItem, 1, isConsumable);
     }
 
     /**
      * Adds the given ingredient multiple times.
      */
-    public GTRecipeBuilder<T> input(ItemLike pItem, int pQuantity) {
+    public GTRecipeBuilder<T, R> input(ItemLike pItem, int pQuantity) {
         return this.input(pItem, pQuantity, true);
     }
 
     /**
      * Adds the given ingredient multiple times.
      */
-    public GTRecipeBuilder<T> input(ItemLike pItem, int pQuantity, boolean isConsumable) {
+    public GTRecipeBuilder<T, R> input(ItemLike pItem, int pQuantity, boolean isConsumable) {
         for(int i = 0; i < pQuantity; ++i) {
             this.input(ExtendedIngredient.of(new ItemStack(pItem), isConsumable));
         }
@@ -108,14 +140,14 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     /**
      * Adds the given ingredient multiple times.
      */
-    public GTRecipeBuilder<T> inputMany(ItemStack... pItems) {
+    public GTRecipeBuilder<T, R> inputMany(ItemStack... pItems) {
         return this.inputMany(true, pItems);
     }
 
     /**
      * Adds the given ingredient multiple times.
      */
-    public GTRecipeBuilder<T> inputMany(boolean isConsumable, ItemStack... pItems) {
+    public GTRecipeBuilder<T, R> inputMany(boolean isConsumable, ItemStack... pItems) {
         for (ItemStack pItem : pItems) {
             this.input(ExtendedIngredient.of(pItem, isConsumable));
         }
@@ -126,14 +158,14 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     /**
      * Adds an ingredient.
      */
-    public GTRecipeBuilder<T> input(ExtendedIngredient pIngredient) {
+    public GTRecipeBuilder<T, R> input(ExtendedIngredient pIngredient) {
         return this.input(pIngredient, 1);
     }
 
     /**
      * Adds an ingredient multiple times.
      */
-    public GTRecipeBuilder<T> input(ExtendedIngredient pIngredient, int pQuantity) {
+    public GTRecipeBuilder<T, R> input(ExtendedIngredient pIngredient, int pQuantity) {
         for(int i = 0; i < pQuantity; ++i) {
             this.inputs.add(pIngredient);
         }
@@ -144,35 +176,35 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     /**
      * adds a fluid ingredient.
      */
-    public GTRecipeBuilder<T> fluidInput(FluidStack input) {
+    public GTRecipeBuilder<T, R> fluidInput(FluidStack input) {
         return this.fluidInput(FluidIngredient.ofFluid(true, input));
     }
 
     /**
      * adds a fluid ingredient.
      */
-    public GTRecipeBuilder<T> fluidInput(FluidStack... input) {
+    public GTRecipeBuilder<T, R> fluidInput(FluidStack... input) {
         return this.fluidInput(FluidIngredient.ofFluid(true, input));
     }
 
     /**
      * adds a fluid ingredient.
      */
-    public GTRecipeBuilder<T> fluidInput(boolean isConsumable, FluidStack... input) {
+    public GTRecipeBuilder<T, R> fluidInput(boolean isConsumable, FluidStack... input) {
         return this.fluidInput(FluidIngredient.ofFluid(isConsumable, input));
     }
 
     /**
      * adds a fluid ingredient.
      */
-    public GTRecipeBuilder<T> fluidInput(FluidStack input, boolean isConsumable) {
+    public GTRecipeBuilder<T, R> fluidInput(FluidStack input, boolean isConsumable) {
         return this.fluidInput(FluidIngredient.ofFluid(isConsumable, input));
     }
 
     /**
      * adds a fluid ingredient.
      */
-    public GTRecipeBuilder<T> fluidInput(FluidIngredient input) {
+    public GTRecipeBuilder<T, R> fluidInput(FluidIngredient input) {
         this.fluidInputs.add(input);
         return this;
     }
@@ -180,14 +212,14 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     /**
      * adds many fluid ingredients.
      */
-    public GTRecipeBuilder<T> fluidInputMany(FluidStack... inputs) {
+    public GTRecipeBuilder<T, R> fluidInputMany(FluidStack... inputs) {
         return this.fluidInputMany(true, inputs);
     }
 
     /**
      * adds many fluid ingredients.
      */
-    public GTRecipeBuilder<T> fluidInputMany(boolean isConsumable, FluidStack... inputs) {
+    public GTRecipeBuilder<T, R> fluidInputMany(boolean isConsumable, FluidStack... inputs) {
         for(FluidStack input : inputs) {
             this.fluidInput(FluidIngredient.ofFluid(isConsumable, input));
         }
@@ -197,35 +229,35 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     /**
      * adds many fluid ingredients.
      */
-    public GTRecipeBuilder<T> fluidInputMany(FluidIngredient... input) {
+    public GTRecipeBuilder<T, R> fluidInputMany(FluidIngredient... input) {
         this.fluidInputs.addAll(Arrays.asList(input));
         return this;
     }
 
-    public GTRecipeBuilder<T> fluidInputs(Collection<FluidIngredient> fluidIngredients) {
+    public GTRecipeBuilder<T, R> fluidInputs(Collection<FluidIngredient> fluidIngredients) {
         this.fluidInputs.addAll(fluidIngredients);
         return this;
     }
 
-    public GTRecipeBuilder<T> output(Item output) {
+    public GTRecipeBuilder<T, R> output(Item output) {
         return this.output(output, 1);
     }
 
-    public GTRecipeBuilder<T> output(Item output, int count) {
+    public GTRecipeBuilder<T, R> output(Item output, int count) {
         return this.output(new ItemStack(output, count));
     }
 
-    public GTRecipeBuilder<T> output(ItemStack output) {
+    public GTRecipeBuilder<T, R> output(ItemStack output) {
         this.outputs.add(output);
         return this;
     }
 
-    public GTRecipeBuilder<T> outputs(ItemStack... output) {
+    public GTRecipeBuilder<T, R> outputs(ItemStack... output) {
         this.outputs.addAll(Arrays.asList(output));
         return this;
     }
 
-    public GTRecipeBuilder<T> outputs(Collection<ItemStack> outputs) {
+    public GTRecipeBuilder<T, R> outputs(Collection<ItemStack> outputs) {
         outputs = new ArrayList<>(outputs);
         outputs.removeIf(stack -> stack == null || stack.isEmpty());
         this.outputs.addAll(outputs);
@@ -233,27 +265,27 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     }
 
 
-    public GTRecipeBuilder<T> chancedOutput(GTRecipe.ChanceEntry output) {
+    public GTRecipeBuilder<T, R> chancedOutput(GTRecipe.ChanceEntry output) {
         this.chancedOutputs.add(output);
         return this;
     }
 
-    public GTRecipeBuilder<T> chancedOutput(ItemStack output, int chance, int boostPerTier) {
+    public GTRecipeBuilder<T, R> chancedOutput(ItemStack output, int chance, int boostPerTier) {
         this.chancedOutputs.add(new GTRecipe.ChanceEntry(output, chance, boostPerTier));
         return this;
     }
 
-    public GTRecipeBuilder<T> fluidOutput(FluidStack output) {
+    public GTRecipeBuilder<T, R> fluidOutput(FluidStack output) {
         this.fluidOutputs.add(output);
         return this;
     }
 
-    public GTRecipeBuilder<T> fluidOutput(FluidStack... output) {
+    public GTRecipeBuilder<T, R> fluidOutput(FluidStack... output) {
         this.fluidOutputs.addAll(Arrays.asList(output));
         return this;
     }
 
-    public GTRecipeBuilder<T> fluidOutputs(Collection<FluidStack> outputs) {
+    public GTRecipeBuilder<T, R> fluidOutputs(Collection<FluidStack> outputs) {
         outputs = new ArrayList<>(outputs);
         outputs.removeIf(FluidStack::isEmpty);
         this.fluidOutputs.addAll(outputs);
@@ -281,7 +313,7 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
         }
     }
 
-    public GTRecipeBuilder<T> inputIngredients(Collection<ExtendedIngredient> inputs) {
+    public GTRecipeBuilder<T, R> inputIngredients(Collection<ExtendedIngredient> inputs) {
         for (ExtendedIngredient input : inputs) {
             if (input.value instanceof ExtendedIngredient.CountValue countValue && countValue.getCount() < 0) {
                 GregTech.LOGGER.error("Count cannot be less than 0. Actual: {}.", countValue.getCount());
@@ -293,7 +325,7 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
         return this;
     }
 
-    public GTRecipeBuilder<T> unlockedBy(@Nonnull String pCriterionName, @Nonnull CriterionTriggerInstance pCriterionTrigger) {
+    public GTRecipeBuilder<T, R> unlockedBy(@Nonnull String pCriterionName, @Nonnull CriterionTriggerInstance pCriterionTrigger) {
         this.advancement.addCriterion(pCriterionName, pCriterionTrigger);
         return this;
     }
@@ -308,7 +340,7 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
      * @return the builder holding the multiplied recipe
      */
 
-    public GTRecipeBuilder<T> append(GTRecipe recipe, int multiplier, boolean multiplyDuration) {
+    public GTRecipeBuilder<T, R> append(GTRecipe recipe, int multiplier, boolean multiplyDuration) {
         for (Map.Entry<RecipeProperty<?>, Object> property : recipe.getPropertyValues()) {
             this.applyProperty(property.getKey(), property.getValue());
         }
@@ -400,6 +432,14 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
         return chancedOutputs;
     }
 
+    public List<FluidIngredient> getFluidInputs() {
+        return fluidInputs;
+    }
+
+    public List<FluidStack> getFluidOutputs() {
+        return fluidOutputs;
+    }
+
     /**
      * Similar to {@link GTRecipe#getAllItemOutputs()}, returns the recipe outputs and all chanced outputs
      *
@@ -420,6 +460,10 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
         return parallel;
     }
 
+    public int getEUt() {
+        return EUt;
+    }
+
     /**
      * note: unused, don't use!!!
      * @param pGroupName UNUSED
@@ -428,26 +472,26 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
     @Deprecated
     @Override
 
-    public GTRecipeBuilder<T> group(@Nullable String pGroupName) {
+    public GTRecipeBuilder<T, R> group(@Nullable String pGroupName) {
         return this;
     }
 
-    public GTRecipeBuilder<T> setHidden() {
+    public GTRecipeBuilder<T, R> setHidden() {
         this.hidden = true;
         return this;
     }
 
-    public GTRecipeBuilder<T> setEUt(int eUt) {
+    public GTRecipeBuilder<T, R> setEUt(int eUt) {
         this.EUt = eUt;
         return this;
     }
 
-    public GTRecipeBuilder<T> setBaseDuration(int duration) {
+    public GTRecipeBuilder<T, R> setBaseDuration(int duration) {
         this.duration = duration;
         return this;
     }
 
-    public GTRecipeBuilder<T> applyProperty(RecipeProperty<?> property, Object value) {
+    public GTRecipeBuilder<T, R> applyProperty(RecipeProperty<?> property, Object value) {
         this.recipePropertyStorage.store(property, value);
         return this;
     }
@@ -460,7 +504,7 @@ public class GTRecipeBuilder<T extends GTRecipe> implements RecipeBuilder {
         this.ensureValid(pRecipeId);
         this.advancement.parent(ROOT_RECIPE_ADVANCEMENT).addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(pRecipeId)).rewards(AdvancementRewards.Builder.recipe(pRecipeId)).requirements(RequirementsStrategy.OR);
         pFinishedRecipeConsumer.accept(
-                new Result<T>(this.type, pRecipeId,
+                new Result<>(this.type, pRecipeId,
                         this.inputs, this.outputs, this.chancedOutputs,
                         this.fluidInputs, this.fluidOutputs,
                         this.duration, this.EUt, this.hidden,

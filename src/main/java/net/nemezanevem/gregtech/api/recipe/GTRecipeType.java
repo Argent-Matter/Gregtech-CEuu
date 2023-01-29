@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.recipe;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.fluids.FluidStack;
@@ -11,7 +13,7 @@ import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import java.util.List;
 
-public interface GTRecipeType<R extends GTRecipe> extends RecipeType<R> {
+public interface GTRecipeType<T extends GTRecipeBuilder<T, R>, R extends GTRecipe> extends RecipeType<R> {
 
     IChanceFunction DEFAULT_CHANCE_FUNCTION = (baseChance, boostPerTier, baseTier, machineTier) -> {
         int tierDiff = machineTier - baseTier;
@@ -28,7 +30,21 @@ public interface GTRecipeType<R extends GTRecipe> extends RecipeType<R> {
 
     ResourceLocation getId();
 
-    GTRecipeBuilder<R> recipeBuilder();
+    GTRecipeBuilder<T, R> recipeBuilder();
+
+    int getMinInputs();
+    int getMaxInputs();
+    int getMinOutputs();
+    int getMaxOutputs();
+    int getMinFluidInputs();
+    int getMaxFluidInputs();
+    int getMinFluidOutputs();
+    int getMaxFluidOutputs();
+
+    SoundEvent getSound();
+
+    Component getLocalizedName();
+    String getUnlocalizedName();
 
     @FunctionalInterface
     interface IChanceFunction {

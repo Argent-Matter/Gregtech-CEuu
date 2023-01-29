@@ -1,13 +1,13 @@
 package net.nemezanevem.gregtech.common.pipelike.fluidpipe.net;
 
-import gregtech.common.pipelike.fluidpipe.tile.TileEntityFluidPipe;
-import gregtech.common.pipelike.fluidpipe.tile.TileEntityFluidPipeTickable;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
-import net.minecraftforge.fluids.capability.FluidTankPropertiesWrapper;
+import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.tile.TileEntityFluidPipe;
+import net.nemezanevem.gregtech.common.pipelike.fluidpipe.tile.TileEntityFluidPipeTickable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -18,24 +18,12 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
 
     private final TileEntityFluidPipeTickable pipe;
     private final FluidTank[] tanks;
-    private IFluidTankProperties[] properties;
     private final Direction facing;
 
     public PipeTankList(TileEntityFluidPipe pipe, Direction facing, FluidTank... fluidTanks) {
         this.tanks = fluidTanks;
         this.pipe = (TileEntityFluidPipeTickable) pipe;
         this.facing = facing;
-    }
-
-    @Override
-    public IFluidTankProperties[] getTankProperties() {
-        if (properties == null) {
-            properties = new IFluidTankProperties[tanks.length];
-            for (int i = 0; i < tanks.length; i++) {
-                properties[i] = new FluidTankPropertiesWrapper(tanks[i]);
-            }
-        }
-        return properties;
     }
 
     private int findChannel(FluidStack stack) {
@@ -53,9 +41,9 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
     }
 
     @Override
-    public int fill(FluidStack resource, boolean doFill) {
+    public int fill(FluidStack resource, FluidAction doFill) {
         int channel;
-        if (pipe.isFaceBlocked(facing) || resource == null || resource.amount <= 0 || (channel = findChannel(resource)) < 0)
+        if (pipe.isFaceBlocked(facing) || resource == null || resource.getAmount() <= 0 || (channel = findChannel(resource)) < 0)
             return 0;
 
         return fill(resource, doFill, channel);
@@ -65,26 +53,26 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
         return tanks.length * pipe.getCapacityPerTank();
     }
 
-    private int fill(FluidStack resource, boolean doFill, int channel) {
+    private int fill(FluidStack resource, FluidAction doFill, int channel) {
         if (channel >= tanks.length) return 0;
         FluidTank tank = tanks[channel];
         FluidStack currentFluid = tank.getFluid();
 
-        if (currentFluid == null || currentFluid.amount <= 0) {
+        if (currentFluid == null || currentFluid.getAmount() <= 0) {
             FluidStack newFluid = resource.copy();
-            newFluid.amount = Math.min(pipe.getCapacityPerTank(), newFluid.amount);
-            if (doFill) {
+            newFluid.setAmount(Math.min(pipe.getCapacityPerTank(), newFluid.getAmount()));
+            if (doFill == FluidAction.EXECUTE) {
                 tank.setFluid(newFluid);
                 pipe.receivedFrom(facing);
                 pipe.checkAndDestroy(newFluid);
             }
-            return newFluid.amount;
+            return newFluid.getAmount();
         }
         if (currentFluid.isFluidEqual(resource)) {
-            int toAdd = Math.min(tank.getCapacity() - currentFluid.amount, resource.amount);
+            int toAdd = Math.min(tank.getCapacity() - currentFluid.getAmount(), resource.getAmount());
             if (toAdd > 0) {
-                if (doFill) {
-                    currentFluid.amount += toAdd;
+                if (doFill == FluidAction.EXECUTE) {
+                    currentFluid.setAmount(currentFluid.getAmount() + toAdd);
                     pipe.receivedFrom(facing);
                     pipe.checkAndDestroy(currentFluid);
                 }
@@ -97,7 +85,7 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
 
     @Nullable
     @Override
-    public FluidStack drain(int maxDrain, boolean doDrain) {
+    public FluidStack drain(int maxDrain, FluidAction doDrain) {
         if (maxDrain <= 0) return null;
         for (FluidTank tank : tanks) {
             FluidStack drained = tank.drain(maxDrain, doDrain);
@@ -108,8 +96,8 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
 
     @Nullable
     @Override
-    public FluidStack drain(FluidStack fluidStack, boolean doDrain) {
-        if (fluidStack == null || fluidStack.amount <= 0) return null;
+    public FluidStack drain(FluidStack fluidStack, FluidAction doDrain) {
+        if (fluidStack == null || fluidStack.getAmount() <= 0) return null;
         fluidStack = fluidStack.copy();
         for (FluidTank tank : tanks) {
             FluidStack drained = tank.drain(fluidStack, doDrain);
@@ -122,5 +110,25 @@ public class PipeTankList implements IFluidHandler, Iterable<FluidTank> {
     @Nonnull
     public Iterator<FluidTank> iterator() {
         return Arrays.stream(tanks).iterator();
+    }
+
+    @Override
+    public int getTanks() {
+        return tanks.length;
+    }
+
+    @Override
+    public @NotNull FluidStack getFluidInTank(int tank) {
+        return tanks[tank].getFluid();
+    }
+
+    @Override
+    public int getTankCapacity(int tank) {
+        return tanks[tank].getCapacity();
+    }
+
+    @Override
+    public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        return tanks[tank].isFluidValid(stack);
     }
 }

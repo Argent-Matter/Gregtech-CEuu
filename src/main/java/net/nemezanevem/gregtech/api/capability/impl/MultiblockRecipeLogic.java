@@ -1,16 +1,23 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.minecraft.util.Tuple;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeMultiblockController;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import static net.nemezanevem.gregtech.api.recipe.logic.OverclockingLogic.standardOverclockingLogic;
 
 public class MultiblockRecipeLogic extends AbstractRecipeLogic {
 
@@ -76,7 +83,7 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
     // Used for distinct bus recipe checking
     protected List<IItemHandlerModifiable> getInputBuses() {
         RecipeTypeMultiblockController controller = (RecipeTypeMultiblockController) metaTileEntity;
-        return controller.getAbilities(MultiblockAbility.IMPORT_ITEMS);
+        return controller.getAbilities(GtMultiblockAbilities.IMPORT_ITEMS.get());
     }
 
     @Override
@@ -249,12 +256,12 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
         Tuple<Integer, Double> maintenanceValues = getMaintenanceValues();
 
         int[] overclock = null;
-        if (maintenanceValues.getSecond() != 1.0)
+        if (maintenanceValues.getB() != 1.0)
 
             overclock = standardOverclockingLogic(
                     Math.abs(recipeEUt),
                     maxVoltage,
-                    (int) Math.round(recipeDuration * maintenanceValues.getSecond()),
+                    (int) Math.round(recipeDuration * maintenanceValues.getB()),
                     amountOC,
                     getOverclockingDurationDivisor(),
                     getOverclockingVoltageMultiplier()
@@ -270,8 +277,8 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
                     getOverclockingVoltageMultiplier()
             );
 
-        if (maintenanceValues.getFirst() > 0)
-            overclock[1] = (int) (overclock[1] * (1 + 0.1 * maintenanceValues.getFirst()));
+        if (maintenanceValues.getA() > 0)
+            overclock[1] = (int) (overclock[1] * (1 + 0.1 * maintenanceValues.getA()));
 
         return overclock;
     }
@@ -293,7 +300,7 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
     }
 
     @Override
-    protected boolean checkRecipe(@Nonnull Recipe recipe) {
+    protected boolean checkRecipe(@Nonnull GTRecipe recipe) {
         RecipeTypeMultiblockController controller = (RecipeTypeMultiblockController) metaTileEntity;
         if (controller.checkRecipe(recipe, false)) {
             controller.checkRecipe(recipe, true);
@@ -356,7 +363,7 @@ public class MultiblockRecipeLogic extends AbstractRecipeLogic {
 
     @Nullable
     @Override
-    public RecipeType<?> getRecipeType() {
+    public GTRecipeType<?> getRecipeType() {
         // if the multiblock has more than one RecipeType, return the currently selected one
         if (metaTileEntity instanceof IMultipleRecipeTypes)
                 return ((IMultipleRecipeTypes) metaTileEntity).getCurrentRecipeType();

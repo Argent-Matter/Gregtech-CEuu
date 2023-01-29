@@ -1,7 +1,6 @@
 package net.nemezanevem.gregtech.api.recipe;
 
 import codechicken.lib.util.ServerUtils;
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap;
@@ -46,9 +45,9 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
+public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecipe> implements GTRecipeType<T, R> {
 
-    public static final Map<GTRecipeType<?>, GTRecipeBuilder<?>> TYPES_TO_BUILDERS = new HashMap<>();
+    public static final Map<GTRecipeType<?, ?>, GTRecipeBuilder<?, ?>> TYPES_TO_BUILDERS = new HashMap<>();
 
     private static final Comparator<GTRecipe> RECIPE_DURATION_THEN_EU = Comparator.comparingInt(GTRecipe::getDuration)
             .thenComparingInt(GTRecipe::getEUt)
@@ -63,7 +62,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
     public IChanceFunction chanceFunction = DEFAULT_CHANCE_FUNCTION;
 
-    public final ResourceLocation id;
+    public ResourceLocation id;
 
     private final R recipeBuilderSample;
     private final int minInputs, maxInputs;
@@ -79,15 +78,13 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
     private final Branch lookup = new Branch();
     private boolean hastaggedInputs = false;
-    private boolean hasNBTMatcherInputs = false;
     private static final WeakHashMap<AbstractMapIngredient, WeakReference<AbstractMapIngredient>> ingredientRoot = new WeakHashMap<>();
     private final WeakHashMap<AbstractMapIngredient, WeakReference<AbstractMapIngredient>> fluidIngredientRoot = new WeakHashMap<>();
 
     protected SoundEvent sound;
-    private GTRecipeType<?> smallRecipeMap;
+    private GTRecipeType<?, ?> smallRecipeType;
 
     public GTRecipeTypeImpl(ResourceLocation id, int minInputs, int maxInputs, int minOutputs, int maxOutputs, int minFluidInputs, int maxFluidInputs, int minFluidOutputs, int maxFluidOutputs, R defaultRecipe, boolean isHidden) {
-        this.id = id;
         this.slotOverlays = new Byte2ObjectOpenHashMap<>();
         this.progressBarTexture = GuiTextures.PROGRESS_BAR_ARROW;
         this.moveType = ProgressWidget.MoveType.HORIZONTAL;
@@ -105,17 +102,10 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
         this.isHidden = isHidden;
         defaultRecipe.setType(this);
         this.recipeBuilderSample = defaultRecipe;
-        GtRecipeTypes.toRegister.put(this.id, this);
+
+        this.id = id;
 
         TYPES_TO_BUILDERS.put(this, new GTRecipeBuilder<>(this));
-    }
-
-    public static List<GTRecipeType<?>> getRecipeMaps() {
-        return ImmutableList.copyOf(GtRecipeTypes.toRegister.values());
-    }
-
-    public static GTRecipeType<?> getById(ResourceLocation id) {
-        return GtRecipeTypes.toRegister.get(id);
     }
 
     public IChanceFunction getChanceFunction() {
@@ -135,38 +125,38 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
         }
     }
 
-    public GTRecipeType<R> setProgressBar(TextureArea progressBar, ProgressWidget.MoveType moveType) {
+    public GTRecipeType<T, R> setProgressBar(TextureArea progressBar, ProgressWidget.MoveType moveType) {
         this.progressBarTexture = progressBar;
         this.moveType = moveType;
         return this;
     }
 
-    public GTRecipeType<R> setSlotOverlay(boolean isOutput, boolean isFluid, TextureArea slotOverlay) {
+    public GTRecipeType<T, R> setSlotOverlay(boolean isOutput, boolean isFluid, TextureArea slotOverlay) {
         return this.setSlotOverlay(isOutput, isFluid, false, slotOverlay).setSlotOverlay(isOutput, isFluid, true, slotOverlay);
     }
 
-    public GTRecipeTypeImpl<R> setSlotOverlay(boolean isOutput, boolean isFluid, boolean isLast, TextureArea slotOverlay) {
+    public GTRecipeTypeImpl<T, R> setSlotOverlay(boolean isOutput, boolean isFluid, boolean isLast, TextureArea slotOverlay) {
         this.slotOverlays.put((byte) ((isOutput ? 2 : 0) + (isFluid ? 1 : 0) + (isLast ? 4 : 0)), slotOverlay);
         return this;
     }
 
-    public GTRecipeType<R> setSound(SoundEvent sound) {
+    public GTRecipeType<T, R> setSound(SoundEvent sound) {
         this.sound = sound;
         return this;
     }
 
-    public GTRecipeType<R> setChanceFunction(IChanceFunction function) {
+    public GTRecipeType<T, R> setChanceFunction(IChanceFunction function) {
         chanceFunction = function;
         return this;
     }
 
-    public GTRecipeType<R> setSmallRecipeMap(GTRecipeType<?> recipeMap) {
-        this.smallRecipeMap = recipeMap;
+    public GTRecipeType<T, R> setSmallRecipeType(GTRecipeType<?, ?> recipeMap) {
+        this.smallRecipeType = recipeMap;
         return this;
     }
 
-    public GTRecipeType<?> getSmallRecipeMap() {
-        return smallRecipeMap;
+    public GTRecipeType<?, ?> getSmallRecipeType() {
+        return smallRecipeType;
     }
 
     private static boolean foundInvalidRecipe = false;
@@ -232,6 +222,11 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     @Nullable
     public R findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity) {
         return this.findRecipe(voltage, Util.itemHandlerToList(inputs), Util.fluidHandlerToList(fluidInputs), outputFluidTankCapacity);
+    }
+
+    @Override
+    public ResourceLocation getId() {
+        return null;
     }
 
     /**
@@ -688,7 +683,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
                             return v;
                         } else {
                             if (ConfigHolder.misc.debug || GTValues.isDeobfEnvironment()) {
-                                GregTech.LOGGER.warn("Recipe duplicate or conflict found in RecipeMap {} and was not added. See next lines for details", this.id);
+                                GregTech.LOGGER.warn("Recipe duplicate or conflict found in RecipeType {} and was not added. See next lines for details", this.id);
 
                                 GregTech.LOGGER.warn("Attempted to add Recipe: {}", recipe.toString());
 
@@ -812,7 +807,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
         }
     }
 
-    protected GTRecipeType<R> setSpecialTexture(int x, int y, int width, int height, TextureArea area) {
+    protected GTRecipeType<T, R> setSpecialTexture(int x, int y, int width, int height, TextureArea area) {
         this.specialTexturePosition = new int[]{x, y, width, height};
         this.specialTexture = area;
         return this;
@@ -835,14 +830,13 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
     public Component getLocalizedName() {
         return Component.translatable("recipemap." + id.getPath() + ".name");
     }
-
-    public ResourceLocation getId() {
-        return id;
+    public String getUnlocalizedName() {
+        return "recipemap." + id.getPath() + ".name";
     }
 
     @Override
-    public GTRecipeBuilder<R> recipeBuilder() {
-        return (GTRecipeBuilder<R>) TYPES_TO_BUILDERS.get(this);
+    public GTRecipeBuilder<T, R> recipeBuilder() {
+        return (GTRecipeBuilder<T, R>) TYPES_TO_BUILDERS.get(this);
     }
 
     /**
@@ -927,7 +921,7 @@ public class GTRecipeTypeImpl<R extends GTRecipe> implements GTRecipeType<R> {
 
     @Override
     public String toString() {
-        return "RecipeMap{" + "unlocalizedName='" + id + '\'' + '}';
+        return "RecipeType{" + "unlocalizedName='" + id + '\'' + '}';
     }
 
 }

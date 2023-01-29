@@ -1,9 +1,9 @@
 package net.nemezanevem.gregtech.common.pipelike.fluidpipe.net;
 
-import gregtech.api.pipenet.PipeNet;
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.unification.material.properties.FluidPipeProperty;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.nemezanevem.gregtech.api.pipenet.PipeNet;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.FluidPipeProperty;
 
 public class FluidPipeNet extends PipeNet<FluidPipeProperty> {
 
@@ -12,25 +12,25 @@ public class FluidPipeNet extends PipeNet<FluidPipeProperty> {
     }
 
     @Override
-    protected void writeNodeData(FluidPipeProperty nodeData, NBTTagCompound tagCompound) {
-        tagCompound.setInteger("max_temperature", nodeData.getMaxFluidTemperature());
-        tagCompound.setInteger("throughput", nodeData.getThroughput());
-        tagCompound.setBoolean("gas_proof", nodeData.isGasProof());
-        tagCompound.setBoolean("acid_proof", nodeData.isAcidProof());
-        tagCompound.setBoolean("cryo_proof", nodeData.isCryoProof());
-        tagCompound.setBoolean("plasma_proof", nodeData.isPlasmaProof());
-        tagCompound.setInteger("channels", nodeData.getTanks());
+    protected void writeNodeData(FluidPipeProperty nodeData, CompoundTag tagCompound) {
+        tagCompound.putInt("max_temperature", nodeData.getMaxFluidTemperature());
+        tagCompound.putInt("throughput", nodeData.getThroughput());
+        tagCompound.putBoolean("gas_proof", nodeData.isGasProof());
+        tagCompound.putBoolean("acid_proof", nodeData.isAcidProof());
+        tagCompound.putBoolean("cryo_proof", nodeData.isCryoProof());
+        tagCompound.putBoolean("plasma_proof", nodeData.isPlasmaProof());
+        tagCompound.putInt("channels", nodeData.getTanks());
     }
 
     @Override
-    protected FluidPipeProperty readNodeData(NBTTagCompound tagCompound) {
-        int maxTemperature = tagCompound.getInteger("max_temperature");
-        int throughput = tagCompound.getInteger("throughput");
+    protected FluidPipeProperty readNodeData(CompoundTag tagCompound) {
+        int maxTemperature = tagCompound.getInt("max_temperature");
+        int throughput = tagCompound.getInt("throughput");
         boolean gasProof = tagCompound.getBoolean("gas_proof");
         boolean acidProof = tagCompound.getBoolean("acid_proof");
         boolean cryoProof = tagCompound.getBoolean("cryo_proof");
         boolean plasmaProof = tagCompound.getBoolean("plasma_proof");
-        int channels = tagCompound.getInteger("channels");
+        int channels = tagCompound.getInt("channels");
         return new FluidPipeProperty(maxTemperature, throughput, gasProof, acidProof, cryoProof, plasmaProof, channels);
     }
 }

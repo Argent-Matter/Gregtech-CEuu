@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.util;
 
-import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,10 +9,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -41,14 +38,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.machine.MachineBlockItem;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialFlagRegistry;
 import net.nemezanevem.gregtech.api.registry.material.info.MaterialIconSetRegistry;
 import net.nemezanevem.gregtech.api.registry.material.properties.MaterialPropertyRegistry;
 import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.material.properties.PropertyKey;
@@ -277,10 +274,10 @@ public class Util {
         return NonNullList.of(ItemStack.EMPTY, stacks);
     }
 
-    public static List<FluidStack> copyFluidList(List<FluidStack> fluidStacks) {
+    public static NonNullList<FluidStack> copyFluidList(List<FluidStack> fluidStacks) {
         FluidStack[] stacks = new FluidStack[fluidStacks.size()];
         for (int i = 0; i < fluidStacks.size(); i++) stacks[i] = fluidStacks.get(i).copy();
-        return Lists.newArrayList(stacks);
+        return NonNullList.of(FluidStack.EMPTY, stacks);
     }
 
     public static ItemStack copy(ItemStack... stacks) {
@@ -331,6 +328,11 @@ public class Util {
         return start <= value && value <= end;
     }
 
+    public static int getExplosionPower(long voltage) {
+        return getTierByVoltage(voltage) + 1;
+    }
+
+
     /**
      * @param values to find the mean of
      * @return the mean value
@@ -351,6 +353,21 @@ public class Util {
      */
     public static double getMeanTickTime(@Nonnull Level world) {
         return mean(Objects.requireNonNull(world.getServer()).tickTimes) * 1.0E-6D;
+    }
+
+    public static <M> M selectItemInList(int index, M replacement, List<M> list, Class<M> minClass) {
+        if (list.isEmpty())
+            return replacement;
+
+        M maybeResult;
+        if (list.size() <= index) {
+            maybeResult = list.get(list.size() - 1);
+        } else if (index < 0) {
+            maybeResult = list.get(0);
+        } else maybeResult = list.get(index);
+
+        if (maybeResult != null) return maybeResult;
+        return replacement;
     }
 
 

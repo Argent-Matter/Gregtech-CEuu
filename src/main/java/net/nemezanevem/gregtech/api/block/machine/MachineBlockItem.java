@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.block.machine;
 
-import cpw.mods.util.Lazy;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -10,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -18,7 +16,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -29,14 +26,13 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
-import net.nemezanevem.gregtech.api.tileentity.ITieredMetaTileEntity;
-import net.nemezanevem.gregtech.api.tileentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.ITieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.List;
 
 public class MachineBlockItem extends BlockItem {

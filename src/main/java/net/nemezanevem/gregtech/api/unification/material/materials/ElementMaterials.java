@@ -742,7 +742,7 @@ public class ElementMaterials {
                 .build());
 
         Tin = MATERIALS.register("tin", () -> new Material.Builder("tin")
-                .ingot(1).fluid(GtFluidTypes.LIQUID.get(), true).ore()
+                .ingot(1).fluid(GtFluidTypes.LIQUID, true).ore()
                 .color(0xDCDCDC)
                 .flags(EXT2_METAL, MORTAR_GRINDABLE.get(), GENERATE_ROTOR.get(), GENERATE_SPRING.get(), GENERATE_SPRING_SMALL.get(), GENERATE_FINE_WIRE.get())
                 .element(GtElements.Sn)

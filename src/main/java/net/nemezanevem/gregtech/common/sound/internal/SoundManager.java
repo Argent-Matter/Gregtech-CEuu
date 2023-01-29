@@ -9,10 +9,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.sound.ISoundManager;
 
 public class SoundManager implements ISoundManager {
@@ -39,7 +37,7 @@ public class SoundManager implements ISoundManager {
 
     @Override
     public SoundEvent registerSound(String soundName) {
-        String containerId = GregTech.moduleManager.getLoadedContainer().getID();
+        String containerId = GregTech.spriteRegistryHelper.getLoadedContainer().getID();
         if (containerId == null) containerId = GregTech.MODID;
         return registerSound(containerId, soundName);
     }

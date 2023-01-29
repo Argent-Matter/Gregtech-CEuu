@@ -2,7 +2,6 @@ package net.nemezanevem.gregtech.common.block;
 
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -16,7 +15,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -33,14 +31,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.block.DelayedStateBlock;
 import net.nemezanevem.gregtech.api.unification.material.Material;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 import net.nemezanevem.gregtech.common.block.properties.PropertyMaterial;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

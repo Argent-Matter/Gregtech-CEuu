@@ -38,7 +38,7 @@ public class BlockSteamCasing extends VariantBlock<BlockSteamCasing.SteamCasingT
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<String> tooltip, ITooltipFlag advanced) {
+    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, ITooltipFlag advanced) {
         int ordinal = getState(stack).ordinal();
         if (ordinal < 2) {
             tooltip.add(Component.translatable("tile.steam_casing.bronze.tooltip"));
