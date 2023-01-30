@@ -52,7 +52,7 @@ public class MetaTileEntityPumpHatch extends MetaTileEntityMultiblockPart implem
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         if (data.hasKey("ContainerInventory")) {
-            MetaTileEntityQuantumTank.legacyTankItemHandlerNBTReading(this, data.getCompoundTag("ContainerInventory"), 0, 1);
+            MetaTileEntityQuantumTank.legacyTankItemHandlerNBTReading(this, data.getCompound("ContainerInventory"), 0, 1);
         }
     }
 
@@ -127,7 +127,7 @@ public class MetaTileEntityPumpHatch extends MetaTileEntityMultiblockPart implem
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity", FLUID_TANK_SIZE));
     }
 

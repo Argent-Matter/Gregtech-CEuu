@@ -191,7 +191,7 @@ public class MetaTileEntityLargeMiner extends MultiblockWithDisplayBase implemen
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, @Nonnull List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, @Nonnull List<Component> tooltip, boolean advanced) {
         int workingRadius = this.minerLogic.getCurrentRadius() / CHUNK_LENGTH;
         tooltip.add(Component.translatable("gregtech.machine.miner.multi.modes"));
         tooltip.add(Component.translatable("gregtech.machine.miner.multi.production"));
@@ -282,16 +282,16 @@ public class MetaTileEntityLargeMiner extends MultiblockWithDisplayBase implemen
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("chunkMode", new NBTTagInt(chunkMode ? 1 : 0));
-        data.setTag("silkTouch", new NBTTagInt(silkTouch ? 1 : 0));
+        data.put("chunkMode", new NBTTagInt(chunkMode ? 1 : 0));
+        data.put("silkTouch", new NBTTagInt(silkTouch ? 1 : 0));
         return this.minerLogic.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        chunkMode = data.getInteger("chunkMode") != 0;
-        silkTouch = data.getInteger("silkTouch") != 0;
+        chunkMode = data.getInt("chunkMode") != 0;
+        silkTouch = data.getInt("silkTouch") != 0;
         this.minerLogic.readFromNBT(data);
     }
 

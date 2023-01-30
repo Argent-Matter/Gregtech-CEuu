@@ -18,6 +18,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.DeferredRegister;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.item.armor.ArmorMetaItem;
 import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.metaitem.StandardMetaItem;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
@@ -30,7 +32,6 @@ import net.nemezanevem.gregtech.api.unification.material.properties.properties.D
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
 import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
 
 import javax.annotation.Nonnull;
@@ -128,7 +129,7 @@ public class PrefixItem extends StandardMetaItem {
     }
 
     @Override
-    public int getItemStackLimit(@Nonnull ItemStack stack) {
+    public int getMaxStackSize(@Nonnull ItemStack stack) {
         if (prefix == null) return 64;
         return prefix.maxStackSize;
     }
@@ -145,8 +146,8 @@ public class PrefixItem extends StandardMetaItem {
 
                 float heatDamage = prefix.heatDamageFunction.apply(material.getBlastTemperature());
                 ItemStack armor = living.getItemBySlot(EquipmentSlot.CHEST);
-                if (!armor.isEmpty() && armor.getItem() instanceof ArmorMetaItem<?>) {
-                    heatDamage *= ((ArmorMetaItem<?>) armor.getItem()).getItem(armor).getArmorLogic().getHeatResistance();
+                if (!armor.isEmpty() && armor.getItem() instanceof ArmorMetaItem) {
+                    heatDamage *= ((ArmorMetaItem) armor.getItem()).getArmorLogic().getHeatResistance();
                 }
 
                 if (heatDamage > 0.0) {
@@ -157,12 +158,9 @@ public class PrefixItem extends StandardMetaItem {
             }
         }
     }
-
     @Override
-    public void addTooltip(@Nonnull ItemStack itemStack, @Nullable Level worldIn, @Nonnull List<Component> lines, @Nonnull TooltipFlag tooltipFlag) {
-        super.addInformation(itemStack, worldIn, lines, tooltipFlag);
-        int damage = itemStack.getItemDamage();
-        Material material = GregTechAPI.MATERIAL_REGISTRY.getObjectById(damage);
+    public void appendHoverText(@Nonnull ItemStack itemStack, @Nullable Level worldIn, @Nonnull List<Component> lines, @Nonnull TooltipFlag tooltipFlag) {
+        super.appendHoverText(itemStack, worldIn, lines, tooltipFlag);
         if (prefix == null || material == null) return;
         addMaterialTooltip(lines, itemStack);
     }
@@ -192,8 +190,10 @@ public class PrefixItem extends StandardMetaItem {
         return false;
     }
 
+
+
     @Override
-    public boolean onEntityItemUpdate(ItemEntity itemEntity) {
+    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity itemEntity) {
         if (itemEntity.getLevel().isClientSide)
             return false;
 
@@ -213,7 +213,7 @@ public class PrefixItem extends StandardMetaItem {
         itemEntity.getLevel().setBlock(blockPos,
                 blockState.setValue(LayeredCauldronBlock.LEVEL, waterLevel - 1), 3);
         Item replacementStack = TagUnifier.get(purifyMap.get(prefix), material);
-        itemEntity.setItem(new ItemStack(replacementStack, itemEntity.getItem().getCount()));
+        itemEntity.setItem(new ItemStack(replacementStack, stack.getCount()));
         return false;
     }
 

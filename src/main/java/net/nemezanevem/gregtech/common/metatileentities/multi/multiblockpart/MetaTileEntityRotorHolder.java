@@ -71,7 +71,7 @@ public class MetaTileEntityRotorHolder extends MetaTileEntityMultiblockPart impl
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.machine.rotor_holder.tooltip1"));
         tooltip.add(Component.translatable("gregtech.machine.rotor_holder.tooltip2"));
@@ -285,18 +285,18 @@ public class MetaTileEntityRotorHolder extends MetaTileEntityMultiblockPart impl
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("inventory", inventory.serializeNBT());
-        data.setInteger("currentSpeed", currentSpeed);
-        data.setBoolean("Spinning", isRotorSpinning);
-        data.setBoolean("FrontFree", frontFaceFree);
+        data.put("inventory", inventory.serializeNBT());
+        data.putInt("currentSpeed", currentSpeed);
+        data.putBoolean("Spinning", isRotorSpinning);
+        data.putBoolean("FrontFree", frontFaceFree);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.inventory.deserializeNBT(data.getCompoundTag("inventory"));
-        this.currentSpeed = data.getInteger("currentSpeed");
+        this.inventory.deserializeNBT(data.getCompound("inventory"));
+        this.currentSpeed = data.getInt("currentSpeed");
         this.isRotorSpinning = data.getBoolean("Spinning");
         this.frontFaceFree = data.getBoolean("FrontFree");
     }

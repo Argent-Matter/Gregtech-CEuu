@@ -1,4 +1,4 @@
-package net.nemezanevem.gregtech.client.util;
+package net.nemezanevem.gregtech.api.util;
 
 import java.io.Serial;
 import java.util.HashMap;
@@ -21,12 +21,6 @@ public class SizedHashMap<K, V> extends HashMap<K, V> {
         } else {
             super.put(key, value);
             return value;
-        }
-    }
-
-    public void fill(V value) {
-        for (int i = 0; i < max; ++i) {
-            this.put
         }
     }
 }

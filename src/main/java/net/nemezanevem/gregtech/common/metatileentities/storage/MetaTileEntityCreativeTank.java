@@ -119,18 +119,18 @@ public class MetaTileEntityCreativeTank extends MetaTileEntityQuantumTank {
     public CompoundTag writeToNBT(CompoundTag data) {
         CompoundTag fluidTankTag = new CompoundTag();
         fluidTank.writeToNBT(fluidTankTag);
-        data.setTag("FluidTank", fluidTankTag);
-        data.setInteger("mBPerCycle", mBPerCycle);
-        data.setInteger("TicksPerCycle", ticksPerCycle);
-        data.setBoolean("Active", active);
+        data.put("FluidTank", fluidTankTag);
+        data.putInt("mBPerCycle", mBPerCycle);
+        data.putInt("TicksPerCycle", ticksPerCycle);
+        data.putBoolean("Active", active);
         return super.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
-        fluidTank.readFromNBT(data.getCompoundTag("FluidTank"));
-        mBPerCycle = data.getInteger("mBPerCycle");
-        ticksPerCycle = data.getInteger("TicksPerCycle");
+        fluidTank.readFromNBT(data.getCompound("FluidTank"));
+        mBPerCycle = data.getInt("mBPerCycle");
+        ticksPerCycle = data.getInt("TicksPerCycle");
         active = data.getBoolean("Active");
         super.readFromNBT(data);
     }
@@ -144,9 +144,9 @@ public class MetaTileEntityCreativeTank extends MetaTileEntityQuantumTank {
     public void initFromItemStackData(CompoundTag itemStack) {
         super.initFromItemStackData(itemStack);
         if (itemStack.hasKey(FLUID_NBT_KEY, Constants.NBT.TAG_COMPOUND)) {
-            fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompoundTag(FLUID_NBT_KEY)));
-            mBPerCycle = itemStack.getInteger("mBPerCycle");
-            ticksPerCycle = itemStack.getInteger("ticksPerCycle");
+            fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompound(FLUID_NBT_KEY)));
+            mBPerCycle = itemStack.getInt("mBPerCycle");
+            ticksPerCycle = itemStack.getInt("ticksPerCycle");
         }
     }
 
@@ -155,14 +155,14 @@ public class MetaTileEntityCreativeTank extends MetaTileEntityQuantumTank {
         super.writeItemStackData(itemStack);
         FluidStack stack = fluidTank.getFluid();
         if (stack != null && stack.amount > 0) {
-            itemStack.setTag(FLUID_NBT_KEY, stack.writeToNBT(new CompoundTag()));
-            itemStack.setInteger("mBPerCycle", mBPerCycle);
-            itemStack.setInteger("ticksPerCycle", ticksPerCycle);
+            itemStack.put(FLUID_NBT_KEY, stack.writeToNBT(new CompoundTag()));
+            itemStack.putInt("mBPerCycle", mBPerCycle);
+            itemStack.putInt("ticksPerCycle", ticksPerCycle);
         }
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.creative_tooltip.1")
                 + TooltipHelper.RAINBOW + Component.translatable("gregtech.creative_tooltip.2")
                 + Component.translatable("gregtech.creative_tooltip.3"));

@@ -344,14 +344,14 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
 
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
-        data.setInteger("screenH", this.height);
+        data.putInt("screenH", this.height);
         return super.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.height = data.hasKey("screenH") ? data.getInteger("screenH") : this.height;
+        this.height = data.hasKey("screenH") ? data.getInt("screenH") : this.height;
         reinitializeStructurePattern();
     }
 
@@ -590,7 +590,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.multiblock.central_monitor.tooltip.1"));
         tooltip.add(Component.translatable("gregtech.multiblock.central_monitor.tooltip.2", MAX_WIDTH, MAX_HEIGHT));

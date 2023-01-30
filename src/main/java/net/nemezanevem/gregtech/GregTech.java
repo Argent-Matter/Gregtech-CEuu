@@ -82,7 +82,7 @@ public class GregTech {
     public static final CreativeModeTab TAB_GREGTECH_MATERIALS = new CreativeModeTab("tab.gregtech.matarials") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(MetaItems.CT_OREDICT_ITEM);
+            return new ItemStack(MetaItems.CONVEYOR_MODULE_LuV.get());
         }
     };
 

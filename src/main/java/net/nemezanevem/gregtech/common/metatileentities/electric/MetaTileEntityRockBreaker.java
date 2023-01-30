@@ -80,7 +80,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("hasValidFluids", hasValidFluids);
+        data.putBoolean("hasValidFluids", hasValidFluids);
         return data;
     }
 

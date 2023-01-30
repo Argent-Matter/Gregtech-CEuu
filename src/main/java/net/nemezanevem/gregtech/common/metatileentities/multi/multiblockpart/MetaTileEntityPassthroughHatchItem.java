@@ -110,14 +110,14 @@ public class MetaTileEntityPassthroughHatchItem extends MetaTileEntityMultiblock
     @Override
     public CompoundTag writeToNBT(CompoundTag tag) {
         super.writeToNBT(tag);
-        tag.setTag("Inventory", itemStackHandler.serializeNBT());
+        tag.put("Inventory", itemStackHandler.serializeNBT());
         return tag;
     }
 
     @Override
     public void readFromNBT(CompoundTag tag) {
         super.readFromNBT(tag);
-        this.itemStackHandler.deserializeNBT(tag.getCompoundTag("Inventory"));
+        this.itemStackHandler.deserializeNBT(tag.getCompound("Inventory"));
     }
 
     @Override
@@ -131,7 +131,7 @@ public class MetaTileEntityPassthroughHatchItem extends MetaTileEntityMultiblock
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.universal.tooltip.item_storage_capacity", getInventorySize()));
         tooltip.add(Component.translatable("gregtech.universal.enabled"));

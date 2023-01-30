@@ -128,19 +128,19 @@ public class MetaTileEntityCreativeChest extends MetaTileEntityQuantumChest {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("ItemStackHandler", handler.serializeNBT());
-        data.setInteger("ItemsPerCycle", itemsPerCycle);
-        data.setInteger("TicksPerCycle", ticksPerCycle);
-        data.setBoolean("Active", active);
+        data.put("ItemStackHandler", handler.serializeNBT());
+        data.putInt("ItemsPerCycle", itemsPerCycle);
+        data.putInt("TicksPerCycle", ticksPerCycle);
+        data.putBoolean("Active", active);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        handler.deserializeNBT(data.getCompoundTag("ItemStackHandler"));
-        itemsPerCycle = data.getInteger("ItemsPerCycle");
-        ticksPerCycle = data.getInteger("TicksPerCycle");
+        handler.deserializeNBT(data.getCompound("ItemStackHandler"));
+        itemsPerCycle = data.getInt("ItemsPerCycle");
+        ticksPerCycle = data.getInt("TicksPerCycle");
         active = data.getBoolean("Active");
     }
 
@@ -155,8 +155,8 @@ public class MetaTileEntityCreativeChest extends MetaTileEntityQuantumChest {
         if (itemStack.hasKey("id", 8)) { // Check if ItemStack wrote to this
             this.handler.setStackInSlot(0, new ItemStack(itemStack));
         }
-        itemsPerCycle = itemStack.getInteger("mBPerCycle");
-        ticksPerCycle = itemStack.getInteger("ticksPerCycle");
+        itemsPerCycle = itemStack.getInt("mBPerCycle");
+        ticksPerCycle = itemStack.getInt("ticksPerCycle");
     }
 
     @Override
@@ -166,12 +166,12 @@ public class MetaTileEntityCreativeChest extends MetaTileEntityQuantumChest {
         if (!stack.isEmpty()) {
             stack.writeToNBT(tag);
         }
-        tag.setInteger("mBPerCycle", itemsPerCycle);
-        tag.setInteger("ticksPerCycle", ticksPerCycle);
+        tag.putInt("mBPerCycle", itemsPerCycle);
+        tag.putInt("ticksPerCycle", ticksPerCycle);
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.creative_tooltip.1")
                 + TooltipHelper.RAINBOW + Component.translatable("gregtech.creative_tooltip.2")
                 + Component.translatable("gregtech.creative_tooltip.3"));

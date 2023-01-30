@@ -289,14 +289,14 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setInteger("PumpHeadDepth", pumpHeadY);
+        data.putInt("PumpHeadDepth", pumpHeadY);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.pumpHeadY = data.getInteger("PumpHeadDepth");
+        this.pumpHeadY = data.getInt("PumpHeadDepth");
     }
 
     @Override

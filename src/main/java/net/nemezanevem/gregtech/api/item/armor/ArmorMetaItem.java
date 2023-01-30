@@ -35,7 +35,6 @@ public class ArmorMetaItem extends MetaItem implements IArmorItem, IEnchantabili
         super(new ArmorExtendedProperties(""));
     }
 
-    @SuppressWarnings("unchecked")
     protected ArmorExtendedProperties constructMetaValueItem(String unlocalizedName) {
         return new ArmorExtendedProperties(unlocalizedName);
     }
@@ -56,6 +55,10 @@ public class ArmorMetaItem extends MetaItem implements IArmorItem, IEnchantabili
         IArmorLogic armorLogic = getArmorLogic(stack);
         multimap.putAll(armorLogic.getAttributeModifiers(slot, stack));
         return multimap;
+    }
+
+    public static ArmorExtendedProperties builder(String unlocalizedName) {
+        return new ArmorExtendedProperties(unlocalizedName);
     }
 
     @Override

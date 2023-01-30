@@ -94,7 +94,7 @@ public class ConverterTrait extends MTETrait {
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.setLong("StoredEU", storedEU);
-        nbt.setBoolean("feToEu", feToEu);
+        nbt.putBoolean("feToEu", feToEu);
         return nbt;
     }
 

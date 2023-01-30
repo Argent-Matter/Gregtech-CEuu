@@ -203,16 +203,16 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setInteger("CollectRange", itemSuckingRange);
-        data.setTag("Filter", itemFilter.serializeNBT());
+        data.putInt("CollectRange", itemSuckingRange);
+        data.put("Filter", itemFilter.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.itemSuckingRange = data.getInteger("CollectRange");
-        this.itemFilter.deserializeNBT(data.getCompoundTag("Filter"));
+        this.itemSuckingRange = data.getInt("CollectRange");
+        this.itemFilter.deserializeNBT(data.getCompound("Filter"));
     }
 
     protected void setItemSuckingRange(int itemSuckingRange) {

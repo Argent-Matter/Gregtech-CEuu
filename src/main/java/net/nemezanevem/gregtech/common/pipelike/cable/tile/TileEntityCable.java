@@ -313,14 +313,14 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     @Override
     public CompoundTag writeToNBT(@Nonnull CompoundTag compound) {
         super.writeToNBT(compound);
-        compound.setInteger("Temp", temperature);
+        compound.putInt("Temp", temperature);
         return compound;
     }
 
     @Override
     public void readFromNBT(@Nonnull CompoundTag compound) {
         super.readFromNBT(compound);
-        temperature = compound.getInteger("Temp");
+        temperature = compound.getInt("Temp");
     }
 
     @Nonnull

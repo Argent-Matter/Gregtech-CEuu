@@ -1,25 +1,24 @@
 package net.nemezanevem.gregtech.common.metatileentities.steam.boiler;
 
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.IFuelInfo;
-import gregtech.api.capability.IFuelable;
-import gregtech.api.capability.impl.ItemFuelInfo;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.ProgressWidget.MoveType;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.recipes.ModHandler;
-import gregtech.client.renderer.texture.Textures;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntityFurnace;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.IFuelInfo;
+import net.nemezanevem.gregtech.api.capability.IFuelable;
+import net.nemezanevem.gregtech.api.capability.impl.ItemFuelInfo;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -49,7 +48,7 @@ public class SteamCoalBoiler extends SteamBoiler implements IFuelable {
         if(FluidUtil.getFluidHandler(fuelInSlot) != null) {
             return;
         }
-        int burnTime = TileEntityFurnace.getItemBurnTime(fuelInSlot);
+        int burnTime = ForgeHooks.getBurnTime(fuelInSlot, null);
         if (burnTime <= 0) return;
         importItems.extractItem(0, 1, false);
         ItemStack remainderAsh = ModHandler.getBurningFuelRemainder(fuelInSlot);

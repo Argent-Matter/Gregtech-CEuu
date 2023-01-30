@@ -56,7 +56,7 @@ public class MetaTileEntitySteamHatch extends MetaTileEntityMultiblockPart imple
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         if (data.hasKey("ContainerInventory")) {
-            MetaTileEntityQuantumTank.legacyTankItemHandlerNBTReading(this, data.getCompoundTag("ContainerInventory"), 0, 1);
+            MetaTileEntityQuantumTank.legacyTankItemHandlerNBTReading(this, data.getCompound("ContainerInventory"), 0, 1);
         }
     }
 
@@ -143,7 +143,7 @@ public class MetaTileEntitySteamHatch extends MetaTileEntityMultiblockPart imple
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity", INVENTORY_SIZE));
         tooltip.add(Component.translatable("gregtech.machine.steam.steam_hatch.tooltip"));
     }

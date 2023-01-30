@@ -231,20 +231,20 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compound = super.serializeNBT();
-        compound.setInteger("Heat", currentHeat);
-        compound.setInteger("ExcessFuel", excessFuel);
-        compound.setInteger("ExcessWater", excessWater);
-        compound.setInteger("ExcessProjectedEU", excessProjectedEU);
+        compound.putInt("Heat", currentHeat);
+        compound.putInt("ExcessFuel", excessFuel);
+        compound.putInt("ExcessWater", excessWater);
+        compound.putInt("ExcessProjectedEU", excessProjectedEU);
         return compound;
     }
 
     @Override
     public void deserializeNBT(@Nonnull CompoundTag compound) {
         super.deserializeNBT(compound);
-        this.currentHeat = compound.getInteger("Heat");
-        this.excessFuel = compound.getInteger("ExcessFuel");
-        this.excessWater = compound.getInteger("ExcessWater");
-        this.excessProjectedEU = compound.getInteger("ExcessProjectedEU");
+        this.currentHeat = compound.getInt("Heat");
+        this.excessFuel = compound.getInt("ExcessFuel");
+        this.excessWater = compound.getInt("ExcessWater");
+        this.excessProjectedEU = compound.getInt("ExcessProjectedEU");
     }
 
     @Override

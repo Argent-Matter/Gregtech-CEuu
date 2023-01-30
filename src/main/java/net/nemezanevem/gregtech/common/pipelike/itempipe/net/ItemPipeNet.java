@@ -58,13 +58,13 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperty> {
 
     @Override
     protected void writeNodeData(ItemPipeProperty nodeData, CompoundTag tagCompound) {
-        tagCompound.setInteger("Resistance", nodeData.getPriority());
+        tagCompound.putInt("Resistance", nodeData.getPriority());
         tagCompound.setFloat("Rate", nodeData.getTransferRate());
     }
 
     @Override
     protected ItemPipeProperty readNodeData(CompoundTag tagCompound) {
-        return new ItemPipeProperty(tagCompound.getInteger("Range"), tagCompound.getFloat("Rate"));
+        return new ItemPipeProperty(tagCompound.getInt("Range"), tagCompound.getFloat("Rate"));
     }
 
     public static class Inventory {

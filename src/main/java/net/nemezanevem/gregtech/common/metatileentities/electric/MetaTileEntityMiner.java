@@ -226,14 +226,14 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("ChargerInventory", chargerInventory.serializeNBT());
+        data.put("ChargerInventory", chargerInventory.serializeNBT());
         return this.minerLogic.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.chargerInventory.deserializeNBT(data.getCompoundTag("ChargerInventory"));
+        this.chargerInventory.deserializeNBT(data.getCompound("ChargerInventory"));
         this.minerLogic.readFromNBT(data);
     }
 

@@ -312,7 +312,7 @@ public class PipeCoverableImplementation implements ICoverable {
                 coversList.add(tagCompound);
             }
         }
-        data.setTag("Covers", coversList);
+        data.put("Covers", coversList);
     }
 
     public void readFromNBT(CompoundTag data) {

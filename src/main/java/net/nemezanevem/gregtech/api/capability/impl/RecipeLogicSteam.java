@@ -245,16 +245,16 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compound = super.serializeNBT();
-        compound.setInteger("VentingSide", getVentingSide().getIndex());
-        compound.setBoolean("NeedsVenting", needsVenting);
-        compound.setBoolean("VentingStuck", ventingStuck);
+        compound.putInt("VentingSide", getVentingSide().getIndex());
+        compound.putBoolean("NeedsVenting", needsVenting);
+        compound.putBoolean("VentingStuck", ventingStuck);
         return compound;
     }
 
     @Override
     public void deserializeNBT(@Nonnull CompoundTag compound) {
         super.deserializeNBT(compound);
-        this.ventingSide = Direction.values()[compound.getInteger("VentingSide")];
+        this.ventingSide = Direction.values()[compound.getInt("VentingSide")];
         this.needsVenting = compound.getBoolean("NeedsVenting");
         this.ventingStuck = compound.getBoolean("VentingStuck");
     }

@@ -20,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -42,6 +43,7 @@ import net.nemezanevem.gregtech.api.capability.IThermalFluidHandlerItemStack;
 import net.nemezanevem.gregtech.api.capability.impl.CombinedCapabilityProvider;
 import net.nemezanevem.gregtech.api.capability.impl.ElectricItem;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.item.armor.ArmorMetaItem;
 import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
 import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
 import net.nemezanevem.gregtech.api.item.materialitem.PrefixItem;
@@ -51,6 +53,7 @@ import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.util.ToolChargeBarRenderer;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 
@@ -107,6 +110,8 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         META_ITEMS.add(this);
     }
 
+
+
     @SubscribeEvent
     public static void registerItemColors(final RegisterColorHandlersEvent.Item event) {
         for(var item : getMetaItems()) {
@@ -125,6 +130,9 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
 
     public static ResourceLocation createItemModelPath(MetaItem metaValueItem, String postfix) {
         return new ResourceLocation(GregTech.MODID, formatModelPath(metaValueItem) + postfix);
+    }
+    public void registerItemColor(RegisterColorHandlersEvent.Item event) {
+        event.register(this::getColorForItemStack, this);
     }
 
     protected static String formatModelPath(MetaItem metaValueItem) {
@@ -148,8 +156,8 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         return (int) (metaValueItem.getDurabilityManager().getDurabilityForDisplay(stack) * this.getMaxDamage(stack));
     }
 
-    public static ExtendedProperties builder(String unlocalizedName) {
-        return new ExtendedProperties(unlocalizedName);
+    public static ExtendedProperties<ExtendedProperties<?>> builder(String unlocalizedName) {
+        return new ExtendedProperties<>(unlocalizedName);
     }
 
     @Override
@@ -669,7 +677,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
         return itemStack;
     }
 
-    public static class ExtendedProperties extends Item.Properties {
+    public static class ExtendedProperties<T extends ExtendedProperties<?>> extends Item.Properties {
         public final String unlocalizedName;
         private IItemNameProvider nameProvider;
         private IItemContainerItemProvider containerItemProvider;
@@ -730,68 +738,113 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
             return item;
         }
 
-        public ExtendedProperties setMaterialInfo(ItemMaterialInfo materialInfo) {
+        public T setMaterialInfo(ItemMaterialInfo materialInfo) {
             if (materialInfo == null) {
                 throw new IllegalArgumentException("Cannot add null ItemMaterialInfo.");
             }
             infosToAdd.add(materialInfo);
             //TagUnifier.registerTag(getMetaItem(), materialInfo);
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties setUnificationData(TagPrefix prefix, @Nullable Material material) {
+        public T setUnificationData(TagPrefix prefix, @Nullable Material material) {
             if (prefix == null) {
                 throw new IllegalArgumentException("Cannot add null TagPrefix.");
             }
             unificationData.put(prefix, material);
             //TagUnifier.registerTag(getMetaItem(), prefix, material);
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties addTag(String tagName) {
+        public T addTag(String tagName) {
             if (tagName == null) {
                 throw new IllegalArgumentException("Cannot add null OreDictName.");
             }
             tagsToAdd.add(tagName);
             //GtItemRegistry.addTagToItem(this.getMetaItem(), tagName);
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties setVisible(boolean isVisible) {
+        public T setVisible(boolean isVisible) {
             this.visible = isVisible;
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties setInvisible() {
+        public T setInvisible() {
             this.visible = false;
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties setBurnValue(int burnValue) {
+        public T setBurnValue(int burnValue) {
             if (burnValue <= 0) {
                 throw new IllegalArgumentException("Cannot set Burn Value to negative or zero number.");
             }
             this.burnValue = burnValue;
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties disableModelLoading() {
+        public T disableModelLoading() {
             this.modelAmount = 0;
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties setModelAmount(int modelAmount) {
+        public T setModelAmount(int modelAmount) {
             if (modelAmount <= 0) {
                 throw new IllegalArgumentException("Cannot set amount of models to negative or zero number.");
             }
             this.modelAmount = modelAmount;
-            return this;
+            return (T) this;
         }
 
-        public ExtendedProperties addComponents(IItemComponent... stats) {
+        public T addComponents(IItemComponent... stats) {
             //addItemComponentsInternal(stats);
             components.addAll(Arrays.asList(stats));
-            return this;
+            return (T) this;
+        }
+
+        public T food(FoodProperties pFood) {
+            super.food(pFood);
+            return (T) this;
+        }
+
+        public T stacksTo(int pMaxStackSize) {
+            super.stacksTo(pMaxStackSize);
+            return (T) this;
+        }
+
+        public T defaultDurability(int pMaxDamage) {
+            super.defaultDurability(pMaxDamage);
+            return (T) this;
+        }
+
+        public T durability(int pMaxDamage) {
+            super.durability(pMaxDamage);
+            return (T) this;
+        }
+
+        public T craftRemainder(Item pCraftingRemainingItem) {
+            super.craftRemainder(pCraftingRemainingItem);
+            return (T) this;
+        }
+
+        public T tab(CreativeModeTab pCategory) {
+            super.tab(pCategory);
+            return (T) this;
+        }
+
+        public T rarity(Rarity pRarity) {
+            super.rarity(pRarity);
+            return (T) this;
+        }
+
+        public T fireResistant() {
+            super.fireResistant();
+            return (T) this;
+        }
+
+        public T setNoRepair() {
+            super.setNoRepair();
+            return (T) this;
         }
 
         protected void addItemComponentsInternal(MetaItem item, List<IItemComponent> stats) {

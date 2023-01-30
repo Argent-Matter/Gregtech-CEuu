@@ -122,7 +122,7 @@ public class MetaTileEntityLargeChemicalReactor extends RecipeTypeMultiblockCont
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(TooltipHelper.RAINBOW_SLOW + Component.translatable("gregtech.machine.perfect_oc"));
     }

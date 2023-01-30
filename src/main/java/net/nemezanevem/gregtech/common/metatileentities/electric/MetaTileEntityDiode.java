@@ -64,14 +64,14 @@ public class MetaTileEntityDiode extends MetaTileEntityMultiblockPart implements
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setInteger(AMP_NBT_KEY, amps);
+        data.putInt(AMP_NBT_KEY, amps);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.amps = data.getInteger(AMP_NBT_KEY);
+        this.amps = data.getInt(AMP_NBT_KEY);
         reinitializeEnergyContainer();
     }
 
@@ -152,7 +152,7 @@ public class MetaTileEntityDiode extends MetaTileEntityMultiblockPart implements
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, @Nonnull List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, @Nonnull List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.machine.diode.tooltip_general"));
         tooltip.add(Component.translatable("gregtech.machine.diode.tooltip_starts_at"));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.voltage_in_out", energyContainer.getInputVoltage(), GTValues.VNF[getTier()]));

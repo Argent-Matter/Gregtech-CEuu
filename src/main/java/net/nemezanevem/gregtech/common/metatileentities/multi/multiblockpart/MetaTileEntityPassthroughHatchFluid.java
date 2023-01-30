@@ -113,14 +113,14 @@ public class MetaTileEntityPassthroughHatchFluid extends MetaTileEntityMultibloc
     @Override
     public CompoundTag writeToNBT(CompoundTag tag) {
         super.writeToNBT(tag);
-        tag.setTag("FluidInventory", fluidTankList.serializeNBT());
+        tag.put("FluidInventory", fluidTankList.serializeNBT());
         return tag;
     }
 
     @Override
     public void readFromNBT(CompoundTag tag) {
         super.readFromNBT(tag);
-        this.fluidTankList.deserializeNBT(tag.getCompoundTag("FluidInventory"));
+        this.fluidTankList.deserializeNBT(tag.getCompound("FluidInventory"));
     }
 
     @Override
@@ -129,7 +129,7 @@ public class MetaTileEntityPassthroughHatchFluid extends MetaTileEntityMultibloc
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity_mult", getTier() + 1, TANK_SIZE));
         tooltip.add(Component.translatable("gregtech.universal.enabled"));

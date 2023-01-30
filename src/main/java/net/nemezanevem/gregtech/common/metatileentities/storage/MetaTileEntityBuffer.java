@@ -104,16 +104,16 @@ public class MetaTileEntityBuffer extends MetaTileEntity implements ITieredMetaT
     @Override
     public CompoundTag writeToNBT(CompoundTag tag) {
         super.writeToNBT(tag);
-        tag.setTag("Inventory", itemStackHandler.serializeNBT());
-        tag.setTag("FluidInventory", fluidTankList.serializeNBT());
+        tag.put("Inventory", itemStackHandler.serializeNBT());
+        tag.put("FluidInventory", fluidTankList.serializeNBT());
         return tag;
     }
 
     @Override
     public void readFromNBT(CompoundTag tag) {
         super.readFromNBT(tag);
-        this.itemStackHandler.deserializeNBT(tag.getCompoundTag("Inventory"));
-        this.fluidTankList.deserializeNBT(tag.getCompoundTag("FluidInventory"));
+        this.itemStackHandler.deserializeNBT(tag.getCompound("Inventory"));
+        this.fluidTankList.deserializeNBT(tag.getCompound("FluidInventory"));
     }
 
     @Override
@@ -127,7 +127,7 @@ public class MetaTileEntityBuffer extends MetaTileEntity implements ITieredMetaT
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.machine.buffer.tooltip"));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.item_storage_capacity", (int) Math.pow(tier + 2, 2)));

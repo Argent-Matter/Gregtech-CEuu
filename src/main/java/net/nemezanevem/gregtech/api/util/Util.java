@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -11,6 +12,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -19,6 +21,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,6 +38,7 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.IReverseTag;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.machine.MachineBlockItem;
@@ -461,6 +465,23 @@ public class Util {
     public static MetaTileEntity getMetaTileEntity(ItemStack stack) {
         if (!(stack.getItem() instanceof MachineBlockItem blockItem)) return null;
         return MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN.get().getValue(Util.getId(blockItem));
+    }
+
+    public static boolean canSeeSunClearly(Level world, BlockPos blockPos) {
+        if (!world.canSeeSky(blockPos.above())) {
+            return false;
+        }
+        Holder<Biome> biome = world.getBiome(blockPos.above());
+        if (world.isRaining()) {
+            if (biome.value().getPrecipitation() != Biome.Precipitation.NONE) {
+                return false;
+            }
+        }
+        Optional<IReverseTag<Biome>> biomeTags = ForgeRegistries.BIOMES.tags().getReverseTag(biome.value());
+        if (biomeTags.isPresent() && biomeTags.get().containsTag(BiomeTags.IS_END)) {
+            return false;
+        }
+        return world.isDay();
     }
 
     public static boolean arePosEqual(BlockPos pos1, BlockPos pos2) {

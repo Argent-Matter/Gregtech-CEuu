@@ -160,7 +160,7 @@ public class SteamMiner extends MetaTileEntity implements IMiner, IControllable,
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.universal.tooltip.uses_per_tick_steam", energyPerTick)
                 + TextFormatting.GRAY + ", " + Component.translatable("gregtech.machine.miner.per_block", this.minerLogic.getSpeed() / 20));
         int maxArea = getWorkingArea(minerLogic.getMaximumRadius());
@@ -203,8 +203,8 @@ public class SteamMiner extends MetaTileEntity implements IMiner, IControllable,
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("needsVenting", this.needsVenting);
-        data.setBoolean("ventingStuck", this.ventingStuck);
+        data.putBoolean("needsVenting", this.needsVenting);
+        data.putBoolean("ventingStuck", this.ventingStuck);
         return this.minerLogic.writeToNBT(data);
     }
 

@@ -226,8 +226,8 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("TileMode", tileMode);
-        data.setBoolean("isPaused", isPaused);
+        data.putBoolean("TileMode", tileMode);
+        data.putBoolean("isPaused", isPaused);
         return data;
     }
 

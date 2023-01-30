@@ -200,7 +200,7 @@ public class MetaTileEntityFluidHatch extends MetaTileEntityMultiblockNotifiable
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         if (this.isExportHatch)
             tooltip.add(Component.translatable("gregtech.machine.fluid_hatch.export.tooltip"));
         else

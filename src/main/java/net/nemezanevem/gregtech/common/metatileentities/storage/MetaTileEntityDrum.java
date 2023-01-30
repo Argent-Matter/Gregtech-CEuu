@@ -143,7 +143,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
     public void initFromItemStackData(CompoundTag itemStack) {
         super.initFromItemStackData(itemStack);
         if (itemStack.hasKey(FluidHandlerItemStack.FLUID_NBT_KEY, Constants.NBT.TAG_COMPOUND)) {
-            FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(itemStack.getCompoundTag(FluidHandlerItemStack.FLUID_NBT_KEY));
+            FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(itemStack.getCompound(FluidHandlerItemStack.FLUID_NBT_KEY));
             fluidTank.setFluid(fluidStack);
         }
     }
@@ -155,7 +155,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
         if (fluidStack != null && fluidStack.amount > 0) {
             CompoundTag tagCompound = new CompoundTag();
             fluidStack.writeToNBT(tagCompound);
-            itemStack.setTag(FluidHandlerItemStack.FLUID_NBT_KEY, tagCompound);
+            itemStack.put(FluidHandlerItemStack.FLUID_NBT_KEY, tagCompound);
         }
     }
 
@@ -289,7 +289,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity", tankSize));
         if (TooltipHelper.isShiftDown()) {
             if (ModHandler.isMaterialWood(material)) {
@@ -312,7 +312,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
 
         CompoundTag tagCompound = stack.getTagCompound();
         if (tagCompound != null && tagCompound.hasKey("Fluid", Constants.NBT.TAG_COMPOUND)) {
-            FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(tagCompound.getCompoundTag("Fluid"));
+            FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(tagCompound.getCompound("Fluid"));
             if (fluidStack == null) return;
             tooltip.add(Component.translatable("gregtech.machine.fluid_tank.fluid", fluidStack.amount, Component.translatable(fluidStack.getUnlocalizedName())));
         }
@@ -332,15 +332,15 @@ public class MetaTileEntityDrum extends MetaTileEntity {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("FluidInventory", ((FluidTank) fluidInventory).writeToNBT(new CompoundTag()));
-        data.setBoolean("AutoOutput", isAutoOutput);
+        data.put("FluidInventory", ((FluidTank) fluidInventory).writeToNBT(new CompoundTag()));
+        data.putBoolean("AutoOutput", isAutoOutput);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        ((FluidTank) this.fluidInventory).readFromNBT(data.getCompoundTag("FluidInventory"));
+        ((FluidTank) this.fluidInventory).readFromNBT(data.getCompound("FluidInventory"));
         isAutoOutput = data.getBoolean("AutoOutput");
     }
 

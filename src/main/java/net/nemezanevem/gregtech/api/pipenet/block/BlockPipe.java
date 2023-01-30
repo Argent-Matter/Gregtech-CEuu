@@ -29,12 +29,14 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.nemezanevem.gregtech.api.block.BuiltInRenderBlock;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.cover.IFacadeCover;
+import net.nemezanevem.gregtech.api.item.toolitem.IGTTool;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
 import net.nemezanevem.gregtech.api.pipenet.PipeNet;
@@ -47,6 +49,7 @@ import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.block.BlockFrame;
 import net.nemezanevem.gregtech.common.block.FrameItemBlock;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 import net.nemezanevem.gregtech.integration.IFacadeWrapper;
 
 import javax.annotation.Nonnull;
@@ -162,7 +165,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             if (placer instanceof Player) {
                 ItemStack offhand = placer.getOffhandItem();
                 for (int i = 0; i < DyeColor.values().length; i++) {
-                    if (ItemStack.matches(offhand, MetaItems.SPRAY_CAN_DYES[i].getStackForm())) {
+                    if (offhand.is(MetaItems.SPRAY_CAN_DYES[i])) {
                         MetaItems.SPRAY_CAN_DYES[i].getBehaviours().get(0).onItemUse((Player) placer, worldIn, pos, InteractionHand.OFF_HAND, Direction.UP, 0, 0 , 0);
                         break;
                     }

@@ -147,7 +147,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.multiblock.large_boiler.rate_tooltip", (int) (boilerType.steamPerTick() * 20 * boilerType.runtimeBoost(20) / 20.0)));
         tooltip.add(Component.translatable("gregtech.multiblock.large_boiler.heat_time_tooltip", boilerType.getTicksToBoiling() / 20));
@@ -196,13 +196,13 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
 
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
-        data.setInteger("ThrottlePercentage", throttlePercentage);
+        data.putInt("ThrottlePercentage", throttlePercentage);
         return super.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
-        throttlePercentage = data.getInteger("ThrottlePercentage");
+        throttlePercentage = data.getInt("ThrottlePercentage");
         super.readFromNBT(data);
     }
 

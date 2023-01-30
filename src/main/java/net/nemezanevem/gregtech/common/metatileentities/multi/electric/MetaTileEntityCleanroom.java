@@ -462,7 +462,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.machine.cleanroom.tooltip.1"));
         tooltip.add(Component.translatable("gregtech.machine.cleanroom.tooltip.2"));
         tooltip.add(Component.translatable("gregtech.machine.cleanroom.tooltip.3"));
@@ -604,24 +604,24 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     @Override
     public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
         super.writeToNBT(data);
-        data.setInteger("lDist", this.lDist);
-        data.setInteger("rDist", this.rDist);
-        data.setInteger("bDist", this.fDist);
-        data.setInteger("fDist", this.bDist);
-        data.setInteger("hDist", this.hDist);
-        data.setInteger("cleanAmount", this.cleanAmount);
+        data.putInt("lDist", this.lDist);
+        data.putInt("rDist", this.rDist);
+        data.putInt("bDist", this.fDist);
+        data.putInt("fDist", this.bDist);
+        data.putInt("hDist", this.hDist);
+        data.putInt("cleanAmount", this.cleanAmount);
         return this.cleanroomLogic.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.lDist = data.hasKey("lDist") ? data.getInteger("lDist") : this.lDist;
-        this.rDist = data.hasKey("rDist") ? data.getInteger("rDist") : this.rDist;
-        this.hDist = data.hasKey("hDist") ? data.getInteger("hDist") : this.hDist;
-        this.bDist = data.hasKey("bDist") ? data.getInteger("bDist") : this.bDist;
-        this.fDist = data.hasKey("fDist") ? data.getInteger("fDist") : this.fDist;
-        this.cleanAmount = data.getInteger("cleanAmount");
+        this.lDist = data.hasKey("lDist") ? data.getInt("lDist") : this.lDist;
+        this.rDist = data.hasKey("rDist") ? data.getInt("rDist") : this.rDist;
+        this.hDist = data.hasKey("hDist") ? data.getInt("hDist") : this.hDist;
+        this.bDist = data.hasKey("bDist") ? data.getInt("bDist") : this.bDist;
+        this.fDist = data.hasKey("fDist") ? data.getInt("fDist") : this.fDist;
+        this.cleanAmount = data.getInt("cleanAmount");
         this.cleanroomLogic.readFromNBT(data);
     }
 

@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.widgets.ClickButtonWidget;
@@ -21,8 +22,9 @@ import net.nemezanevem.gregtech.api.gui.widgets.SimpleTextWidget;
 import net.nemezanevem.gregtech.api.gui.widgets.TextFieldWidget2;
 import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
 import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
+import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.metaitem.stats.IItemBehaviour;
-import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntityClipboard;
 
 import java.util.ArrayList;
@@ -106,21 +108,21 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
     }
 
     private static CompoundTag getPageCompound(ItemStack stack) {
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return null;
         short pageNum = stack.getTag().getShort("PageIndex");
         return stack.getTag().getCompound("Page" + pageNum);
     }
 
     private static void setPageCompound(ItemStack stack, CompoundTag pageCompound) {
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         short pageNum = stack.getTag().getShort("PageIndex");
         stack.getTag().put("Page" + pageNum, pageCompound);
     }
 
     private static void initNBT(ItemStack stack) {
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         CompoundTag tagCompound = stack.getTag();
         if (tagCompound == null) {
@@ -139,13 +141,13 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
                 tagCompound.put("Page" + i, pageCompound.copy());
             }
 
-            stack.setTag(tagCompound);
+            stack.put(tagCompound);
         }
     }
 
     private static void setButton(PlayerInventoryHolder holder, int pos, int newState) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         CompoundTag tagCompound = getPageCompound(stack);
         short buttonState;
@@ -160,7 +162,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static int getButtonState(PlayerInventoryHolder holder, int pos) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return 0;
         CompoundTag tagCompound = getPageCompound(stack);
         short buttonState;
@@ -170,7 +172,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static void setString(PlayerInventoryHolder holder, int pos, String newString) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         CompoundTag tagCompound = getPageCompound(stack);
         tagCompound.putString("Task" + pos, newString);
@@ -179,7 +181,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static String getString(PlayerInventoryHolder holder, int pos) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return "";
         CompoundTag tagCompound = getPageCompound(stack);
         return tagCompound.getString("Task" + pos);
@@ -187,7 +189,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static void setTitle(PlayerInventoryHolder holder, String newString) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         CompoundTag tagCompound = getPageCompound(stack);
         assert tagCompound != null;
@@ -197,7 +199,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static String getTitle(PlayerInventoryHolder holder) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return "";
         CompoundTag tagCompound = getPageCompound(stack);
         return tagCompound.getString("Title");
@@ -205,7 +207,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static int getPageNum(PlayerInventoryHolder holder) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return 1;
         CompoundTag tagCompound = stack.getTag();
         return tagCompound.getInt("PageIndex");
@@ -213,7 +215,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
 
     private static void incrPageNum(PlayerInventoryHolder holder, int increment) {
         ItemStack stack = holder.getCurrentItem();
-        if (!MetaItems.CLIPBOARD.isItemEqual(stack))
+        if (!stack.is(MetaItems.CLIPBOARD.get()))
             return;
         CompoundTag tagCompound = stack.getTag();
         assert tagCompound != null;
@@ -221,7 +223,7 @@ public class ClipboardBehavior implements IItemBehaviour, ItemUIFactory {
         int currentIndex = tagCompound.getInt("PageIndex");
         // Clamps currentIndex between 0 and MAX_PAGES.
         tagCompound.putInt("PageIndex", Math.max(Math.min(currentIndex + increment, MAX_PAGES - 1), 0));
-        stack.setTag(tagCompound);
+        stack.put(tagCompound);
     }
 
     @Override

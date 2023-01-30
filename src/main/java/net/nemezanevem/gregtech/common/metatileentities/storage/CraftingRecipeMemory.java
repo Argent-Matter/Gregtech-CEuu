@@ -82,13 +82,13 @@ public class CraftingRecipeMemory {
     public CompoundTag serializeNBT() {
         CompoundTag tagCompound = new CompoundTag();
         NBTTagList resultList = new NBTTagList();
-        tagCompound.setTag("Memory", resultList);
+        tagCompound.put("Memory", resultList);
         for (int i = 0; i < memorizedRecipes.length; i++) {
             MemorizedRecipe recipe = memorizedRecipes[i];
             if (recipe == null) continue;
             CompoundTag entryComponent = new CompoundTag();
-            entryComponent.setInteger("Slot", i);
-            entryComponent.setTag("Recipe", recipe.serializeNBT());
+            entryComponent.putInt("Slot", i);
+            entryComponent.put("Recipe", recipe.serializeNBT());
             resultList.appendTag(entryComponent);
         }
         return tagCompound;
@@ -97,9 +97,9 @@ public class CraftingRecipeMemory {
     public void deserializeNBT(CompoundTag tagCompound) {
         NBTTagList resultList = tagCompound.getTagList("Memory", NBT.TAG_COMPOUND);
         for (int i = 0; i < resultList.tagCount(); i++) {
-            CompoundTag entryComponent = resultList.getCompoundTagAt(i);
-            int slotIndex = entryComponent.getInteger("Slot");
-            MemorizedRecipe recipe = MemorizedRecipe.deserializeNBT(entryComponent.getCompoundTag("Recipe"));
+            CompoundTag entryComponent = resultList.getCompoundAt(i);
+            int slotIndex = entryComponent.getInt("Slot");
+            MemorizedRecipe recipe = MemorizedRecipe.deserializeNBT(entryComponent.getCompound("Recipe"));
             this.memorizedRecipes[slotIndex] = recipe;
         }
     }
@@ -115,19 +115,19 @@ public class CraftingRecipeMemory {
 
         private CompoundTag serializeNBT() {
             CompoundTag result = new CompoundTag();
-            result.setTag("Result", recipeResult.serializeNBT());
-            result.setTag("Matrix", craftingMatrix.serializeNBT());
-            result.setBoolean("Locked", recipeLocked);
-            result.setInteger("TimesUsed", timesUsed);
+            result.put("Result", recipeResult.serializeNBT());
+            result.put("Matrix", craftingMatrix.serializeNBT());
+            result.putBoolean("Locked", recipeLocked);
+            result.putInt("TimesUsed", timesUsed);
             return result;
         }
 
         private static MemorizedRecipe deserializeNBT(CompoundTag tagCompound) {
             MemorizedRecipe recipe = new MemorizedRecipe();
-            recipe.recipeResult = new ItemStack(tagCompound.getCompoundTag("Result"));
-            recipe.craftingMatrix.deserializeNBT(tagCompound.getCompoundTag("Matrix"));
+            recipe.recipeResult = new ItemStack(tagCompound.getCompound("Result"));
+            recipe.craftingMatrix.deserializeNBT(tagCompound.getCompound("Matrix"));
             recipe.recipeLocked = tagCompound.getBoolean("Locked");
-            recipe.timesUsed = tagCompound.getInteger("TimesUsed");
+            recipe.timesUsed = tagCompound.getInt("TimesUsed");
             return recipe;
         }
 

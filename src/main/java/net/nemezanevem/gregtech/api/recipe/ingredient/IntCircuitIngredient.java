@@ -55,7 +55,7 @@ public class IntCircuitIngredient extends ExtendedIngredient {
         if (isCircuit && !itemStack.hasTag()) {
             CompoundTag compound = new CompoundTag();
             compound.putInt("Configuration", 0);
-            itemStack.setTag(compound);
+            itemStack.put(compound);
         }
         return isCircuit;
     }

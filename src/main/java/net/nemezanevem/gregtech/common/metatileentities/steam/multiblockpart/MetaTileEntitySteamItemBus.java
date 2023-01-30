@@ -60,7 +60,7 @@ public class MetaTileEntitySteamItemBus extends MetaTileEntityItemBus implements
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(TooltipHelper.BLINKING_ORANGE + Component.translatable("gregtech.machine.steam_bus.tooltip"));
     }

@@ -307,33 +307,33 @@ public class MetaTileEntityLockedSafe extends MetaTileEntity implements IFastRen
     public void initFromItemStackData(CompoundTag itemStack) {
         super.initFromItemStackData(itemStack);
         if (itemStack.hasKey("ComponentTier", NBT.TAG_ANY_NUMERIC)) {
-            this.unlockComponentTier = itemStack.getInteger("ComponentTier");
+            this.unlockComponentTier = itemStack.getInt("ComponentTier");
         }
     }
 
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         data = super.writeToNBT(data);
-        data.setInteger("UnlockProgress", unlockProgress);
-        data.setInteger("ComponentTier", unlockComponentTier);
-        data.setBoolean("Unlocked", isSafeUnlocked);
+        data.putInt("UnlockProgress", unlockProgress);
+        data.putInt("ComponentTier", unlockComponentTier);
+        data.putBoolean("Unlocked", isSafeUnlocked);
 
         data.setLong("UnlockComponentsSeed", unlockComponentsSeed);
-        data.setTag("UnlockInventory", unlockInventory.serializeNBT());
-        data.setTag("LootInventory", safeLootInventory.serializeNBT());
+        data.put("UnlockInventory", unlockInventory.serializeNBT());
+        data.put("LootInventory", safeLootInventory.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.unlockProgress = data.getInteger("UnlockProgress");
-        this.unlockComponentTier = data.getInteger("ComponentTier");
+        this.unlockProgress = data.getInt("UnlockProgress");
+        this.unlockComponentTier = data.getInt("ComponentTier");
         this.isSafeUnlocked = data.getBoolean("Unlocked");
 
         this.unlockComponentsSeed = data.getLong("UnlockComponentsSeed");
-        this.unlockInventory.deserializeNBT(data.getCompoundTag("UnlockInventory"));
-        this.safeLootInventory.deserializeNBT(data.getCompoundTag("LootInventory"));
+        this.unlockInventory.deserializeNBT(data.getCompound("UnlockInventory"));
+        this.safeLootInventory.deserializeNBT(data.getCompound("LootInventory"));
         updateDisplayUnlockComponents();
     }
 

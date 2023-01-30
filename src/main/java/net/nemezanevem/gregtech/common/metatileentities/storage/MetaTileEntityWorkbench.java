@@ -121,22 +121,22 @@ public class MetaTileEntityWorkbench extends MetaTileEntity implements ICrafting
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("CraftingGridInventory", craftingGrid.serializeNBT());
-        data.setTag("ToolInventory", toolInventory.serializeNBT());
-        data.setTag("InternalInventory", internalInventory.serializeNBT());
-        data.setInteger("ItemsCrafted", recipeLogic == null ? itemsCrafted : recipeLogic.getItemsCraftedAmount());
-        data.setTag("RecipeMemory", recipeMemory.serializeNBT());
+        data.put("CraftingGridInventory", craftingGrid.serializeNBT());
+        data.put("ToolInventory", toolInventory.serializeNBT());
+        data.put("InternalInventory", internalInventory.serializeNBT());
+        data.putInt("ItemsCrafted", recipeLogic == null ? itemsCrafted : recipeLogic.getItemsCraftedAmount());
+        data.put("RecipeMemory", recipeMemory.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.craftingGrid.deserializeNBT(data.getCompoundTag("CraftingGridInventory"));
-        this.toolInventory.deserializeNBT(data.getCompoundTag("ToolInventory"));
-        this.internalInventory.deserializeNBT(data.getCompoundTag("InternalInventory"));
-        this.itemsCrafted = data.getInteger("ItemsCrafted");
-        this.recipeMemory.deserializeNBT(data.getCompoundTag("RecipeMemory"));
+        this.craftingGrid.deserializeNBT(data.getCompound("CraftingGridInventory"));
+        this.toolInventory.deserializeNBT(data.getCompound("ToolInventory"));
+        this.internalInventory.deserializeNBT(data.getCompound("InternalInventory"));
+        this.itemsCrafted = data.getInt("ItemsCrafted");
+        this.recipeMemory.deserializeNBT(data.getCompound("RecipeMemory"));
     }
 
     private void createCraftingRecipeLogic(Player entityPlayer) {

@@ -352,12 +352,12 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
             FluidStack stack1 = getContainedFluid(i);
             CompoundTag fluidTag = new CompoundTag();
             if (stack1 == null || stack1.amount <= 0)
-                fluidTag.setBoolean("isNull", true);
+                fluidTag.putBoolean("isNull", true);
             else
                 stack1.writeToNBT(fluidTag);
             list.appendTag(fluidTag);
         }
-        nbt.setTag("Fluids", list);
+        nbt.put("Fluids", list);
         return nbt;
     }
 
@@ -367,7 +367,7 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
         NBTTagList list = (NBTTagList) nbt.getTag("Fluids");
         createTanksList();
         for (int i = 0; i < list.tagCount(); i++) {
-            CompoundTag tag = list.getCompoundTagAt(i);
+            CompoundTag tag = list.getCompoundAt(i);
             if (!tag.getBoolean("isNull")) {
                 fluidTanks[i].setFluid(FluidStack.loadFluidStackFromNBT(tag));
             }

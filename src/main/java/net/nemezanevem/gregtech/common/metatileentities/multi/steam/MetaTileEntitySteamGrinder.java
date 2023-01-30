@@ -82,7 +82,7 @@ public class MetaTileEntitySteamGrinder extends RecipeTypeSteamMultiblockControl
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.multiblock.steam_.duration_modifier"));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.parallel", PARALLEL_LIMIT));

@@ -24,7 +24,7 @@ import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 import net.nemezanevem.gregtech.api.util.Util;
-import net.nemezanevem.gregtech.client.util.SizedHashMap;
+import net.nemezanevem.gregtech.api.util.SizedHashMap;
 import net.nemezanevem.gregtech.common.block.block.BlockWireCoil;
 import net.nemezanevem.gregtech.common.block.foam.BlockFoam;
 import net.nemezanevem.gregtech.common.block.foam.BlockPetrifiedFoam;

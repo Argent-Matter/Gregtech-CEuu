@@ -242,26 +242,26 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("ChargerInventory", chargerInventory.serializeNBT());
-        data.setTag("CircuitInventory", circuitInventory.serializeNBT());
-        data.setInteger("OutputFacing", getOutputFacingItems().getIndex());
-        data.setInteger("OutputFacingF", getOutputFacingFluids().getIndex());
-        data.setBoolean("AutoOutputItems", autoOutputItems);
-        data.setBoolean("AutoOutputFluids", autoOutputFluids);
-        data.setBoolean("AllowInputFromOutputSide", allowInputFromOutputSideItems);
-        data.setBoolean("AllowInputFromOutputSideF", allowInputFromOutputSideFluids);
+        data.put("ChargerInventory", chargerInventory.serializeNBT());
+        data.put("CircuitInventory", circuitInventory.serializeNBT());
+        data.putInt("OutputFacing", getOutputFacingItems().getIndex());
+        data.putInt("OutputFacingF", getOutputFacingFluids().getIndex());
+        data.putBoolean("AutoOutputItems", autoOutputItems);
+        data.putBoolean("AutoOutputFluids", autoOutputFluids);
+        data.putBoolean("AllowInputFromOutputSide", allowInputFromOutputSideItems);
+        data.putBoolean("AllowInputFromOutputSideF", allowInputFromOutputSideFluids);
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.chargerInventory.deserializeNBT(data.getCompoundTag("ChargerInventory"));
+        this.chargerInventory.deserializeNBT(data.getCompound("ChargerInventory"));
         if (data.hasKey("CircuitInventory")) {
-            this.circuitInventory.deserializeNBT(data.getCompoundTag("CircuitInventory"));
+            this.circuitInventory.deserializeNBT(data.getCompound("CircuitInventory"));
         }
-        this.outputFacingItems = Direction.values()[data.getInteger("OutputFacing")];
-        this.outputFacingFluids = Direction.values()[data.getInteger("OutputFacingF")];
+        this.outputFacingItems = Direction.values()[data.getInt("OutputFacing")];
+        this.outputFacingFluids = Direction.values()[data.getInt("OutputFacingF")];
         this.autoOutputItems = data.getBoolean("AutoOutputItems");
         this.autoOutputFluids = data.getBoolean("AutoOutputFluids");
         this.allowInputFromOutputSideItems = data.getBoolean("AllowInputFromOutputSide");
@@ -509,7 +509,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         String key = this.metaTileEntityId.getPath().split("\\.")[0];
         String mainKey = String.format("gregtech.machine.%s.tooltip", key);

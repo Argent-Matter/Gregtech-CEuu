@@ -246,12 +246,12 @@ public class FluidDrillLogic {
      * This MUST be called and returned in the MetaTileEntity's {@link MetaTileEntity#writeToNBT(CompoundTag)} method
      */
     public CompoundTag writeToNBT(@Nonnull CompoundTag data) {
-        data.setBoolean("isActive", this.isActive);
-        data.setBoolean("isWorkingEnabled", this.isWorkingEnabled);
-        data.setBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
-        data.setBoolean("isDone", isDone);
-        data.setInteger("progressTime", progressTime);
-        data.setBoolean("isInventoryFull", isInventoryFull);
+        data.putBoolean("isActive", this.isActive);
+        data.putBoolean("isWorkingEnabled", this.isWorkingEnabled);
+        data.putBoolean("wasActiveAndNeedsUpdate", this.wasActiveAndNeedsUpdate);
+        data.putBoolean("isDone", isDone);
+        data.putInt("progressTime", progressTime);
+        data.putBoolean("isInventoryFull", isInventoryFull);
         return data;
     }
 
@@ -264,7 +264,7 @@ public class FluidDrillLogic {
         this.isWorkingEnabled = data.getBoolean("isWorkingEnabled");
         this.wasActiveAndNeedsUpdate = data.getBoolean("wasActiveAndNeedsUpdate");
         this.isDone = data.getBoolean("isDone");
-        this.progressTime = data.getInteger("progressTime");
+        this.progressTime = data.getInt("progressTime");
         this.isInventoryFull = data.getBoolean("isInventoryFull");
     }
 

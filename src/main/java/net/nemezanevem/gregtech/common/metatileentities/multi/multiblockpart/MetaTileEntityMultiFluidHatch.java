@@ -121,7 +121,7 @@ public class MetaTileEntityMultiFluidHatch extends MetaTileEntityMultiblockNotif
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("workingEnabled", workingEnabled);
+        data.putBoolean("workingEnabled", workingEnabled);
         return data;
     }
 
@@ -158,7 +158,7 @@ public class MetaTileEntityMultiFluidHatch extends MetaTileEntityMultiblockNotif
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable(isExportHatch ? "gregtech.machine.fluid_hatch.export.tooltip" : "gregtech.machine.fluid_hatch.import.tooltip"));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity_mult", (int) Math.pow(this.getTier(), 2), TANK_SIZE));
         tooltip.add(Component.translatable("gregtech.universal.enabled"));

@@ -19,7 +19,7 @@ plugins {
 apply plugin: 'org.spongepowered.mixin'
 
 
-version = 'gregtech-1.19.2-0-0-1-alpha'
+version = '1.19.2-0.0.1'
 group = 'net.nemezanevem.gregtech' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'GregTech'
 

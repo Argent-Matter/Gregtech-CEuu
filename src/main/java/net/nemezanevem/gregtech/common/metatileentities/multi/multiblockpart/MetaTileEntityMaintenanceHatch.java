@@ -414,7 +414,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("IsTaped", isTaped);
+        data.putBoolean("IsTaped", isTaped);
         if (isConfigurable) data.setDouble("DurationMultiplier", durationMultiplier.doubleValue());
         return data;
     }
@@ -480,7 +480,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.universal.disabled"));
     }

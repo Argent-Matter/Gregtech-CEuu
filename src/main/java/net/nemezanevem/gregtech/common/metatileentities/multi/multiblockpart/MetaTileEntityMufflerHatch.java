@@ -148,7 +148,7 @@ public class MetaTileEntityMufflerHatch extends MetaTileEntityMultiblockPart imp
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.machine.muffler_hatch.tooltip1"));
         tooltip.add(Component.translatable("gregtech.muffler.recovery_tooltip", recoveryChance));
@@ -199,13 +199,13 @@ public class MetaTileEntityMufflerHatch extends MetaTileEntityMultiblockPart imp
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("RecoveryInventory", inventory.serializeNBT());
+        data.put("RecoveryInventory", inventory.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.inventory.deserializeNBT(data.getCompoundTag("RecoveryInventory"));
+        this.inventory.deserializeNBT(data.getCompound("RecoveryInventory"));
     }
 }

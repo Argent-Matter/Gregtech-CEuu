@@ -129,14 +129,14 @@ public class MetaTileEntityCrate extends MetaTileEntity {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setTag("Inventory", inventory.serializeNBT());
+        data.put("Inventory", inventory.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.inventory.deserializeNBT(data.getCompoundTag("Inventory"));
+        this.inventory.deserializeNBT(data.getCompound("Inventory"));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class MetaTileEntityCrate extends MetaTileEntity {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.universal.tooltip.item_storage_capacity", inventorySize));
     }
 

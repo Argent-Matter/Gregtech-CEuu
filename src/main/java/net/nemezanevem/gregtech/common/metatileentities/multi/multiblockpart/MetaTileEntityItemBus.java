@@ -130,7 +130,7 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockNotifiablePar
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setBoolean("workingEnabled", workingEnabled);
+        data.putBoolean("workingEnabled", workingEnabled);
         return data;
     }
 
@@ -171,7 +171,7 @@ public class MetaTileEntityItemBus extends MetaTileEntityMultiblockNotifiablePar
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         if (this.isExportHatch)
             tooltip.add(Component.translatable("gregtech.machine.item_bus.export.tooltip"));
         else

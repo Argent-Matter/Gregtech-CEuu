@@ -37,7 +37,7 @@ public class CapesRegistry {
 
             }
         }
-        comp.setTag("UnlockedCapesValList", unlockedCapesTag);
+        comp.put("UnlockedCapesValList", unlockedCapesTag);
 
         ListTag wornCapesTag = new ListTag();
         for (Map.Entry<UUID, ResourceLocation> entry : WORN_CAPES.entrySet()) {
@@ -52,7 +52,7 @@ public class CapesRegistry {
 
             wornCapesTag.appendTag(tag);
         }
-        comp.setTag("WornCapesValList", wornCapesTag);
+        comp.put("WornCapesValList", wornCapesTag);
         try {
             CompressedStreamTools.safeWrite(comp, new File(FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0).getSaveHandler().getWorldDirectory(), "gregtech_cape.dat"));
         } catch (IOException exception) {
@@ -74,7 +74,7 @@ public class CapesRegistry {
         }
         ListTag unlockedCapesTag = comp.getTagList("UnlockedCapesValList", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < unlockedCapesTag.tagCount(); i++) {
-            CompoundTag tag = unlockedCapesTag.getCompoundTagAt(i);
+            CompoundTag tag = unlockedCapesTag.getCompoundAt(i);
             String capeLocation = tag.getString("Cape");
             if (capeLocation.isEmpty())
                 continue;
@@ -90,7 +90,7 @@ public class CapesRegistry {
 
         ListTag wornCapesTag = comp.getTagList("WornCapesValList", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < wornCapesTag.tagCount(); i++) {
-            CompoundTag tag = wornCapesTag.getCompoundTagAt(i);
+            CompoundTag tag = wornCapesTag.getCompoundAt(i);
             String capeLocation = tag.getString("Cape");
             if (capeLocation.isEmpty())
                 continue;

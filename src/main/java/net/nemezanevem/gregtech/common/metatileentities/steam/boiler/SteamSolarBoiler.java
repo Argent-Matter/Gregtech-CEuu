@@ -1,16 +1,14 @@
 package net.nemezanevem.gregtech.common.metatileentities.steam.boiler;
 
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.ProgressWidget.MoveType;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.texture.Textures;
-import net.minecraft.entity.player.Player;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.ProgressWidget;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 public class SteamSolarBoiler extends SteamBoiler {
 
@@ -49,7 +47,7 @@ public class SteamSolarBoiler extends SteamBoiler {
     protected ModularUI createUI(Player entityPlayer) {
         return createUITemplate(entityPlayer)
                 .progressBar(() -> Util.canSeeSunClearly(getWorld(), getPos()) ? 1.0 : 0.0, 114, 44, 20, 20,
-                        GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure), MoveType.HORIZONTAL)
+                        GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure), ProgressWidget.MoveType.HORIZONTAL)
                 .build(getHolder(), entityPlayer);
     }
 

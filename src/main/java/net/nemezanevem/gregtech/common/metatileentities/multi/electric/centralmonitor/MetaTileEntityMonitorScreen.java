@@ -368,27 +368,27 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         if (this.coverPos != null) {
-            data.setTag("coverPos", NBTUtil.createPosTag(this.coverPos.pos));
+            data.put("coverPos", NBTUtil.createPosTag(this.coverPos.pos));
             data.setByte("coverSide", (byte) this.coverPos.facing.getIndex());
         }
         data.setByte("mode", (byte) this.mode.ordinal());
         data.setFloat("scale", this.scale);
-        data.setInteger("color", this.frameColor);
-        data.setInteger("slot", this.slot);
-        data.setTag("Inventory", this.inventory.serializeNBT());
+        data.putInt("color", this.frameColor);
+        data.putInt("slot", this.slot);
+        data.put("Inventory", this.inventory.serializeNBT());
         return super.writeToNBT(data);
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.frameColor = data.hasKey("color") ? data.getInteger("color") : 0XFF00Ff00;
+        this.frameColor = data.hasKey("color") ? data.getInt("color") : 0XFF00Ff00;
         this.scale = data.hasKey("scale") ? data.getFloat("scale") : 1;
-        this.slot = data.hasKey("slot") ? data.getInteger("slot") : 0;
+        this.slot = data.hasKey("slot") ? data.getInt("slot") : 0;
         this.mode = CoverDigitalInterface.MODE.VALUES[data.hasKey("mode") ? data.getByte("mode") : 0];
-        this.inventory.deserializeNBT(data.getCompoundTag("Inventory"));
+        this.inventory.deserializeNBT(data.getCompound("Inventory"));
         if (data.hasKey("coverPos") && data.hasKey("coverSide")) {
-            BlockPos pos = NBTUtil.getPosFromTag(data.getCompoundTag("coverPos"));
+            BlockPos pos = NBTUtil.getPosFromTag(data.getCompound("coverPos"));
             Direction side = Direction.byIndex(data.getByte("coverSide"));
             this.coverPos = new BlockPosFace(pos, side);
         } else {
@@ -748,7 +748,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         tooltip.add(Component.translatable("gregtech.multiblock.monitor_screen.tooltip.1"));
         tooltip.add(Component.translatable("gregtech.multiblock.monitor_screen.tooltip.2"));

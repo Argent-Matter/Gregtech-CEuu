@@ -185,10 +185,10 @@ public class MetaTileEntityCreativeEnergy extends MetaTileEntity implements IEne
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         data.setLong("Voltage", voltage);
-        data.setInteger("Amps", amps);
+        data.putInt("Amps", amps);
         data.setByte("Tier", (byte) setTier);
-        data.setBoolean("Active", active);
-        data.setBoolean("Source", source);
+        data.putBoolean("Active", active);
+        data.putBoolean("Source", source);
         data.setLong("EnergyIOPerSec", lastEnergyIOPerSec);
         return super.writeToNBT(data);
     }
@@ -196,7 +196,7 @@ public class MetaTileEntityCreativeEnergy extends MetaTileEntity implements IEne
     @Override
     public void readFromNBT(CompoundTag data) {
         voltage = data.getLong("Voltage");
-        amps = data.getInteger("Amps");
+        amps = data.getInt("Amps");
         setTier = data.getByte("Tier");
         active = data.getBoolean("Active");
         source = data.getBoolean("Source");

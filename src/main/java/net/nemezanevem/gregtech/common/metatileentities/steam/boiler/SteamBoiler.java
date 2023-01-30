@@ -4,44 +4,44 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.impl.FilteredFluidHandler;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.gui.widgets.FluidContainerSlotWidget;
-import gregtech.api.gui.widgets.ProgressWidget;
-import gregtech.api.gui.widgets.ProgressWidget.MoveType;
-import gregtech.api.gui.widgets.TankWidget;
-import gregtech.api.metatileentity.IDataInfoProvider;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.ModHandler;
-import gregtech.api.unification.material.Materials;
-import gregtech.api.util.GTTransferUtils;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.renderer.texture.cube.SimpleSidedCubeRenderer;
-import gregtech.common.ConfigHolder;
-import gregtech.core.sound.GTSoundEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fluids.FluidTank;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.capability.impl.FilteredFluidHandler;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.gui.widgets.FluidContainerSlotWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.ProgressWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.TankWidget;
+import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.client.renderer.texture.cube.SimpleSidedCubeRenderer;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -50,11 +50,11 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static gregtech.api.capability.GregtechDataCodes.IS_WORKING;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.IS_WORKING;
 
 public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoProvider {
 
-    private static final Direction[] STEAM_PUSH_DIRECTIONS = ArrayUtils.add(Direction.HORIZONTALS, Direction.UP);
+    private static final Direction[] STEAM_PUSH_DIRECTIONS = ArrayUtils.add(Direction., Direction.UP);
 
     public final TextureArea bronzeSlotBackgroundTexture;
 
@@ -90,7 +90,6 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
         return isBurning;
     }
 
-    @SideOnly(Side.CLIENT)
     protected SimpleSidedCubeRenderer getBaseRenderer() {
         if (isHighPressure) {
             return Textures.STEAM_BRICKED_CASING_STEEL;
@@ -99,7 +98,6 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
         }
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public Pair<TextureAtlasSprite, Integer> getParticleTexture() {
         return Pair.of(getBaseRenderer().getParticleSprite(), getPaintingColorForRendering());
@@ -120,22 +118,22 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
-        data.setInteger("FuelBurnTimeLeft", fuelBurnTimeLeft);
-        data.setInteger("FuelMaxBurnTime", fuelMaxBurnTime);
-        data.setInteger("CurrentTemperature", currentTemperature);
-        data.setBoolean("HasNoWater", hasNoWater);
-        data.setTag("ContainerInventory", containerInventory.serializeNBT());
+        data.putInt("FuelBurnTimeLeft", fuelBurnTimeLeft);
+        data.putInt("FuelMaxBurnTime", fuelMaxBurnTime);
+        data.putInt("CurrentTemperature", currentTemperature);
+        data.putBoolean("HasNoWater", hasNoWater);
+        data.put("ContainerInventory", containerInventory.serializeNBT());
         return data;
     }
 
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.fuelBurnTimeLeft = data.getInteger("FuelBurnTimeLeft");
-        this.fuelMaxBurnTime = data.getInteger("FuelMaxBurnTime");
-        this.currentTemperature = data.getInteger("CurrentTemperature");
+        this.fuelBurnTimeLeft = data.getInt("FuelBurnTimeLeft");
+        this.fuelMaxBurnTime = data.getInt("FuelMaxBurnTime");
+        this.currentTemperature = data.getInt("CurrentTemperature");
         this.hasNoWater = data.getBoolean("HasNoWater");
-        this.containerInventory.deserializeNBT(data.getCompoundTag("ContainerInventory"));
+        this.containerInventory.deserializeNBT(data.getCompound("ContainerInventory"));
         this.isBurning = fuelBurnTimeLeft > 0;
     }
 
@@ -225,10 +223,10 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
     private void generateSteam() {
         if (currentTemperature >= 100) {
             int fillAmount = (int) (getBaseSteamOutput() * (currentTemperature / (getMaxTemperate() * 1.0)) / 2);
-            boolean hasDrainedWater = waterFluidTank.drain(1, true) != null;
+            boolean hasDrainedWater = !waterFluidTank.drain(1, IFluidHandler.FluidAction.EXECUTE).isEmpty();
             int filledSteam = 0;
             if (hasDrainedWater) {
-                filledSteam = steamFluidTank.fill(ModHandler.getSteam(fillAmount), true);
+                filledSteam = steamFluidTank.fill(ModHandler.getSteam(fillAmount), IFluidHandler.FluidAction.EXECUTE);
             }
             if (this.hasNoWater && hasDrainedWater) {
                 doExplosion(2.0f);
@@ -238,20 +236,20 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
                 final float y = getPos().getY() + 0.5F;
                 final float z = getPos().getZ() + 0.5F;
 
-                ((WorldServer) getWorld()).spawnParticle(EnumParticleTypes.CLOUD,
-                        x + getFrontFacing().getXOffset() * 0.6,
-                        y + getFrontFacing().getYOffset() * 0.6,
-                        z + getFrontFacing().getZOffset() * 0.6,
+                ((ServerLevel) getWorld()).sendParticles(ParticleTypes.CLOUD,
+                        x + getFrontFacing().getStepX() * 0.6,
+                        y + getFrontFacing().getStepY() * 0.6,
+                        z + getFrontFacing().getStepZ() * 0.6,
                         7 + GTValues.RNG.nextInt(3),
-                        getFrontFacing().getXOffset() / 2.0,
-                        getFrontFacing().getYOffset() / 2.0,
-                        getFrontFacing().getZOffset() / 2.0, 0.1);
+                        getFrontFacing().getStepX() / 2.0,
+                        getFrontFacing().getStepY() / 2.0,
+                        getFrontFacing().getStepZ() / 2.0, 0.1);
 
                 if (ConfigHolder.machines.machineSounds && !this.isMuffled()) {
-                    getWorld().playSound(null, x, y, z, SoundEvents.BLOCK_LAVA_EXTINGUISH, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                    getWorld().playSound(null, x, y, z, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f);
                 }
 
-                steamFluidTank.drain(4000, true);
+                steamFluidTank.drain(4000, IFluidHandler.FluidAction.EXECUTE);
             }
         } else this.hasNoWater = false;
     }
@@ -310,7 +308,7 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
                 .widget(new ProgressWidget(this::getTemperaturePercent, 96, 26, 10, 54)
                         .setProgressBar(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
                                 GuiTextures.PROGRESS_BAR_BOILER_HEAT,
-                                MoveType.VERTICAL))
+                                ProgressWidget.MoveType.VERTICAL))
 
                 .widget(new TankWidget(waterFluidTank, 83, 26, 10, 54)
                         .setBackgroundTexture(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure)))
@@ -323,14 +321,14 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
                         GuiTextures.SLOT_STEAM.get(isHighPressure), GuiTextures.OUT_SLOT_OVERLAY_STEAM.get(isHighPressure))
                 .image(43, 44, 18, 18, GuiTextures.CANISTER_OVERLAY_STEAM.get(isHighPressure))
 
-                .bindPlayerInventory(player.inventory, GuiTextures.SLOT_STEAM.get(isHighPressure), 0);
+                .bindPlayerInventory(player.getInventory(), GuiTextures.SLOT_STEAM.get(isHighPressure), 0);
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World player, List<Component> tooltip, boolean advanced) {
-        tooltip.add(String.format("%s %s",
+    public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
+        tooltip.add(Component.literal(String.format("%s %s",
                 Component.translatable("gregtech.universal.tooltip.produces_fluid", getBaseSteamOutput() / 20),
-                Materials.Steam.getLocalizedName()));
+                GtMaterials.Steam.get().getLocalizedName())));
     }
 
     @Override
@@ -357,16 +355,15 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
         return Collections.singletonList(Component.translatable("gregtech.machine.steam_boiler.heat_amount", Util.formatNumbers((int) (this.getTemperaturePercent() * 100))));
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public void randomDisplayTick() {
         if (this.isActive()) {
             final BlockPos pos = getPos();
-            float x = pos.getX() + 0.5F;
-            float z = pos.getZ() + 0.5F;
+            double x = pos.getX() + 0.5F;
+            double z = pos.getZ() + 0.5F;
 
             if (GTValues.RNG.nextDouble() < 0.1) {
-                getWorld().playSound(x, pos.getY(), z + 0.5F, SoundEvents.BLOCK_FURNACE_FIRE_CRACKLE, SoundCategory.BLOCKS, 1.0F, 1.0F, false);
+                getWorld().playSound(Minecraft.getInstance().player, x, pos.getY(), z + 0.5D, SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
 
             final Direction facing = getFrontFacing();
@@ -386,9 +383,8 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
         }
     }
 
-    @SideOnly(Side.CLIENT)
     protected void randomDisplayTick(float x, float y, float z) {
-        getWorld().spawnParticle(isHighPressure ? EnumParticleTypes.SMOKE_LARGE : EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0, 0, 0);
-        getWorld().spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0, 0, 0);
+        getWorld().addParticle(isHighPressure ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, x, y, z, 0, 0, 0);
+        getWorld().addParticle(ParticleTypes.FLAME, x, y, z, 0, 0, 0);
     }
 }

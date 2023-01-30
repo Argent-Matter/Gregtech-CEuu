@@ -318,9 +318,9 @@ public class MetaTileEntityClipboard extends MetaTileEntity implements IFastRend
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
         if (this.getClipboard() != null && this.getClipboard().getTagCompound() != null)
-            data.setTag("clipboardNBT", this.getClipboard().getTagCompound());
+            data.put("clipboardNBT", this.getClipboard().getTagCompound());
         else
-            data.setTag("clipboardNBT", NO_CLIPBOARD_SIG);
+            data.put("clipboardNBT", NO_CLIPBOARD_SIG);
         return data;
     }
 

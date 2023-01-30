@@ -38,17 +38,19 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.BlockCustomParticle;
-import net.nemezanevem.gregtech.api.cover.CoverBehavior;
-import net.nemezanevem.gregtech.api.cover.IFacadeCover;
-import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
-import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
-import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.cover.IFacadeCover;
+import net.nemezanevem.gregtech.api.item.toolitem.IGTTool;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
+import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
+import net.nemezanevem.gregtech.api.registry.tileentity.MetaTileEntityRegistry;
 import net.nemezanevem.gregtech.api.util.Util;
-import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 import net.nemezanevem.gregtech.integration.IFacadeWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -226,7 +228,7 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
         metaTileEntity.writeItemStackData(tagCompound);
         //only set item tag if it's not empty, so newly created items will stack with dismantled
         if (!tagCompound.isEmpty())
-            itemStack.setTag(tagCompound);
+            itemStack.put(tagCompound);
         // TODO Clean this up
         if (metaTileEntity.getHolder() instanceof MetaTileEntityHolder) {
             MetaTileEntityHolder holder = (MetaTileEntityHolder) metaTileEntity.getHolder();
@@ -322,7 +324,7 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
     @Nullable
     @Override
     public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState blockState) {
-        return new MetaTileEntityHolder(MetaBlocks.MACHINE.get(), pos, blockState);
+        return new MetaTileEntityHolder(pos, blockState);
     }
 
     @Nonnull
@@ -331,24 +333,15 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
         return MetaTileEntityRenderer.BLOCK_RENDER_TYPE;
     }
 
-    @Nonnull
     @Override
-    public BlockFaceShape getBlockFaceShape(@Nonnull BlockGetter worldIn, @Nonnull BlockState state, @Nonnull BlockPos pos, @Nonnull Direction face) {
-        MetaTileEntity metaTileEntity = getMetaTileEntity(worldIn, pos);
-        return metaTileEntity == null ? BlockFaceShape.SOLID : metaTileEntity.getCoverFaceShape(face);
-    }
-
-    @Override
-    public int getLightValue(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos) {
-        //why mc is so fucking retarded to call this method on fucking NEIGHBOUR BLOCKS!
-        MetaTileEntity metaTileEntity = getMetaTileEntity(world, pos);
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+        MetaTileEntity metaTileEntity = getMetaTileEntity(level, pos);
         return metaTileEntity == null ? 0 : metaTileEntity.getLightValue();
     }
 
     @Override
-    public int getLightOpacity(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos) {
-        //why mc is so fucking retarded to call this method on fucking NEIGHBOUR BLOCKS!
-        MetaTileEntity metaTileEntity = getMetaTileEntity(world, pos);
+    public int getLightBlock(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+        MetaTileEntity metaTileEntity = getMetaTileEntity(pLevel, pPos);
         return metaTileEntity == null ? 0 : metaTileEntity.getLightOpacity();
     }
 
@@ -378,9 +371,9 @@ public class BlockMachine extends BlockCustomParticle implements EntityBlock, IF
         return world.getBlockState(pos);
     }
 
-    @Nonnull
+    @NotNull
     @Override
-    public BlockState getVisualState(@Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull Direction side) {
+    public BlockState getVisualState(@NotNull BlockGetter world, @NotNull BlockPos pos, @NotNull Direction side) {
         return getFacade(world, pos, side);
     }
 

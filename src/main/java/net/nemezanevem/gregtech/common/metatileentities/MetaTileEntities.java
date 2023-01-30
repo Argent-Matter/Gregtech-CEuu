@@ -1,15 +1,39 @@
 package net.nemezanevem.gregtech.common.metatileentities;
 
 
+import mezz.jei.api.constants.RecipeTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.SimpleGeneratorMetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.SimpleMachineMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IMultiblockAbilityPart;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockAbility;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockControllerBase;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.block.BlockTurbineCasing;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import net.nemezanevem.gregtech.common.metatileentities.converter.MetaTileEntityConverter;
 import net.nemezanevem.gregtech.common.metatileentities.electric.*;
-import net.nemezanevem.gregtech.common.metatileentities.multi.electric.MetaTileEntityFusionReactor;
+import net.nemezanevem.gregtech.common.metatileentities.multi.*;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.*;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.centralmonitor.MetaTileEntityCentralMonitor;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.centralmonitor.MetaTileEntityMonitorScreen;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.generator.MetaTileEntityLargeCombustionEngine;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.generator.MetaTileEntityLargeTurbine;
 import net.nemezanevem.gregtech.common.metatileentities.multi.multiblockpart.*;
-import net.nemezanevem.gregtech.common.metatileentities.storage.MetaTileEntityBuffer;
-import net.nemezanevem.gregtech.common.metatileentities.storage.MetaTileEntityQuantumChest;
-import net.nemezanevem.gregtech.common.metatileentities.storage.MetaTileEntityQuantumTank;
+import net.nemezanevem.gregtech.common.metatileentities.multi.steam.MetaTileEntitySteamGrinder;
+import net.nemezanevem.gregtech.common.metatileentities.multi.steam.MetaTileEntitySteamOven;
+import net.nemezanevem.gregtech.common.metatileentities.steam.*;
+import net.nemezanevem.gregtech.common.metatileentities.steam.boiler.SteamCoalBoiler;
+import net.nemezanevem.gregtech.common.metatileentities.steam.boiler.SteamLavaBoiler;
+import net.nemezanevem.gregtech.common.metatileentities.steam.boiler.SteamSolarBoiler;
+import net.nemezanevem.gregtech.common.metatileentities.steam.multiblockpart.MetaTileEntitySteamHatch;
+import net.nemezanevem.gregtech.common.metatileentities.steam.multiblockpart.MetaTileEntitySteamItemBus;
+import net.nemezanevem.gregtech.common.metatileentities.storage.*;
 import net.nemezanevem.gregtech.common.tileentity.multi.MetaTileEntityLargeBoiler;
 
 import java.util.HashMap;
@@ -198,7 +222,7 @@ public class MetaTileEntities {
     public static MetaTileEntityConverter[][] ENERGY_CONVERTER = new MetaTileEntityConverter[4][GTValues.V.length];
 
     public static void init() {
-        GTLog.logger.info("Registering MetaTileEntities");
+        GregTech.LOGGER.info("Registering MetaTileEntities");
 
         STEAM_BOILER_COAL_BRONZE = registerMetaTileEntity(1, new SteamCoalBoiler(gregtechId("steam_boiler_coal_bronze"), false));
         STEAM_BOILER_COAL_STEEL = registerMetaTileEntity(2, new SteamCoalBoiler(gregtechId("steam_boiler_coal_steel"), true));
