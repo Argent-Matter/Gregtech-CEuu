@@ -88,7 +88,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
     protected void handleDisplayClick(String componentData, ClickData clickData) {
         super.handleDisplayClick(componentData, clickData);
         int result = componentData.equals("add") ? 5 : -5;
-        this.throttlePercentage = MathHelper.clamp(throttlePercentage + result, 25, 100);
+        this.throttlePercentage = Mth.clamp(throttlePercentage + result, 25, 100);
     }
 
     @Override

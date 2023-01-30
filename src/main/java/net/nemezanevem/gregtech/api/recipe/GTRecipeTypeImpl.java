@@ -45,9 +45,9 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecipe> implements GTRecipeType<T, R> {
+public class GTRecipeTypeImpl<R extends GTRecipeBuilder<R>> implements GTRecipeType<R> {
 
-    public static final Map<GTRecipeType<?, ?>, GTRecipeBuilder<?, ?>> TYPES_TO_BUILDERS = new HashMap<>();
+    public static final Map<GTRecipeType<?>, GTRecipeBuilder<?>> TYPES_TO_BUILDERS = new HashMap<>();
 
     private static final Comparator<GTRecipe> RECIPE_DURATION_THEN_EU = Comparator.comparingInt(GTRecipe::getDuration)
             .thenComparingInt(GTRecipe::getEUt)
@@ -82,7 +82,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
     private final WeakHashMap<AbstractMapIngredient, WeakReference<AbstractMapIngredient>> fluidIngredientRoot = new WeakHashMap<>();
 
     protected SoundEvent sound;
-    private GTRecipeType<?, ?> smallRecipeType;
+    private GTRecipeType<?> smallRecipeType;
 
     public GTRecipeTypeImpl(ResourceLocation id, int minInputs, int maxInputs, int minOutputs, int maxOutputs, int minFluidInputs, int maxFluidInputs, int minFluidOutputs, int maxFluidOutputs, R defaultRecipe, boolean isHidden) {
         this.slotOverlays = new Byte2ObjectOpenHashMap<>();
@@ -105,7 +105,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
 
         this.id = id;
 
-        TYPES_TO_BUILDERS.put(this, new GTRecipeBuilder<>(this));
+        TYPES_TO_BUILDERS.put(this, new GTRecipeBuilder<>());
     }
 
     public IChanceFunction getChanceFunction() {
@@ -125,37 +125,37 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
         }
     }
 
-    public GTRecipeType<T, R> setProgressBar(TextureArea progressBar, ProgressWidget.MoveType moveType) {
+    public GTRecipeType<R> setProgressBar(TextureArea progressBar, ProgressWidget.MoveType moveType) {
         this.progressBarTexture = progressBar;
         this.moveType = moveType;
         return this;
     }
 
-    public GTRecipeType<T, R> setSlotOverlay(boolean isOutput, boolean isFluid, TextureArea slotOverlay) {
+    public GTRecipeType<R> setSlotOverlay(boolean isOutput, boolean isFluid, TextureArea slotOverlay) {
         return this.setSlotOverlay(isOutput, isFluid, false, slotOverlay).setSlotOverlay(isOutput, isFluid, true, slotOverlay);
     }
 
-    public GTRecipeTypeImpl<T, R> setSlotOverlay(boolean isOutput, boolean isFluid, boolean isLast, TextureArea slotOverlay) {
+    public GTRecipeTypeImpl<R> setSlotOverlay(boolean isOutput, boolean isFluid, boolean isLast, TextureArea slotOverlay) {
         this.slotOverlays.put((byte) ((isOutput ? 2 : 0) + (isFluid ? 1 : 0) + (isLast ? 4 : 0)), slotOverlay);
         return this;
     }
 
-    public GTRecipeType<T, R> setSound(SoundEvent sound) {
+    public GTRecipeType<R> setSound(SoundEvent sound) {
         this.sound = sound;
         return this;
     }
 
-    public GTRecipeType<T, R> setChanceFunction(IChanceFunction function) {
+    public GTRecipeType<R> setChanceFunction(IChanceFunction function) {
         chanceFunction = function;
         return this;
     }
 
-    public GTRecipeType<T, R> setSmallRecipeType(GTRecipeType<?, ?> recipeMap) {
+    public GTRecipeType<R> setSmallRecipeType(GTRecipeType<?> recipeMap) {
         this.smallRecipeType = recipeMap;
         return this;
     }
 
-    public GTRecipeType<?, ?> getSmallRecipeType() {
+    public GTRecipeType<?> getSmallRecipeType() {
         return smallRecipeType;
     }
 
@@ -220,7 +220,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
     }
 
     @Nullable
-    public R findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity) {
+    public GTRecipe findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity) {
         return this.findRecipe(voltage, Util.itemHandlerToList(inputs), Util.fluidHandlerToList(fluidInputs), outputFluidTankCapacity);
     }
 
@@ -239,7 +239,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
      * @return the Recipe it has found or null for no matching Recipe
      */
     @Nullable
-    public R findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity) {
+    public GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity) {
         return findRecipe(voltage, inputs, fluidInputs, outputFluidTankCapacity, false);
     }
 
@@ -255,7 +255,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
      */
 
     @Nullable
-    public R findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity, boolean exactVoltage) {
+    public GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity, boolean exactVoltage) {
         return find(inputs.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList()), fluidInputs.stream().filter(f -> !f.isEmpty()).collect(Collectors.toList()), recipe -> {
             if (exactVoltage && recipe.getEUt() != voltage) {
                 return false;
@@ -265,7 +265,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
     }
 
     @Nullable
-    public R find(@Nonnull List<ItemStack> items, @Nonnull List<FluidStack> fluids, @Nonnull Predicate<GTRecipe> canHandle) {
+    public GTRecipe find(@Nonnull List<ItemStack> items, @Nonnull List<FluidStack> fluids, @Nonnull Predicate<GTRecipe> canHandle) {
         // First, check if items and fluids are valid.
         if (items.size() == Integer.MAX_VALUE || fluids.size() == Integer.MAX_VALUE) {
             return null;
@@ -274,7 +274,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
             return null;
         }
 
-        Optional<R> recipeOptional = ServerUtils.getServer().getRecipeManager().getAllRecipesFor(this).stream().filter(recipe -> recipe.matches(false, items, fluids) && canHandle.test(recipe)).distinct().findFirst();
+        Optional<GTRecipe> recipeOptional = ServerUtils.getServer().getRecipeManager().getAllRecipesFor(this).stream().filter(recipe -> recipe.matches(false, items, fluids) && canHandle.test(recipe)).distinct().findFirst();
         return recipeOptional.orElse(null);
         /*List<List<AbstractMapIngredient>> list = new ObjectArrayList<>(items.size() + fluids.size());
         if (items.size() > 0) {
@@ -807,7 +807,7 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
         }
     }
 
-    protected GTRecipeType<T, R> setSpecialTexture(int x, int y, int width, int height, TextureArea area) {
+    protected GTRecipeType<R> setSpecialTexture(int x, int y, int width, int height, TextureArea area) {
         this.specialTexturePosition = new int[]{x, y, width, height};
         this.specialTexture = area;
         return this;
@@ -835,8 +835,8 @@ public class GTRecipeTypeImpl<T extends GTRecipeBuilder<T, R>, R extends GTRecip
     }
 
     @Override
-    public GTRecipeBuilder<T, R> recipeBuilder() {
-        return (GTRecipeBuilder<T, R>) TYPES_TO_BUILDERS.get(this);
+    public GTRecipeBuilder<R> recipeBuilder() {
+        return (GTRecipeBuilder<R>) TYPES_TO_BUILDERS.get(this);
     }
 
     /**

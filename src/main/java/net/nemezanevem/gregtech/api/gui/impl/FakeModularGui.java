@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.impl;
 
-import codechicken.lib.math.MathHelper;
+import codechicken.lib.math.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.ChatFormatting;
@@ -131,7 +131,7 @@ public class FakeModularGui implements IRenderContext {
                     RenderSystem.disableTexture();
                     Tesselator tessellator = Tesselator.getInstance();
                     BufferBuilder bufferBuilder = tessellator.getBuilder();
-                    draw(bufferBuilder, 0, MathHelper.floor(16.0F * (1.0F - f3)), 16, MathHelper.ceil(16.0F * f3), 255, 255, 255, 127);
+                    draw(bufferBuilder, 0, Mth.floor(16.0F * (1.0F - f3)), 16, Mth.ceil(16.0F * f3), 255, 255, 255, 127);
                     RenderSystem.enableTexture();
                 }
             }

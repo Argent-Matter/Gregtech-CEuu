@@ -33,7 +33,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.InteractionHand;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraft.world.entity.player.Player;

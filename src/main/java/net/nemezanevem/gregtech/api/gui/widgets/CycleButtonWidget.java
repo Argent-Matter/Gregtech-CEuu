@@ -15,7 +15,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -138,7 +138,7 @@ public class CycleButtonWidget extends Widget {
     public void handleClientAction(int id, FriendlyByteBuf buffer) {
         super.handleClientAction(id, buffer);
         if (id == 1) {
-            this.currentOption = MathHelper.clamp(buffer.readVarInt(), 0, optionNames.length);
+            this.currentOption = Mth.clamp(buffer.readVarInt(), 0, optionNames.length);
             setOptionExecutor.accept(currentOption);
         }
     }

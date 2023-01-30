@@ -1,13 +1,13 @@
 package net.nemezanevem.gregtech.common.metatileentities.multi.electric.generator;
 
-import gregtech.api.metatileentity.multiblock.FuelMultiblockController;
-import gregtech.api.metatileentity.multiblock.MultiblockAbility;
 import net.minecraft.util.Mth;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.FuelMultiblockController;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeMultiblockController;
 import net.nemezanevem.gregtech.api.capability.IRotorHolder;
 import net.nemezanevem.gregtech.api.capability.impl.MultiblockFuelRecipeLogic;
@@ -122,7 +122,7 @@ public class LargeTurbineWorkableHandler extends MultiblockFuelRecipeLogic {
     public void updateTanks() {
         FuelMultiblockController controller = (FuelMultiblockController) this.metaTileEntity;
         List<IFluidHandler> tanks = controller.getNotifiedFluidInputList();
-        for (IFluidTank tank : controller.getAbilities(MultiblockAbility.IMPORT_FLUIDS)) {
+        for (IFluidTank tank : controller.getAbilities(GtMultiblockAbilities.IMPORT_FLUIDS.get())) {
             tanks.add((FluidTank) tank);
         }
     }

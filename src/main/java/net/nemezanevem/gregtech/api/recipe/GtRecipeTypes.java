@@ -7,9 +7,13 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
 import net.nemezanevem.gregtech.api.gui.widgets.ProgressWidget;
 import net.nemezanevem.gregtech.api.recipe.builder.SimpleRecipeBuilder;
+
+import static net.nemezanevem.gregtech.api.GTValues.LV;
+import static net.nemezanevem.gregtech.api.GTValues.VA;
 
 public class GtRecipeTypes {
 
@@ -298,14 +302,14 @@ public class GtRecipeTypes {
          * Any recipe added to the Chemical Reactor not specifying an <B>EUt</B> value will default to 30.
          */
         @ZenProperty
-        public static final RegistryObject<RecipeMap<SimpleRecipeBuilder>> CHEMICAL_RECIPES = new RecipeMap<>("chemical_reactor", 0, 2, 0, 2, 0, 3, 0, 2, new SimpleRecipeBuilder().EUt(VA[LV]), false)
+        public static final RegistryObject<GTRecipeType<SimpleRecipeBuilder, GTRecipe>> CHEMICAL_RECIPES = new RecipeMap<>("chemical_reactor", 0, 2, 0, 2, 0, 3, 0, 2, new SimpleRecipeBuilder().EUt(VA[LV]), false)
                 .setSlotOverlay(false, false, false, GuiTextures.MOLECULAR_OVERLAY_1)
                 .setSlotOverlay(false, false, true, GuiTextures.MOLECULAR_OVERLAY_2)
                 .setSlotOverlay(false, true, false, GuiTextures.MOLECULAR_OVERLAY_3)
                 .setSlotOverlay(false, true, true, GuiTextures.MOLECULAR_OVERLAY_4)
                 .setSlotOverlay(true, false, GuiTextures.VIAL_OVERLAY_1)
                 .setSlotOverlay(true, true, GuiTextures.VIAL_OVERLAY_2)
-                .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, MoveType.HORIZONTAL)
+                .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, ProgressWidget.MoveType.HORIZONTAL)
                 .setSound(GTValues.FOOLS.get() ? GTSoundEvents.SCIENCE : GTSoundEvents.CHEMICAL_REACTOR)
                 .onRecipeBuild(recipeBuilder -> {
                     recipeBuilder.invalidateOnBuildAction();

@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.crafting.*;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -40,6 +40,7 @@ import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMater
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntities;
 import net.nemezanevem.gregtech.common.network.packets.PacketBlockParticle;
 import net.nemezanevem.gregtech.common.network.packets.PacketRecoverMTE;
@@ -71,10 +72,17 @@ public class GregTech {
 
     public static final Object2ObjectOpenHashMap<BlockState, IHeatingCoilBlockStats> HEATING_COILS = new Object2ObjectOpenHashMap<>();
 
-    public static final CreativeModeTab TAB_GREGTECH = new CreativeModeTab("tab.gregtech.main") {
+    public static final CreativeModeTab TAB_GREGTECH = new CreativeModeTab("tab.gregtech") {
         @Override
         public ItemStack makeIcon() {
-            return null;
+            return new ItemStack(MetaItems.BATTERY_HULL_HV);
+        }
+    };
+
+    public static final CreativeModeTab TAB_GREGTECH_MATERIALS = new CreativeModeTab("tab.gregtech.matarials") {
+        @Override
+        public ItemStack makeIcon() {
+            return new ItemStack(MetaItems.CT_OREDICT_ITEM);
         }
     };
 

@@ -6,7 +6,7 @@ uniform float radius;
 uniform sampler2D depthTexture;
 
 uniform vec2 u_resolution;
-uniform float u_zFar; // mc.gameSettings.renderDistanceChunks * 16 * MathHelper.SQRT_2
+uniform float u_zFar; // mc.gameSettings.renderDistanceChunks * 16 * Mth.SQRT_2
 uniform float u_FOV;
 
 varying vec2 textureCoords;

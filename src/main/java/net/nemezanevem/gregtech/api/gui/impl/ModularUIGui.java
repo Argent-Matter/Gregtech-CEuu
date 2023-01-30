@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.impl;
 
 
-import codechicken.lib.math.MathHelper;
+import codechicken.lib.math.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -162,7 +162,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
             int dragOffset = this.draggingItem.isEmpty() ? 8 : 16;
             if (!this.draggingItem.isEmpty() && this.isQuickCrafting) {
                 itemStack = itemStack.copy();
-                itemStack.setCount(MathHelper.ceil((float) itemStack.getCount() / 2.0F));
+                itemStack.setCount(Mth.ceil((float) itemStack.getCount() / 2.0F));
 
             } else if (this.isQuickCrafting && this.quickCraftSlots.size() > 1) {
                 itemStack = itemStack.copy();

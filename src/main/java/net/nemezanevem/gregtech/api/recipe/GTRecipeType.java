@@ -13,7 +13,7 @@ import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import java.util.List;
 
-public interface GTRecipeType<T extends GTRecipeBuilder<T, R>, R extends GTRecipe> extends RecipeType<R> {
+public interface GTRecipeType<T extends GTRecipeBuilder<T>> extends RecipeType<GTRecipe> {
 
     IChanceFunction DEFAULT_CHANCE_FUNCTION = (baseChance, boostPerTier, baseTier, machineTier) -> {
         int tierDiff = machineTier - baseTier;
@@ -24,13 +24,13 @@ public interface GTRecipeType<T extends GTRecipeBuilder<T, R>, R extends GTRecip
 
     IChanceFunction getChanceFunction();
 
-    R findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity);
+    GTRecipe findRecipe(long voltage, List<ItemStack> inputs, List<FluidStack> fluidInputs, int outputFluidTankCapacity);
 
-    R findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity);
+    GTRecipe findRecipe(long voltage, IItemHandlerModifiable inputs, IMultipleTankHandler fluidInputs, int outputFluidTankCapacity);
 
     ResourceLocation getId();
 
-    GTRecipeBuilder<T, R> recipeBuilder();
+    GTRecipeBuilder<T> recipeBuilder();
 
     int getMinInputs();
     int getMaxInputs();

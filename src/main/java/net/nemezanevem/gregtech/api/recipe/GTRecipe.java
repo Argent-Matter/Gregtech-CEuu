@@ -116,7 +116,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      * @param fluidTrimLimit The Limit to which fluid outputs should be trimmed to, -1 for no trimming
      * @return A new Recipe whose outputs have been trimmed.
      */
-    public GTRecipe trimRecipeOutputs(GTRecipe currentRecipe, GTRecipeType<?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
+    public GTRecipe trimRecipeOutputs(GTRecipe currentRecipe, GTRecipeType<?, ?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
 
         // Fast return early if no trimming desired
         if (itemTrimLimit == -1 && fluidTrimLimit == -1) {
@@ -362,7 +362,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      * @param recipeType   The RecipeType that the recipe is being performed upon, used for chanced output calculation
      * @return A list of all resulting ItemStacks from the recipe, after chance has been applied to any chanced outputs
      */
-    public List<ItemStack> getResultItemOutputs(int recipeTier, int machineTier, GTRecipeType<?> recipeType) {
+    public List<ItemStack> getResultItemOutputs(int recipeTier, int machineTier, GTRecipeType<?, ?> recipeType) {
         ArrayList<ItemStack> outputs = new ArrayList<>(Util.copyStackList(getOutputs()));
         List<ChanceEntry> chancedOutputsList = getChancedOutputs();
         List<ItemStack> resultChanced = new ArrayList<>();

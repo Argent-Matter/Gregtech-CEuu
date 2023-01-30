@@ -1,10 +1,8 @@
 package net.nemezanevem.gregtech.api.item.metaitem;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraftforge.registries.IForgeRegistry;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
 
 public class StandardMetaItem extends MetaItem {
 

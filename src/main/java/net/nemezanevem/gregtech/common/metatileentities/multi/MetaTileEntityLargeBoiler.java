@@ -25,7 +25,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.util.text.Component;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -116,7 +116,7 @@ public class MetaTileEntityLargeBoiler extends MultiblockWithDisplayBase {
     protected void handleDisplayClick(String componentData, ClickData clickData) {
         super.handleDisplayClick(componentData, clickData);
         int result = componentData.equals("add") ? 5 : -5;
-        this.throttlePercentage = MathHelper.clamp(throttlePercentage + result, 25, 100);
+        this.throttlePercentage = Mth.clamp(throttlePercentage + result, 25, 100);
     }
 
     @Override

@@ -28,7 +28,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AABB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.world.World;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
@@ -140,7 +140,7 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
             if (entityItem.isDead) continue;
             double distanceX = (areaCenterPos.getX() + 0.5) - entityItem.posX;
             double distanceZ = (areaCenterPos.getZ() + 0.5) - entityItem.posZ;
-            double distance = MathHelper.sqrt(distanceX * distanceX + distanceZ * distanceZ);
+            double distance = Mth.sqrt(distanceX * distanceX + distanceZ * distanceZ);
             if (!itemFilter.testItemStack(entityItem.getItem())) {
                 continue;
             }
@@ -187,7 +187,7 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
 
     @Override
     protected IItemHandlerModifiable createExportItemHandler() {
-        return new ItemStackHandler(INVENTORY_SIZES[MathHelper.clamp(getTier(), 0, INVENTORY_SIZES.length - 1)]);
+        return new ItemStackHandler(INVENTORY_SIZES[Mth.clamp(getTier(), 0, INVENTORY_SIZES.length - 1)]);
     }
 
     @Override
@@ -222,7 +222,7 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
     }
 
     protected void adjustSuckingRange(int amount) {
-        setItemSuckingRange(MathHelper.clamp(itemSuckingRange + amount, 1, maxItemSuckingRange));
+        setItemSuckingRange(Mth.clamp(itemSuckingRange + amount, 1, maxItemSuckingRange));
     }
 
     @Override

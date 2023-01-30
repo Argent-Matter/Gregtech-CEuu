@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -38,7 +39,7 @@ public interface IItemBehaviour extends IItemComponent {
         return InteractionResultHolder.pass(player.getItemInHand(hand));
     }
 
-    default void addInformation(ItemStack itemStack, List<String> lines) {
+    default void addInformation(ItemStack itemStack, List<Component> lines) {
     }
 
     default void onUpdate(ItemStack itemStack, Entity entity) {

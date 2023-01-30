@@ -1,20 +1,20 @@
 package net.nemezanevem.gregtech.api.recipe.builder;
 
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeTypeImpl;
 import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
-public class SimpleRecipeBuilder extends GTRecipeBuilder<SimpleRecipeBuilder, GTRecipe> {
+public class SimpleRecipeBuilder extends GTRecipeBuilder<SimpleRecipeBuilder> {
 
-    public SimpleRecipeBuilder(GTRecipeType<GTRecipe> type) {
-        super(type);
+    public SimpleRecipeBuilder() {
+
     }
 
-    public SimpleRecipeBuilder(GTRecipe recipe, GTRecipeType<GTRecipe> recipeMap) {
+    public SimpleRecipeBuilder(GTRecipe recipe, GTRecipeTypeImpl<SimpleRecipeBuilder> recipeMap) {
         super(recipe, recipeMap);
     }
 
-    public SimpleRecipeBuilder(GTRecipeBuilder<SimpleRecipeBuilder, GTRecipe> recipeBuilder) {
+    public SimpleRecipeBuilder(SimpleRecipeBuilder recipeBuilder) {
         super(recipeBuilder);
     }
 

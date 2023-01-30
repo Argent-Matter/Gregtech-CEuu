@@ -45,7 +45,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.util.text.Component;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -509,7 +509,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     @Override
     public void adjustCleanAmount(int amount) {
         // do not allow negative cleanliness nor cleanliness above 100
-        this.cleanAmount = MathHelper.clamp(this.cleanAmount + amount, 0, 100);
+        this.cleanAmount = Mth.clamp(this.cleanAmount + amount, 0, 100);
     }
 
     @Override

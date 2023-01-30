@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.recipe.ingredient;
 
-import codechicken.lib.math.MathHelper;
+import codechicken.lib.math.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;

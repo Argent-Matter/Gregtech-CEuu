@@ -15,7 +15,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.SoundActions;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.*;
+import net.minecraftforge.fluids.FluidActionResult;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
@@ -163,7 +166,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
             List<Component> tooltips = new ArrayList<>();
             if (lastFluidInTank != null) {
                 Fluid fluid = lastFluidInTank.getFluid();
-                tooltips.add(fluid.getLocalizedName(lastFluidInTank));
+                tooltips.add(fluid.getFluidType().getDescription(lastFluidInTank));
 
                 // Amount Tooltip
                 tooltips.add(Component.translatable("gregtech.fluid.amount", lastFluidInTank.getAmount(), lastTankCapacity));

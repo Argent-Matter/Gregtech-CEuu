@@ -24,7 +24,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Direction;
 import net.minecraft.util.InteractionHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 
@@ -58,7 +58,7 @@ public class MetaTileEntityDiode extends MetaTileEntityMultiblockPart implements
         long energyStored = energyContainer.getEnergyStored();
         long energyCapacity = energyContainer.getEnergyCapacity();
         float f = energyCapacity == 0L ? 0.0f : energyStored / (energyCapacity * 1.0f);
-        return MathHelper.floor(f * 14.0f) + (energyStored > 0 ? 1 : 0);
+        return Mth.floor(f * 14.0f) + (energyStored > 0 ? 1 : 0);
     }
 
     @Override

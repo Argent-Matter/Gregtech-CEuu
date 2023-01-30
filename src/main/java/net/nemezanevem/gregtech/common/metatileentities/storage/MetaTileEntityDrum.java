@@ -31,7 +31,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Direction;
 import net.minecraft.util.InteractionHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Mth;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -88,7 +88,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
         int fluidAmount = fluidTank.getFluidAmount();
         int maxCapacity = fluidTank.getCapacity();
         float f = fluidAmount / (maxCapacity * 1.0f);
-        return MathHelper.floor(f * 14.0f) + (fluidAmount > 0 ? 1 : 0);
+        return Mth.floor(f * 14.0f) + (fluidAmount > 0 ? 1 : 0);
     }
 
     @Override

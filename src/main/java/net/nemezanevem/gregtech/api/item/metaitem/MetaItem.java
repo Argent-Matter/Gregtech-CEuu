@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -30,11 +31,11 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IElectricItem;
 import net.nemezanevem.gregtech.api.capability.IThermalFluidHandlerItemStack;
@@ -49,8 +50,8 @@ import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.stack.ItemMaterialInfo;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.item.GtItemRegistry;
 
 import javax.annotation.Nonnull;
@@ -58,7 +59,6 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.List;
 
 /**
  * MetaItem is item that can have up to Short.MAX_VALUE items inside one id.
@@ -177,6 +177,10 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
             return metaItem.getBurnValue();
         }
         return super.getBurnTime(itemStack, recipeType);
+    }
+
+    public int getBurnValue() {
+        return burnValue;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -454,17 +458,16 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
                 .getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM, null);
         if (fluidHandler.isPresent()) {
             var realFluidHandler = fluidHandler.resolve().get();
-            IFluidTank fluidTankProperties = realFluidHandler.getTankProperties()[0];
-            FluidStack fluid = fluidTankProperties.getContents();
+            FluidStack fluid = realFluidHandler.getFluidInTank(0);
 
             lines.add(Component.translatable("metaitem.generic.fluid_container.tooltip",
-                    fluid == null ? 0 : fluid.amount,
-                    fluidTankProperties.getCapacity(),
-                    fluid == null ? "" : fluid.getLocalizedName()));
+                    fluid.isEmpty() ? 0 : fluid.getAmount(),
+                    realFluidHandler.getTankCapacity(0),
+                    fluid.isEmpty() ? "" : fluid.getDisplayName()));
 
             if (fluidHandler instanceof IThermalFluidHandlerItemStack) {
                 IThermalFluidHandlerItemStack thermalFluidHandler = (IThermalFluidHandlerItemStack) fluidHandler;
-                if (TooltipHelper.isShiftDown()) {
+                if (Screen.hasShiftDown()) {
                     lines.add(Component.translatable("gregtech.fluid_pipe.max_temperature", thermalFluidHandler.getMaxFluidTemperature()));
                     if (thermalFluidHandler.isGasProof()) lines.add(Component.translatable("gregtech.fluid_pipe.gas_proof"));
                     if (thermalFluidHandler.isAcidProof()) lines.add(Component.translatable("gregtech.fluid_pipe.acid_proof"));
@@ -513,17 +516,17 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     }
 
     @Override
-    public boolean hasContainerItem(@Nonnull ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        if (!(item instanceof MetaItem metaItem)) {
-            return false;
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        Item item = stack.getItem();
+        if (item instanceof MetaItem metaItem) {
+            return metaItem.getContainerItemProvider() != null;
         }
-        return metaItem.getContainerItemProvider() != null;
+        return false;
     }
 
     @Nonnull
     @Override
-    public ItemStack getContainerItem(@Nonnull ItemStack itemStack) {
+    public ItemStack getCraftingRemainingItem(ItemStack itemStack) {
         Item item = itemStack.getItem();
         if (!(item instanceof MetaItem metaItem)) {
             return ItemStack.EMPTY;
@@ -537,7 +540,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     @Nonnull
     @Override
     public Collection<CreativeModeTab> getCreativeTabs() {
-        return new CreativeModeTab[]{GregTech.TAB_GREGTECH, GregTech.TAB_GREGTECH_MATERIALS};
+        return List.<CreativeModeTab>of(GregTech.TAB_GREGTECH, GregTech.TAB_GREGTECH_MATERIALS);
     }
 
     @Override
