@@ -1,6 +1,6 @@
 # Gregtech-CEUu-1.19x
 
-This is a fork of a fork of GregTech Community Edition for MC 1.19.2 maintained by the GTCEuu Development team.
+This is a fork of a fork of GTCEu for MC 1.19.2 maintained by the GTCEuu Development team.
 
 ## Welcome to GregTech CE: Unofficial
 ### What is this?
