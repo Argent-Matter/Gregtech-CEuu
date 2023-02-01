@@ -1,46 +1,29 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.GTValues;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IVentable;
-import gregtech.api.damagesources.DamageSources;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.recipes.Recipe;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.util.Util;
-import gregtech.common.ConfigHolder;
-import gregtech.core.advancement.AdvancementTriggers;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.PlayerMP;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.EntitySelectors;
-import net.minecraft.util.Direction;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AABB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fluids.IFluidTank;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
@@ -192,7 +175,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    protected boolean checkRecipe(@Nonnull GTRecipe<?> recipe) {
+    protected boolean checkRecipe(@Nonnull GTRecipe recipe) {
         return super.checkRecipe(recipe) && !this.needsVenting;
     }
 
@@ -204,7 +187,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     }
 
     @Override
-    protected int[] calculateOverclock(@Nonnull Recipe recipe) {
+    protected int[] calculateOverclock(@Nonnull GTRecipe recipe) {
 
         //EUt, Duration
         int[] result = new int[2];
@@ -234,7 +217,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     protected boolean drawEnergy(int recipeEUt, boolean simulate) {
         int resultDraw = (int) Math.ceil(recipeEUt / conversionRate);
         return resultDraw >= 0 && steamFluidTank.getFluidAmount() >= resultDraw &&
-                steamFluidTank.drain(resultDraw, !simulate) != null;
+                !steamFluidTank.drain(resultDraw, simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE).isEmpty();
     }
 
     @Override
@@ -245,7 +228,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compound = super.serializeNBT();
-        compound.putInt("VentingSide", getVentingSide().getIndex());
+        compound.putInt("VentingSide", getVentingSide().ordinal());
         compound.putBoolean("NeedsVenting", needsVenting);
         compound.putBoolean("VentingStuck", ventingStuck);
         return compound;

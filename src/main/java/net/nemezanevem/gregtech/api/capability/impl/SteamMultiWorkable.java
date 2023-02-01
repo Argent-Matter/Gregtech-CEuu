@@ -1,8 +1,9 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.metatileentity.multiblock.ParallelLogicType;
-import gregtech.api.metatileentity.multiblock.RecipeTypeSteamMultiblockController;
-import gregtech.api.recipes.RecipeBuilder;
+
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeSteamMultiblockController;
+import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import javax.annotation.Nonnull;
 
@@ -26,10 +27,10 @@ public class SteamMultiWorkable extends SteamMultiblockRecipeLogic {
     }
 
     @Override
-    public void applyParallelBonus(@Nonnull RecipeBuilder<?> builder) {
+    public void applyParallelBonus(@Nonnull GTRecipeBuilder<?> builder) {
         int currentRecipeEU = builder.getEUt();
         int currentRecipeDuration = builder.getDuration() / getParallelLimit();
-        builder.EUt((int) Math.min(32.0, Math.ceil(currentRecipeEU) * 1.33))
-                .duration((int) (currentRecipeDuration * 1.5));
+        builder.setEUt((int) Math.min(32.0, Math.ceil(currentRecipeEU) * 1.33))
+                .setBaseDuration((int) (currentRecipeDuration * 1.5));
     }
 }

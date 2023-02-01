@@ -68,14 +68,14 @@ public class ToggleButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         if (!isVisible) return;
         Position pos = getPosition();
         Size size = getSize();
         if (shouldUseBaseBackground) {
             GuiTextures.TOGGLE_BUTTON_BACK.drawSubArea(pos.x, pos.y, size.width, size.height, 0, isPressed ? 0.5f : 0.0f, 1, 0.5f);
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            buttonTexture.draw(pos.x, pos.y, size.width, size.height);
+            buttonTexture.draw(poseStack, pos.x, pos.y, size.width, size.height);
         } else {
             if (buttonTexture instanceof SizedTextureArea) {
                 ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, isPressed ? 0.5 : 0.0, 0.5);

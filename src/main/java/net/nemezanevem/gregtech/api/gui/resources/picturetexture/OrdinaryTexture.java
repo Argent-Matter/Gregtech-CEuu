@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.resources.picturetexture;
 
-import gregtech.api.gui.resources.utils.ProcessedImageData;
+import net.nemezanevem.gregtech.api.gui.resources.utils.ProcessedImageData;
 
 public class OrdinaryTexture extends PictureTexture {
 

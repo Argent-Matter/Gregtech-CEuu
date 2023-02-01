@@ -1,27 +1,25 @@
 package net.nemezanevem.gregtech.integration.jei.recipe;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.forge.ForgeTypes;
-import mezz.jei.api.ingredients.IIngredientType;
+import com.mojang.blaze3d.vertex.PoseStack;
+import mezz.jei.api.gui.ingredient.IRecipeSlotView;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe.ChanceEntry;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
-import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
-import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
 import net.nemezanevem.gregtech.api.recipe.property.PrimitiveProperty;
 import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.util.TooltipHelper;
 
 import javax.annotation.Nonnull;
+import javax.swing.text.html.Option;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GTRecipeWrapper {
@@ -40,7 +38,7 @@ public class GTRecipeWrapper {
         return recipe;
     }
 
-    public Map<IIngredientType<?>, ? extends ExtendedIngredient> getIngredients() {
+    /*public Map<IIngredientType<?>, ? extends ExtendedIngredient> getIngredients() {
         Map<IIngredientType<?>, List<? extends ExtendedIngredient>> ingredients = new Object2ObjectOpenHashMap<>();
 
 
@@ -86,43 +84,39 @@ public class GTRecipeWrapper {
         }
 
         return ingredients;
-    }
+    }*/
 
-    public void addItemTooltip(int slotIndex, boolean input, Object ingredient, List<Component> tooltip) {
-        boolean notConsumed = input && isNotConsumedItem(slotIndex);
 
-        ChanceEntry entry = null;
-        int outputIndex = slotIndex - recipeMap.getMaxInputs();
-        if (!input && !recipe.getChancedOutputs().isEmpty() && outputIndex >= recipe.getOutputs().size()) {
-            entry = recipe.getChancedOutputs().get(outputIndex - recipe.getOutputs().size());
-        }
+    public void addItemTooltip(IRecipeSlotView recipeSlotView, List<Component> tooltip) {
+        if (recipeSlotView.getRole() == RecipeIngredientRole.CATALYST) {
+            tooltip.add(Component.literal(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.not_consumed").getString()));
+        } else {
+            Optional<ChanceEntry> entry = recipe.getChancedOutputs().stream().filter(chanceEntry -> recipeSlotView.getItemStacks().collect(Collectors.toSet()).contains(chanceEntry.itemStack())).findFirst();
 
-        if (entry != null) {
-            double chance = entry.getChance() / 100.0;
-            double boost = entry.getBoostPerTier() / 100.0;
-            tooltip.add(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.chance", chance, boost));
-        } else if (notConsumed) {
-            tooltip.add(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.not_consumed"));
+            if (entry.isPresent()) {
+                var realEntry = entry.get();
+                double chance = realEntry.chance() / 100.0;
+                double boost = realEntry.boostPerTier() / 100.0;
+                tooltip.add(Component.literal(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.chance", chance, boost).getString()));
+            }
         }
     }
 
-    public void addFluidTooltip(int slotIndex, boolean input, Object ingredient, List<Component> tooltip) {
-        boolean notConsumed = input && isNotConsumedFluid(slotIndex);
+    public void addFluidTooltip(IRecipeSlotView recipeSlotView, List<Component> tooltip) {
+        boolean notConsumed = recipeSlotView.getRole() == RecipeIngredientRole.CATALYST;
 
         if (notConsumed) {
-            tooltip.add(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.not_consumed"));
+            tooltip.add(Component.literal(TooltipHelper.BLINKING_CYAN + Component.translatable("gregtech.recipe.not_consumed").getString()));
         }
     }
 
-    @Override
-    public void drawInfo(@Nonnull Minecraft minecraft, int recipeWidth, int recipeHeight, int mouseX, int mouseY) {
-        super.drawInfo(minecraft, recipeWidth, recipeHeight, mouseX, mouseY);
+    public void drawInfo(PoseStack poseStack, @Nonnull Minecraft minecraft, int recipeWidth, int recipeHeight, double mouseX, double mouseY) {
         int yPosition = recipeHeight - getPropertyListHeight();
         if (!recipe.hasProperty(PrimitiveProperty.getInstance())) {
-            minecraft.fontRenderer.drawString(Component.translatable("gregtech.recipe.total", Math.abs((long) recipe.getEUt()) * recipe.getDuration()), 0, yPosition, 0x111111);
-            minecraft.fontRenderer.drawString(Component.translatable(recipe.getEUt() >= 0 ? "gregtech.recipe.eu" : "gregtech.recipe.eu_inverted", Math.abs(recipe.getEUt()), GTValues.VN[Util.getTierByVoltage(recipe.getEUt())]), 0, yPosition += LINE_HEIGHT, 0x111111);
+            minecraft.font.draw(poseStack, Component.translatable("gregtech.recipe.total", Math.abs((long) recipe.getEUt()) * recipe.getDuration()), 0, yPosition, 0x111111);
+            minecraft.font.draw(poseStack, Component.translatable(recipe.getEUt() >= 0 ? "gregtech.recipe.eu" : "gregtech.recipe.eu_inverted", Math.abs(recipe.getEUt()), GTValues.VN[Util.getTierByVoltage(recipe.getEUt())]), 0, yPosition += LINE_HEIGHT, 0x111111);
         } else yPosition -= LINE_HEIGHT * 2;
-        minecraft.fontRenderer.drawString(Component.translatable("gregtech.recipe.duration", recipe.getDuration() / 20f), 0, yPosition += LINE_HEIGHT, 0x111111);
+        minecraft.font.draw(poseStack, Component.translatable("gregtech.recipe.duration", recipe.getDuration() / 20f), 0, yPosition += LINE_HEIGHT, 0x111111);
         for (Map.Entry<RecipeProperty<?>, Object> propertyEntry : recipe.getPropertyValues()) {
             if (!propertyEntry.getKey().isHidden()) {
                 propertyEntry.getKey().drawInfo(minecraft, 0, yPosition += LINE_HEIGHT, 0x111111, propertyEntry.getValue());

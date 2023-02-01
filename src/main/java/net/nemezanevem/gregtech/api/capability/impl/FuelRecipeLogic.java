@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.api.capability.impl;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 

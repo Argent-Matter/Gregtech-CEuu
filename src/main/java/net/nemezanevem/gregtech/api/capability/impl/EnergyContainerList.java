@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.minecraft.core.Direction;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import net.minecraft.util.Direction;
 
 import java.util.List;
 

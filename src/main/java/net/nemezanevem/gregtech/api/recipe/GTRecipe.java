@@ -15,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fluids.FluidStack;
@@ -116,7 +115,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      * @param fluidTrimLimit The Limit to which fluid outputs should be trimmed to, -1 for no trimming
      * @return A new Recipe whose outputs have been trimmed.
      */
-    public GTRecipe trimRecipeOutputs(GTRecipe currentRecipe, GTRecipeType<?, ?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
+    public GTRecipe trimRecipeOutputs(GTRecipe currentRecipe, GTRecipeType<?> recipeMap, int itemTrimLimit, int fluidTrimLimit) {
 
         // Fast return early if no trimming desired
         if (itemTrimLimit == -1 && fluidTrimLimit == -1) {
@@ -362,7 +361,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
      * @param recipeType   The RecipeType that the recipe is being performed upon, used for chanced output calculation
      * @return A list of all resulting ItemStacks from the recipe, after chance has been applied to any chanced outputs
      */
-    public List<ItemStack> getResultItemOutputs(int recipeTier, int machineTier, GTRecipeType<?, ?> recipeType) {
+    public List<ItemStack> getResultItemOutputs(int recipeTier, int machineTier, GTRecipeType<?> recipeType) {
         ArrayList<ItemStack> outputs = new ArrayList<>(Util.copyStackList(getOutputs()));
         List<ChanceEntry> chancedOutputsList = getChancedOutputs();
         List<ItemStack> resultChanced = new ArrayList<>();
@@ -599,11 +598,12 @@ public class GTRecipe implements Recipe<CraftingContainer> {
 
     public static class Serializer implements RecipeSerializer<GTRecipe> {
         public GTRecipe fromJson(ResourceLocation pRecipeId, JsonObject pJson) {
-            String type = GsonHelper.getAsString(pJson, "type", "gregtech:basic");
+            String typeName = GsonHelper.getAsString(pJson, "type", "gregtech:basic");
             int eUt = GsonHelper.getAsInt(pJson, "EUt");
             int duration = GsonHelper.getAsInt(pJson, "duration");
             boolean hidden = GsonHelper.getAsBoolean(pJson, "hidden");
-            var typeReal = ForgeRegistries.RECIPE_TYPES.getValue(new ResourceLocation(type));
+            var recipeType = ForgeRegistries.RECIPE_TYPES.getValue(new ResourceLocation(typeName));
+            GTRecipeType<?> typeReal = recipeType instanceof GTRecipeType<?> type ? type : null;
             NonNullList<ExtendedIngredient> inputs = itemsFromJson(GsonHelper.getAsJsonArray(pJson, "itemIngredients"));
             NonNullList<FluidIngredient> fluids = fluidsFromJson(GsonHelper.getAsJsonArray(pJson, "fluidIngredients"));
 
@@ -758,7 +758,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
         }
     }
 
-    ///////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////
         //                   Chanced Output                      //
         ///////////////////////////////////////////////////////////
         public record ChanceEntry(ItemStack itemStack, int chance, int boostPerTier) {
@@ -770,16 +770,24 @@ public class GTRecipe implements Recipe<CraftingContainer> {
                 this.boostPerTier = boostPerTier;
             }
 
-            public ItemStack getItemStackRaw() {
-                return itemStack;
-            }
-
             public boolean isEmpty() {
                 return itemStack.isEmpty() || chance == 0;
             }
 
             public ChanceEntry copy() {
                 return new ChanceEntry(itemStack, chance, boostPerTier);
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (!(o instanceof ChanceEntry that)) return false;
+                return chance == that.chance && boostPerTier == that.boostPerTier && itemStack.equals(that.itemStack);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(itemStack, chance, boostPerTier);
             }
 
             public void toNetwork(FriendlyByteBuf pBuffer) {

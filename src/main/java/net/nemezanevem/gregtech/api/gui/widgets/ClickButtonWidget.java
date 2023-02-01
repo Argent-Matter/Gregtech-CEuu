@@ -77,8 +77,8 @@ public class ClickButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
         if (!shouldDisplay.get()) return;
         Position position = getPosition();
         Size size = getSize();

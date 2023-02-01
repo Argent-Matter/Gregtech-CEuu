@@ -2,14 +2,15 @@ package net.nemezanevem.gregtech.api.capability;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.capability.impl.EUToFEProvider;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.common.Mod;
+import net.nemezanevem.gregtech.common.metatileentities.converter.ConverterTrait;
 
 @Mod.EventBusSubscriber(modid = GregTech.MODID)
 public class GregtechCapabilities {

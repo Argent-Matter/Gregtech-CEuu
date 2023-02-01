@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
-import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 
 import java.util.function.Supplier;
 
@@ -22,7 +22,7 @@ public abstract class NotifiableFluidTankFromList extends NotifiableFluidTank {
     }
 
     @Override
-    public int fill(FluidStack resource, boolean doFill) {
+    public int fill(FluidStack resource, FluidAction doFill) {
         IMultipleTankHandler tanks = getFluidTankList().get();
         if (!tanks.allowSameFluidFill()) {
             int fillIndex = tanks.getIndexOfFluid(resource);

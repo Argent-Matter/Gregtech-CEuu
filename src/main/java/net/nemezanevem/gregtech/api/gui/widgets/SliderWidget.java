@@ -89,16 +89,16 @@ public class SliderWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundArea != null) {
-            backgroundArea.draw(pos.x, pos.y, size.width, size.height);
+            backgroundArea.draw(poseStack, pos.x, pos.y, size.width, size.height);
         }
         if (displayString == null) {
             this.displayString = getDisplayString();
         }
-        sliderIcon.draw(pos.x + (int) (this.sliderPosition * (float) (size.width - 8)), pos.y, sliderWidth, size.height);
+        sliderIcon.draw(poseStack, pos.x + (int) (this.sliderPosition * (float) (size.width - 8)), pos.y, sliderWidth, size.height);
         Font fontRenderer = Minecraft.getInstance().font;
         fontRenderer.draw(poseStack, displayString,
                 pos.x + size.width / 2f - fontRenderer.width(displayString) / 2f,

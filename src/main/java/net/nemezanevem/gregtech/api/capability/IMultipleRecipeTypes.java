@@ -1,6 +1,8 @@
 package net.nemezanevem.gregtech.api.capability;
 
 
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+
 public interface IMultipleRecipeTypes {
 
     /**

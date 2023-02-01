@@ -2,6 +2,7 @@ package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 
 import java.util.function.Supplier;
 

@@ -464,6 +464,10 @@ public class GTRecipeBuilder<R extends GTRecipeBuilder<R>> implements RecipeBuil
         return EUt;
     }
 
+    public int getDuration() {
+        return duration;
+    }
+
     /**
      * note: unused, don't use!!!
      * @param pGroupName UNUSED

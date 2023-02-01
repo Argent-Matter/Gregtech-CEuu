@@ -106,8 +106,8 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
         this.tabListRenderer.renderTabs(gui, getPosition(), tabInfos, sizes.getWidth(), sizes.getHeight(), selectedTabIndex);
     }
 

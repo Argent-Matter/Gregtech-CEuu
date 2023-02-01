@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.gui.resources.picturetexture;
 
-import gregtech.api.gui.resources.IGuiTexture;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.OpenGlHelper;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
 import org.lwjgl.opengl.GL11;
 
 public abstract class PictureTexture implements IGuiTexture {
@@ -20,21 +20,21 @@ public abstract class PictureTexture implements IGuiTexture {
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
-        render((float)x, (float)y, 1, 1, 0, width, height, false, false);
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
+        render(poseStack, (float)x, (float)y, 1, 1, 0, width, height, false, false);
     }
 
-    public void render(float x, float y, float width, float height, float rotation, float scaleX, float scaleY, boolean flippedX, boolean flippedY) {
+    public void render(PoseStack poseStack, float x, float y, float width, float height, float rotation, float scaleX, float scaleY, boolean flippedX, boolean flippedY) {
         this.beforeRender();
-        RenderSystem.color(1,1,1,1);
+        RenderSystem.setShaderColor(1,1,1,1);
         RenderSystem.enableBlend();
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+        GL11.glBlendFunc(770, 771);
         RenderSystem.bindTexture(this.getTextureID());
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        RenderSystem.pushMatrix();
+        poseStack.pushPose();
         GL11.glRotated(rotation, 0, 0, 1);
-        RenderSystem.enableRescaleNormal();
+        RenderSystem.enablePolygonOffset();
         GL11.glScaled(scaleX, scaleY, 1);
         GL11.glBegin(GL11.GL_POLYGON);
         GL11.glTexCoord3f(flippedY ? 1 : 0, flippedX ? 1 : 0, 0);
@@ -46,8 +46,8 @@ public abstract class PictureTexture implements IGuiTexture {
         GL11.glTexCoord3f(flippedY ? 0 : 1, flippedX ? 1 : 0, 0);
         GL11.glVertex3f(x + width, y, 0.01f);
         GL11.glEnd();
-        RenderSystem.popMatrix();
-        RenderSystem.disableRescaleNormal();
+        poseStack.popPose();
+        RenderSystem.disablePolygonOffset();
         RenderSystem.disableBlend();
     }
 

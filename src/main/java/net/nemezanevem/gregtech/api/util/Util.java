@@ -271,6 +271,14 @@ public class Util {
     }
 
 
+    public static <T> String[] mapToString(T[] array, Function<T, String> mapper) {
+        String[] result = new String[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = mapper.apply(array[i]);
+        }
+        return result;
+    }
+
     /**
      * @return a list of itemstack linked with given item handler
      * modifications in list will reflect on item handler and wise-versa
@@ -344,6 +352,24 @@ public class Util {
             if (!stack.isEmpty()) return stack.copy();
         return ItemStack.EMPTY;
     }
+
+    public static ItemStack copyAmount(int amount, ItemStack... stacks) {
+        ItemStack stack = copy(stacks);
+        if (stack.isEmpty()) return ItemStack.EMPTY;
+        if (amount > 64) amount = 64;
+        else if (amount == -1) amount = 111;
+        else if (amount < 0) amount = 0;
+        stack.setCount(amount);
+        return stack;
+    }
+
+    public static FluidStack copyAmount(int amount, FluidStack fluidStack) {
+        if (fluidStack == null) return null;
+        FluidStack stack = fluidStack.copy();
+        stack.setAmount(amount);
+        return stack;
+    }
+
 
     /**
      * Attempts to merge given ItemStack with ItemStacks in list supplied

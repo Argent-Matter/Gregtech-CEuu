@@ -1,18 +1,19 @@
 package net.nemezanevem.gregtech.common.metatileentities.converter;
 
-import gregtech.api.GTValues;
-import gregtech.api.capability.FeCompat;
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.metatileentity.MTETrait;
-import gregtech.api.util.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MTETrait;
+import net.nemezanevem.gregtech.api.capability.FeCompat;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.util.Util;
 
 public class ConverterTrait extends MTETrait {
 
@@ -51,6 +52,8 @@ public class ConverterTrait extends MTETrait {
     protected IEnergyStorage getEnergyFEContainer() {
         return energyFE;
     }
+
+    public LazyOptional<IEnergyStorage> energyFELazy = LazyOptional.of(() -> energyFE);
 
     public boolean isFeToEu() {
         return feToEu;
@@ -93,7 +96,7 @@ public class ConverterTrait extends MTETrait {
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
-        nbt.setLong("StoredEU", storedEU);
+        nbt.putLong("StoredEU", storedEU);
         nbt.putBoolean("feToEu", feToEu);
         return nbt;
     }
@@ -117,28 +120,28 @@ public class ConverterTrait extends MTETrait {
         long energyInserted;
         if (feToEu) { // push out EU
             // Get the EU capability in front of us
-            IEnergyContainer container = getCapabilityAtFront(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
-            if (container == null) return;
+            LazyOptional<IEnergyContainer> container = getCapabilityAtFront(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER);
+            if (!container.isPresent()) return;
 
             // make sure we can output at least 1 amp
             long ampsToInsert = Math.min(amps, storedEU / voltage);
             if (ampsToInsert == 0) return;
 
             // send out energy
-            energyInserted = container.acceptEnergyFromNetwork(metaTileEntity.getFrontFacing().getOpposite(), voltage, ampsToInsert) * voltage;
+            energyInserted = container.resolve().get().acceptEnergyFromNetwork(metaTileEntity.getFrontFacing().getOpposite(), voltage, ampsToInsert) * voltage;
         } else { // push out FE
             // Get the FE capability in front of us
-            IEnergyStorage storage = getCapabilityAtFront(CapabilityEnergy.ENERGY);
-            if (storage == null) return;
+            LazyOptional<IEnergyStorage> storage = getCapabilityAtFront(ForgeCapabilities.ENERGY);
+            if (!storage.isPresent()) return;
 
             // send out energy
-            energyInserted = FeCompat.insertEu(storage, storedEU);
+            energyInserted = FeCompat.insertEu(storage.resolve().get(), storedEU);
         }
         extractInternal(energyInserted);
     }
 
     protected <T> LazyOptional<T> getCapabilityAtFront(Capability<T> capability) {
-        TileEntity tile = metaTileEntity.getWorld().getTileEntity(frontPos == null ? frontPos = metaTileEntity.getPos().offset(metaTileEntity.getFrontFacing()) : frontPos);
+        BlockEntity tile = metaTileEntity.getWorld().getBlockEntity(frontPos == null ? frontPos = metaTileEntity.getPos().offset(metaTileEntity.getFrontFacing().getNormal()) : frontPos);
         if (tile == null) return null;
         Direction opposite = metaTileEntity.getFrontFacing().getOpposite();
         return tile.getCapability(capability, opposite);

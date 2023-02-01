@@ -53,7 +53,6 @@ import net.nemezanevem.gregtech.api.blockentity.ITieredMetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.capability.IActiveOutputSide;
-import net.nemezanevem.gregtech.api.capability.impl.FilteredFluidHandler;
 import net.nemezanevem.gregtech.api.capability.impl.FilteredItemHandler;
 import net.nemezanevem.gregtech.api.capability.impl.FluidHandlerProxy;
 import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
@@ -110,7 +109,7 @@ public class MetaTileEntityQuantumTank extends MetaTileEntity implements ITiered
     protected void initializeInventory() {
         super.initializeInventory();
         this.lockedFluid = new FluidTank(1);
-        this.fluidTank = new FilteredFluidHandler(maxFluidCapacity).setFillPredicate(fs -> lockedFluid.getFluid() == null || fs.isFluidEqual(lockedFluid.getFluid()));
+        this.fluidTank = new FluidTank(maxFluidCapacity).setValidator(fs -> lockedFluid.getFluid().isEmpty() || fs.isFluidEqual(lockedFluid.getFluid()));
         this.fluidInventory = fluidTank;
         this.importFluids = new FluidTankList(false, fluidTank);
         this.exportFluids = new FluidTankList(false, fluidTank);

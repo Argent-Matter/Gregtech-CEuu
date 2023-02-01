@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.client.renderer.Tessellator;
@@ -27,7 +28,7 @@ public class ColorRectTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         double j;
         double right = x + width;
         double bottom = y + height;
@@ -51,7 +52,7 @@ public class ColorRectTexture implements IGuiTexture{
         RenderSystem.enableBlend();
         RenderSystem.disableTexture2D();
         RenderSystem.tryBlendFuncSeparate(RenderSystem.SourceFactor.SRC_ALPHA, RenderSystem.DestFactor.ONE_MINUS_SRC_ALPHA, RenderSystem.SourceFactor.ONE, RenderSystem.DestFactor.ZERO);
-        RenderSystem.color(f, f1, f2, f3);
+        RenderSystem.setShaderColor(f, f1, f2, f3);
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
         bufferbuilder.pos(x, bottom, 0.0D).endVertex();
         bufferbuilder.pos(right, bottom, 0.0D).endVertex();
@@ -59,6 +60,6 @@ public class ColorRectTexture implements IGuiTexture{
         bufferbuilder.pos(x, y, 0.0D).endVertex();
         tessellator.draw();
         RenderSystem.enableTexture2D();
-        RenderSystem.color(1, 1, 1, 1);
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 }

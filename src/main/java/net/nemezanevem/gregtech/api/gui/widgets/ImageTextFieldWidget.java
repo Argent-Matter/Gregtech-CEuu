@@ -1,7 +1,8 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.resources.SizedTextureArea;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.resources.SizedTextureArea;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -27,8 +28,8 @@ public class ImageTextFieldWidget extends TextFieldWidget {
 
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         this.textureArea.drawHorizontalCutArea(this.getPosition().x - 2, this.getPosition().y, this.getSize().width, this.getSize().height);
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
     }
 }

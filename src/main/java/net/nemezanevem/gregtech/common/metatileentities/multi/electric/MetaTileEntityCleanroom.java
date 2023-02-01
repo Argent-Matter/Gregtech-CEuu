@@ -650,7 +650,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         if (ConfigHolder.machines.enableCleanroom) {
             super.getSubItems(creativeTab, subItems);
         }

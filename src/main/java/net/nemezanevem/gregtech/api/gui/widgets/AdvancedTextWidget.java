@@ -219,8 +219,8 @@ public class AdvancedTextWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
         Font fontRenderer = Minecraft.getInstance().font;
         Position position = getPosition();
         for (int i = 0; i < displayText.size(); i++) {
@@ -233,7 +233,7 @@ public class AdvancedTextWidget extends Widget {
         super.drawInForeground(poseStack, mouseX, mouseY);
         Component component = getTextUnderMouse(mouseX, mouseY);
         if (component != null) {
-            getWrapScreen().renderComponentHoverEffect(poseStack, component.getStyle(), mouseX, mouseY);
+            getWrapScreen().renderComponentHoverEffect(poseStack, component.getStyle(), (int) mouseX, (int) mouseY);
         }
     }
 

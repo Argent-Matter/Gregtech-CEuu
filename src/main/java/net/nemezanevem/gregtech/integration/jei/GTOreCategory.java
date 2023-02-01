@@ -152,7 +152,7 @@ public class GTOreCategory extends BasicRecipeCategory<GTOreInfo, GTOreInfo> {
 
     }
 
-    private void drawVeinName(final FontRenderer fontRenderer) {
+    private void drawVeinName(final Font fontRenderer) {
         final int maxVeinNameLength = 176;
 
         String veinNameToDraw = veinName;

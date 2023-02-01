@@ -1,5 +1,7 @@
 package net.nemezanevem.gregtech.api.capability;
 
+import net.minecraft.network.chat.Component;
+
 /**
  * Information about fuel
  */
@@ -7,7 +9,7 @@ public interface IFuelInfo {
     /**
      * @return the fuel
      */
-    String getFuelName();
+    Component getFuelName();
 
     /**
      * @return the amount of fuel remaining

@@ -27,7 +27,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
-import net.nemezanevem.gregtech.api.capability.impl.FilteredFluidHandler;
 import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
@@ -286,7 +285,7 @@ public abstract class SteamBoiler extends MetaTileEntity implements IDataInfoPro
 
     @Override
     protected FluidTankList createImportFluidHandler() {
-        this.waterFluidTank = new FilteredFluidHandler(16000).setFillPredicate(ModHandler::isWater);
+        this.waterFluidTank = new FluidTank(16000).setValidator(ModHandler::isWater);
         return new FluidTankList(false, waterFluidTank);
     }
 

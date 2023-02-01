@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fluids.FluidStack;
 
 /**
@@ -14,7 +15,7 @@ public class FluidFuelInfo extends AbstractFuelInfo {
         this.fluidStack = fluidStack;
     }
 
-    public String getFuelName() {
+    public Component getFuelName() {
         return fluidStack.getTranslationKey();
     }
 }

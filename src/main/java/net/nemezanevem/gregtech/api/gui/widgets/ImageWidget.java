@@ -1,21 +1,10 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.IGuiTexture;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.FriendlyByteBuf;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
@@ -99,22 +88,22 @@ public class ImageWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         if (!this.isVisible || area == null) return;
         if (ignoreColor) RenderSystem.setShaderColor(1, 1, 1, 1);
         Position position = getPosition();
         Size size = getSize();
-        area.draw(position.x, position.y, size.width, size.height);
+        area.draw(poseStack, position.x, position.y, size.width, size.height);
         if (border > 0) {
-            drawBorder(position.x, position.y, size.width, size.height, borderColor, border);
+            drawBorder(poseStack, position.x, position.y, size.width, size.height, borderColor, border);
         }
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (this.isVisible && tooltipText != null && area != null && isMouseOverElement(mouseX, mouseY)) {
             List<Component> hoverList = Arrays.asList(Component.translatable(tooltipText));
-            drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, (int) mouseX, (int) mouseY);
         }
     }
 }

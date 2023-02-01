@@ -1,10 +1,11 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import net.minecraft.item.ItemStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.IdentityHashMap;
@@ -16,7 +17,7 @@ import java.util.Map;
  */
 public class ItemHandlerList implements IItemHandlerModifiable {
 
-    private final TIntObjectMap<IItemHandler> handlerBySlotIndex = new TIntObjectHashMap<>();
+    private final Int2ObjectMap<IItemHandler> handlerBySlotIndex = new Int2ObjectOpenHashMap<>();
     private final Map<IItemHandler, Integer> baseIndexOffset = new IdentityHashMap<>();
 
     public ItemHandlerList(List<? extends IItemHandler> itemHandlerList) {
@@ -61,6 +62,11 @@ public class ItemHandlerList implements IItemHandlerModifiable {
         return itemHandler.getSlotLimit(slot - baseIndexOffset.get(itemHandler));
     }
 
+    @Override
+    public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+        return false;
+    }
+
     @Nonnull
     @Override
     public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
@@ -74,5 +80,4 @@ public class ItemHandlerList implements IItemHandlerModifiable {
         IItemHandler itemHandler = handlerBySlotIndex.get(slot);
         return itemHandler.extractItem(slot - baseIndexOffset.get(itemHandler), amount, simulate);
     }
-
 }

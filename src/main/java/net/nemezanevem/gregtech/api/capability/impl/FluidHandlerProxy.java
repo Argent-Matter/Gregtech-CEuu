@@ -1,19 +1,15 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import com.google.common.collect.Lists;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
 
 public class FluidHandlerProxy implements IFluidHandler {
 
     public IFluidHandler input;
     public IFluidHandler output;
-    private IFluidTankProperties[] properties;
 
     public FluidHandlerProxy(IFluidHandler input, IFluidHandler output) {
         reinitializeHandler(input, output);
@@ -22,32 +18,42 @@ public class FluidHandlerProxy implements IFluidHandler {
     public void reinitializeHandler(IFluidHandler input, IFluidHandler output) {
         this.input = input;
         this.output = output;
-
-        List<IFluidTankProperties> tanks = Lists.newArrayList();
-        Collections.addAll(tanks, input.getTankProperties());
-        Collections.addAll(tanks, output.getTankProperties());
-        this.properties = tanks.toArray(new IFluidTankProperties[0]);
     }
 
     @Override
-    public IFluidTankProperties[] getTankProperties() {
-        return properties;
+    public int getTanks() {
+        return 2;
     }
 
     @Override
-    public int fill(FluidStack resource, boolean doFill) {
+    public @NotNull FluidStack getFluidInTank(int tank) {
+        return tank == 0 ? input.getFluidInTank(0) : output.getFluidInTank(0);
+    }
+
+    @Override
+    public int getTankCapacity(int tank) {
+        return 0;
+    }
+
+    @Override
+    public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        return false;
+    }
+
+    @Override
+    public int fill(FluidStack resource, FluidAction doFill) {
         return input.fill(resource, doFill);
     }
 
     @Nullable
     @Override
-    public FluidStack drain(FluidStack resource, boolean doDrain) {
+    public FluidStack drain(FluidStack resource, FluidAction doDrain) {
         return output.drain(resource, doDrain);
     }
 
     @Nullable
     @Override
-    public FluidStack drain(int maxDrain, boolean doDrain) {
+    public FluidStack drain(int maxDrain, FluidAction doDrain) {
         return output.drain(maxDrain, doDrain);
     }
 }

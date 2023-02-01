@@ -1,19 +1,18 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.SizedTextureArea;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.SizedTextureArea;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,8 +75,8 @@ public class IncrementButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
         Position position = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
@@ -86,17 +85,17 @@ public class IncrementButtonWidget extends Widget {
             buttonTexture.drawSubArea(position.x, position.y, size.width, size.height, 0.0, 0.0, 1.0, 1.0);
         }
 
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        Font fontRenderer = Minecraft.getInstance().font;.
         String text = String.valueOf(clickValue);
         if(clickValue >= 0)
             text = "+" + text;
         drawText(text,
-                position.x + size.width / 2f - (fontRenderer.getStringWidth(text) / 2f) * textScale,
-                position.y + size.height / 2f - (fontRenderer.FONT_HEIGHT / 2f) * textScale, textScale, 0xFFFFFF);
+                position.x + size.width / 2f - (fontRenderer.width(text) / 2f) * textScale,
+                position.y + size.height / 2f - (fontRenderer.lineHeight / 2f) * textScale, textScale, 0xFFFFFF);
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, double mouseX, double mouseY) {
         boolean isHovered = isMouseOverElement(mouseX, mouseY);
         boolean wasHovered = isMouseHovered;
         if (isHovered && !wasHovered) {

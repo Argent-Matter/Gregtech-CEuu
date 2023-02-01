@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.nemezanevem.gregtech.api.capability.IThermalFluidHandlerItemStack;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.capability.IThermalFluidHandlerItemStack;
 
 import javax.annotation.Nonnull;
 

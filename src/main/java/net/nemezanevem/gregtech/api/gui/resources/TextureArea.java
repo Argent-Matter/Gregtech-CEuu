@@ -60,7 +60,7 @@ public class TextureArea implements IGuiTexture {
         poseStack.pushPose();
         poseStack.translate(x, y, 0.0f);
         transformation.apply(new Vector3(1, 1, 1));
-        draw(positionedRect.position.x, positionedRect.position.y, positionedRect.size.width, positionedRect.size.height);
+        draw(poseStack, positionedRect.position.x, positionedRect.position.y, positionedRect.size.width, positionedRect.size.height);
         poseStack.popPose();
     }
 
@@ -94,7 +94,7 @@ public class TextureArea implements IGuiTexture {
         return new Position((int) vector.x, (int) vector.y);
     }
 
-    public void draw(double x, double y, int width, int height) {
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         drawSubArea(x, y, width, height, 0.0f, 0.0f, 1.0f, 1.0f);
     }
 

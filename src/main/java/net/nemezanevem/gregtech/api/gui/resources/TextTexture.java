@@ -1,7 +1,8 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -57,8 +58,8 @@ public class TextTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
+        Font fontRenderer = Minecraft.getMinecraft().fontRenderer;
         int textH = fontRenderer.FONT_HEIGHT;
         if (type == TextType.NORMAL) {
             textH *= texts.size();
@@ -84,7 +85,7 @@ public class TextTexture implements IGuiTexture{
             fontRenderer.drawString(resultText, _x, _y, color, dropShadow);
         }
 
-        RenderSystem.color(1, 1, 1, 1);
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     public enum TextType{

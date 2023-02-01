@@ -6,12 +6,13 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.blockentity.IVoidable;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.recipe.FluidKey;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
-import net.nemezanevem.gregtech.api.blockentity.IVoidable;
 import net.nemezanevem.gregtech.api.util.GTHashMaps;
 import net.nemezanevem.gregtech.api.util.ItemStackKey;
 import net.nemezanevem.gregtech.api.util.OverlayedFluidHandler;
@@ -475,7 +476,7 @@ public abstract class ParallelLogic {
      * @param parallelAmount  The maximum amount of recipes that can be performed at one time
      * @param maxVoltage      The maximum voltage of the machine
      * @param voidable        The MetaTileEntity performing the parallel recipe
-     * @return A {@link RecipeBuilder} containing the recipes that can be performed in parallel, limited by the ingredients available, and the output space available.
+     * @return A {@link GTRecipeBuilder} containing the recipes that can be performed in parallel, limited by the ingredients available, and the output space available.
      */
     public static GTRecipeBuilder<?> appendItemRecipes(@Nonnull GTRecipeType<?> recipeMap, @Nonnull IItemHandlerModifiable importInventory, @Nonnull IItemHandlerModifiable exportInventory, int parallelAmount, long maxVoltage, IVoidable voidable) {
         GTRecipeBuilder<?> recipeBuilder = null;

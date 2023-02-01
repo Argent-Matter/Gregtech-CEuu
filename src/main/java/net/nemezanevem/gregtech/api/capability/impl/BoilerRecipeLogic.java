@@ -1,28 +1,23 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.GTValues;
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.nemezanevem.gregtech.api.GTValues;
-import net.nemezanevem.gregtech.api.capability.IMultiblockController;
-import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import gregtech.api.recipes.ModHandler;
-import gregtech.api.recipes.Recipe;
 import gregtech.api.recipes.RecipeTypes;
-import gregtech.api.util.GTLog;
-import gregtech.common.ConfigHolder;
-import gregtech.common.metatileentities.multi.MetaTileEntityLargeBoiler;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.NonNullList;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.api.capability.IMultiblockController;
+import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 import net.nemezanevem.gregtech.common.tileentity.multi.MetaTileEntityLargeBoiler;
 
@@ -78,7 +73,7 @@ public class BoilerRecipeLogic extends AbstractRecipeLogic {
             FluidStack fuelStack = fluidTank.drain(Integer.MAX_VALUE, false);
             if (fuelStack == null || ModHandler.isWater(fuelStack)) continue;
 
-            GTRecipe dieselRecipe = RecipeTypes.COMBUSTION_GENERATOR_FUELS.findRecipe(
+            GTRecipe dieselRecipe = GtRecipeTypes.GTRecipeTypes.COMBUSTION_GENERATOR_FUELS.findRecipe(
                     GTValues.V[GTValues.MAX], dummyList, Collections.singletonList(fuelStack), Integer.MAX_VALUE);
             // run only if it can apply a certain amount of "parallel", this is to mitigate int division
             if (dieselRecipe != null && fuelStack.getAmount() >= dieselRecipe.getFluidInputs().get(0).getAmount() * FLUID_DRAIN_MULTIPLIER) {

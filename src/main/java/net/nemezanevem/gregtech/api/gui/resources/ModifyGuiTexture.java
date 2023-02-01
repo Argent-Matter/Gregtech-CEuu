@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.util.ResourceLocation;
 
 import java.io.File;
@@ -45,8 +46,8 @@ public class ModifyGuiTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
-        texture.draw(x, y, width, height);
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
+        texture.draw(poseStack, x, y, width, height);
     }
 
     @Override

@@ -144,7 +144,7 @@ public class MetaTileEntityEnergyHatch extends MetaTileEntityMultiblockPart impl
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         // override here is gross, but keeps things in order despite
         // IDs being out of order, due to EV 4A hatches being added later
         if (this == MetaTileEntities.ENERGY_INPUT_HATCH[0]) {

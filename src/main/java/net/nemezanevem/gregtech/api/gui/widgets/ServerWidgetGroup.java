@@ -1,9 +1,9 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
 import net.minecraft.network.FriendlyByteBuf;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
 
 import java.util.function.BooleanSupplier;
 

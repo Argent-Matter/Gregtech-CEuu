@@ -91,8 +91,8 @@ public class TextFieldWidget2 extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
         Font fontRenderer = Minecraft.getInstance().font;
         int y = getPosition().y;
         int textX = getTextX();
@@ -211,8 +211,8 @@ public class TextFieldWidget2 extends Widget {
         return focused;
     }
 
-    private int getCursorPosFromMouse(int mouseX) {
-        int base = mouseX - getTextX();
+    private int getCursorPosFromMouse(double mouseX) {
+        int base = (int) mouseX - getTextX();
         float x = 1;
         int i = 0;
         while (x < base) {

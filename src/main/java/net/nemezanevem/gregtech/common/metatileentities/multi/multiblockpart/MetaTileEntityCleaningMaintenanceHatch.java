@@ -86,7 +86,7 @@ public class MetaTileEntityCleaningMaintenanceHatch extends MetaTileEntityAutoMa
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         // does nothing here so the Auto Maintenance Hatch can put this right after it
     }
 

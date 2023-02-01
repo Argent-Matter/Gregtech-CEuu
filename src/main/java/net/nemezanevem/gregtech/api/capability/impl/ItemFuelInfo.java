@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Item Fuel information
@@ -14,8 +15,8 @@ public class ItemFuelInfo extends AbstractFuelInfo {
         this.itemStack = itemStack;
     }
 
-    public String getFuelName() {
-        return itemStack.getTranslationKey();
+    public Component getFuelName() {
+        return itemStack.getDisplayName();
     }
 
     public ItemStack getItemStack() {

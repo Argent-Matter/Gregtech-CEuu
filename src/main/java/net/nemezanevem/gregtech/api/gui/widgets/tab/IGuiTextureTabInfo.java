@@ -19,8 +19,8 @@ public class IGuiTextureTabInfo implements ITabInfo {
 
     @Override
     public void renderTab(IGuiTexture tabTexture, int posX, int posY, int xSize, int ySize, boolean isSelected) {
-        tabTexture.draw(posX, posY, xSize, ySize);
-        texture.draw(posX, posY, xSize, ySize);
+        tabTexture.draw(poseStack, posX, posY, xSize, ySize);
+        texture.draw(poseStack, posX, posY, xSize, ySize);
     }
 
     @Override

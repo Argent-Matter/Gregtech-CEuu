@@ -2,6 +2,7 @@ package net.nemezanevem.gregtech.api.gui.resources;
 
 import codechicken.lib.render.shader.ShaderObject;
 import codechicken.lib.render.shader.ShaderProgram;
+import com.mojang.blaze3d.vertex.PoseStack;
 import gregtech.api.gui.Widget;
 import gregtech.client.shader.Shaders;
 import gregtech.common.ConfigHolder;
@@ -90,7 +91,7 @@ public class ShaderTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         this.draw(x, y, width, height, null);
     }
 

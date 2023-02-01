@@ -2,12 +2,13 @@ package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.minecraft.util.Tuple;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.nemezanevem.gregtech.api.capability.*;
-import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeMultiblockController;
+import net.nemezanevem.gregtech.api.capability.*;
+import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;

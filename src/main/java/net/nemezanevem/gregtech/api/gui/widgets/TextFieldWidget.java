@@ -142,12 +142,12 @@ public class TextFieldWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
         if (background != null) {
             Position position = getPosition();
             Size size = getSize();
-            background.draw(position.x, position.y, size.width, size.height);
+            background.draw(poseStack, position.x, position.y, size.width, size.height);
         }
         this.textField.render(poseStack, mouseX, mouseY, partialTicks);
         RenderSystem.enableBlend();

@@ -1,25 +1,23 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.SizedTextureArea;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.util.Util;
-import gregtech.api.util.Position;
-import gregtech.api.util.Size;
-import gregtech.api.util.function.BooleanConsumer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.Mth;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.SizedTextureArea;
+import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.api.util.Size;
+import net.nemezanevem.gregtech.api.util.Util;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.*;
 
@@ -41,11 +39,11 @@ public class CycleButtonWidget extends Widget {
         this.setOptionExecutor = setOptionExecutor;
     }
 
-    public <T extends Enum<T> & IStringSerializable> CycleButtonWidget(int xPosition, int yPosition, int width, int height, Class<T> enumClass, Supplier<T> supplier, Consumer<T> updater) {
+    public <T extends Enum<T> & StringRepresentable> CycleButtonWidget(int xPosition, int yPosition, int width, int height, Class<T> enumClass, Supplier<T> supplier, Consumer<T> updater) {
         super(new Position(xPosition, yPosition), new Size(width, height));
         T[] enumConstantPool = enumClass.getEnumConstants();
         //noinspection RedundantCast
-        this.optionNames = Util.mapToString(enumConstantPool, it -> ((IStringSerializable) it).getName());
+        this.optionNames = Util.mapToString(enumConstantPool, it -> ((StringRepresentable) it).getSerializedName());
         this.currentOptionSupplier = () -> supplier.get().ordinal();
         this.setOptionExecutor = (newIndex) -> updater.accept(enumConstantPool[newIndex]);
     }
@@ -54,7 +52,7 @@ public class CycleButtonWidget extends Widget {
         super(new Position(xPosition, yPosition), new Size(width, height));
         this.optionNames = optionNames;
         this.currentOptionSupplier = () -> supplier.getAsBoolean() ? 1 : 0;
-        this.setOptionExecutor = (value) -> updater.apply(value >= 1);
+        this.setOptionExecutor = (value) -> updater.accept(value >= 1);
     }
 
     public CycleButtonWidget setTooltipHoverString(String hoverString) {
@@ -74,26 +72,26 @@ public class CycleButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
             ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, 0.0, 1.0);
         } else {
-            buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0, 0.0, 1.0, 1.0);
+            buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0f, 0.0f, 1.0f, 1.0f);
         }
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        String text = Component.translatable(optionNames[currentOption]);
-        fontRenderer.drawStringWithShadow(text,
-                pos.x + size.width / 2 - fontRenderer.getStringWidth(text) / 2,
-                pos.y + size.height / 2 - fontRenderer.FONT_HEIGHT / 2 + 1, textColor);
+        Font fontRenderer = Minecraft.getInstance().font;
+        Component text = Component.translatable(optionNames[currentOption]);
+        fontRenderer.drawShadow(poseStack, text,
+                pos.x + size.width / 2f - fontRenderer.width(text) / 2f,
+                pos.y + size.height / 2f - fontRenderer.lineHeight / 2f + 1, textColor);
     }
 
     @Override
-    public void drawInForeground(int mouseX, int mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY) && tooltipHoverString != null) {
-            List<String> hoverList = Arrays.asList(Component.translatable(tooltipHoverString).split("/n"));
-            drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            List<Component> hoverList = List.of(Component.translatable(tooltipHoverString));
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, (int) mouseX, (int) mouseY);
         }
     }
 
@@ -115,7 +113,7 @@ public class CycleButtonWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         super.mouseClicked(mouseX, mouseY, button);
         if (isMouseOverElement(mouseX, mouseY)) {
             //Allow only the RMB to reverse cycle

@@ -82,7 +82,7 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         //make sure mouse is not hovered on any element when outside of bounds
         if (!isPositionInsideScissor(mouseX, mouseY)) {
             mouseX = Integer.MAX_VALUE;
@@ -94,16 +94,16 @@ public class ScrollableListWidget extends AbstractWidgetGroup {
         Size size = getSize();
         int paneSize = scrollPaneWidth;
         int scrollX = position.x + size.width - paneSize;
-        GuiTextures.SLIDER_BACKGROUND_VERTICAL.draw(scrollX + 1, position.y + 1, paneSize - 2, size.height - 2);
+        GuiTextures.SLIDER_BACKGROUND_VERTICAL.draw(poseStack, scrollX + 1, position.y + 1, paneSize - 2, size.height - 2);
 
         int maxScrollOffset = totalListHeight - getSize().height + 2;
         float scrollPercent = maxScrollOffset == 0 ? 0 : scrollOffset / (maxScrollOffset * 1.0f);
         int scrollSliderHeight = 14;
         int scrollSliderY = Math.round(position.y + (size.height - scrollSliderHeight) * scrollPercent);
-        GuiTextures.SLIDER_ICON.draw(scrollX + 1, scrollSliderY + 2, paneSize - 2, scrollSliderHeight);
+        GuiTextures.SLIDER_ICON.draw(poseStack, scrollX + 1, scrollSliderY + 2, paneSize - 2, scrollSliderHeight);
 
         RenderUtil.useScissor(position.x, position.y, size.width - paneSize, size.height, () ->
-            super.drawInBackground(poseStack, finalMouseX, finalMouseY, partialTicks, context));
+            super.drawInBackground(poseStack, finalMouseY, finalMouseX, partialTicks, context));
     }
 
     @Override

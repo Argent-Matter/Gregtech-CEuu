@@ -5,43 +5,44 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.FeCompat;
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.PipelineUtil;
-import gregtech.common.ConfigHolder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Direction;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.FeCompat;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.util.PipelineUtil;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static gregtech.api.capability.GregtechDataCodes.SYNC_TILE_MODE;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.SYNC_TILE_MODE;
 
 public class MetaTileEntityConverter extends TieredMetaTileEntity {
 
     protected final ConverterTrait converterTrait;
+    protected LazyOptional<ConverterTrait> converterLazy;
+
 
     protected final int amps;
 
@@ -49,6 +50,7 @@ public class MetaTileEntityConverter extends TieredMetaTileEntity {
         super(metaTileEntityId, tier);
         this.amps = amps;
         this.converterTrait = initializeTrait();
+        converterLazy = LazyOptional.of(() -> converterTrait);
         reinitializeEnergyContainer();
     }
 
@@ -110,7 +112,7 @@ public class MetaTileEntityConverter extends TieredMetaTileEntity {
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         if (ConfigHolder.compat.energy.enableFEConverters) {
             super.getSubItems(creativeTab, subItems);
         }
@@ -133,14 +135,14 @@ public class MetaTileEntityConverter extends TieredMetaTileEntity {
         IVertexOperation[] colouredPipeline = ArrayUtils.add(pipeline, new ColourMultiplier(Util.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering())));
         Textures.VOLTAGE_CASINGS[getTier()].render(renderState, translation, colouredPipeline);
         if (converterTrait.isFeToEu()) {
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 if (facing == frontFacing)
                     Textures.ENERGY_OUT.renderSided(facing, renderState, translation, PipelineUtil.color(pipeline, GTValues.VC[getTier()]));
                 else
                     Textures.CONVERTER_FE_IN.renderSided(facing, renderState, translation, pipeline);
             }
         } else {
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 if (facing == frontFacing)
                     Textures.CONVERTER_FE_OUT.renderSided(facing, renderState, translation, pipeline);
                 else
@@ -168,14 +170,14 @@ public class MetaTileEntityConverter extends TieredMetaTileEntity {
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
             return converterTrait.isFeToEu() == (side == frontFacing) ?
-                    GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(converterTrait.getEnergyEUContainer()) : null;
+                    converterTrait.energyFELazy.cast() : null;
         }
-        if (capability == CapabilityEnergy.ENERGY) {
+        if (capability == ForgeCapabilities.ENERGY) {
             return side != (converterTrait.isFeToEu() ? frontFacing : null) ?
-                    CapabilityEnergy.ENERGY.cast(converterTrait.getEnergyFEContainer()) : null;
+                    converterTrait.energyFELazy.cast() : null;
         }
         if (capability == GregtechCapabilities.CAPABILITY_CONVERTER) {
-            return GregtechCapabilities.CAPABILITY_CONVERTER.cast(converterTrait);
+            return converterLazy.cast();
         }
         return super.getCapability(capability, side);
     }

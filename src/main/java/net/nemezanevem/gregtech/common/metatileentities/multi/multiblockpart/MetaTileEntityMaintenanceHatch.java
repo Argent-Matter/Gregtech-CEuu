@@ -4,43 +4,38 @@ import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.IMaintenanceHatch;
-import gregtech.api.capability.impl.ItemHandlerProxy;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.widgets.AdvancedTextWidget;
-import gregtech.api.gui.widgets.ClickButtonWidget;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.items.toolitem.ToolClasses;
-import gregtech.api.items.toolitem.ToolHelper;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.IMaintenance;
-import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
-import gregtech.api.metatileentity.multiblock.MultiblockAbility;
-import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.common.ConfigHolder;
-import gregtech.common.gui.widget.among_us.FixWiringTaskWidget;
-import gregtech.common.inventory.handlers.TapeItemStackHandler;
-import gregtech.common.items.MetaItems;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.*;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.*;
+import net.nemezanevem.gregtech.api.capability.IMaintenanceHatch;
+import net.nemezanevem.gregtech.api.capability.impl.ItemHandlerProxy;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.widgets.AdvancedTextWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.ClickButtonWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -52,7 +47,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static gregtech.api.capability.GregtechDataCodes.*;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
 
 public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart implements IMultiblockAbilityPart<IMaintenanceHatch>, IMaintenanceHatch {
 
@@ -191,13 +186,13 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
 
         if (entityPlayer != null) {
             // Fix automatically on slot click by player in Creative Mode
-            if (entityPlayer.capabilities.isCreativeMode) {
+            if (entityPlayer.isCreative()) {
                 fixAllMaintenanceProblems();
                 return;
             }
             // Then for every slot in the player's main inventory, try to duct tape fix
-            for (int i = 0; i < entityPlayer.inventory.mainInventory.size(); i++) {
-                if (consumeDuctTape(new ItemStackHandler(entityPlayer.inventory.mainInventory), i)) {
+            for (int i = 0; i < entityPlayer.getInventory().items.size(); i++) {
+                if (consumeDuctTape(new ItemStackHandler(entityPlayer.getInventory().items), i)) {
                     fixAllMaintenanceProblems();
                     setTaped(true);
                     return;
@@ -223,8 +218,8 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     }
 
     private boolean consumeDuctTape(@Nullable Player player, ItemStack itemStack) {
-        if (!itemStack.isEmpty() && itemStack.isItemEqual(MetaItems.DUCT_TAPE.getStackForm())) {
-            if (player == null || !player.capabilities.isCreativeMode) {
+        if (!itemStack.isEmpty() && itemStack.is(MetaItems.DUCT_TAPE.get())) {
+            if (player == null || !player.isCreative()) {
                 itemStack.shrink(1);
             }
             return true;
@@ -240,29 +235,29 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
      * @param entityPlayer Target Player which their inventory would be scanned for tools to fix
      */
     private void fixProblemsWithTools(byte problems, Player entityPlayer) {
-        List<String> toolsToMatch = Arrays.asList(new String[6]);
+        List<ToolClass> toolsToMatch = Arrays.asList(new ToolClass[6]);
         boolean proceed = false;
         for (byte index = 0; index < 6; index++) {
             if (((problems >> index) & 1) == 0) {
                 proceed = true;
                 switch (index) {
                     case 0:
-                        toolsToMatch.set(0, ToolClasses.WRENCH);
+                        toolsToMatch.set(0, ToolClass.WRENCH);
                         break;
                     case 1:
-                        toolsToMatch.set(1, ToolClasses.SCREWDRIVER);
+                        toolsToMatch.set(1, ToolClass.SCREWDRIVER);
                         break;
                     case 2:
-                        toolsToMatch.set(2, ToolClasses.SOFT_MALLET);
+                        toolsToMatch.set(2, ToolClass.SOFT_MALLET);
                         break;
                     case 3:
-                        toolsToMatch.set(3, ToolClasses.HARD_HAMMER);
+                        toolsToMatch.set(3, ToolClass.HARD_HAMMER);
                         break;
                     case 4:
-                        toolsToMatch.set(4, ToolClasses.WIRE_CUTTER);
+                        toolsToMatch.set(4, ToolClass.WIRE_CUTTER);
                         break;
                     case 5:
-                        toolsToMatch.set(5, ToolClasses.CROWBAR);
+                        toolsToMatch.set(5, ToolClass.CROWBAR);
                         break;
                 }
             }
@@ -272,10 +267,10 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
         }
 
         for (int i = 0; i < toolsToMatch.size(); i++) {
-            String toolToMatch = toolsToMatch.get(i);
+            ToolClass toolToMatch = toolsToMatch.get(i);
             if (toolToMatch != null) {
                 // Try to use the item in the player's "hand" (under the cursor)
-                ItemStack heldItem = entityPlayer.inventory.getItemStack();
+                ItemStack heldItem = entityPlayer.getInventory().getSelected();
                 if (ToolHelper.isTool(heldItem, toolToMatch)) {
                     fixProblemWithTool(i, heldItem, entityPlayer);
 
@@ -285,7 +280,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
                 }
 
                 // Then try all the remaining inventory slots
-                for (ItemStack itemStack : entityPlayer.inventory.mainInventory) {
+                for (ItemStack itemStack : entityPlayer.getInventory().items) {
                     if (ToolHelper.isTool(itemStack, toolToMatch)) {
                         fixProblemWithTool(i, itemStack, entityPlayer);
 
@@ -295,7 +290,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
                     }
                 }
 
-                for (ItemStack stack : entityPlayer.inventory.mainInventory) {
+                for (ItemStack stack : entityPlayer.getInventory().items) {
                     if (ToolHelper.isTool(stack, toolToMatch)) {
                         ((IMaintenance) this.getController()).setMaintenanceFixed(i);
                         ToolHelper.damageItemWhenCrafting(stack, entityPlayer);
@@ -364,7 +359,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     @Override
     public boolean onRightClick(Player playerIn, InteractionHand hand, Direction facing, VoxelShapeBlockHitResult hitResult) {
         if (getController() instanceof IMaintenance && ((IMaintenance) getController()).hasMaintenanceProblems()) {
-            if (consumeDuctTape(playerIn, playerIn.getHeldItem(hand))) {
+            if (consumeDuctTape(playerIn, playerIn.getItemInHand(hand))) {
                 fixAllMaintenanceProblems();
                 setTaped(true);
                 return true;
@@ -377,7 +372,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     protected ModularUI createUI(Player entityPlayer) {
         ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176, 18 * 3 + 98)
                 .label(5, 5, getMetaFullName())
-                .bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 * 3 + 16);
+                .bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 18 * 3 + 16);
 
         if (!isConfigurable && GTValues.FOOLS.get()) {
             builder.widget(new FixWiringTaskWidget(48, 15, 80, 50)
@@ -407,7 +402,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
                 tooltip = Component.translatable("gregtech.maintenance.configurable_" + type + ".changed_description", multiplier.get());
             }
             list.add(Component.translatable("gregtech.maintenance.configurable_" + type, multiplier.get())
-                    .setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
+                    .withStyle(style ->  style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         };
     }
 
@@ -415,7 +410,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     public CompoundTag writeToNBT(CompoundTag data) {
         super.writeToNBT(data);
         data.putBoolean("IsTaped", isTaped);
-        if (isConfigurable) data.setDouble("DurationMultiplier", durationMultiplier.doubleValue());
+        if (isConfigurable) data.putDouble("DurationMultiplier", durationMultiplier.doubleValue());
         return data;
     }
 
@@ -459,7 +454,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
 
     @Override
     public MultiblockAbility<IMaintenanceHatch> getAbility() {
-        return MultiblockAbility.MAINTENANCE_HATCH;
+        return GtMultiblockAbilities.MAINTENANCE_HATCH.get();
     }
 
     @Override
@@ -473,7 +468,7 @@ public class MetaTileEntityMaintenanceHatch extends MetaTileEntityMultiblockPart
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         if (ConfigHolder.machines.enableMaintenance) {
             super.getSubItems(creativeTab, subItems);
         }

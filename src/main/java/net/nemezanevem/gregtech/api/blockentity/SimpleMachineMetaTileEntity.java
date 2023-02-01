@@ -65,7 +65,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     protected IFluidHandler outputFluidInventory;
     protected IItemHandlerModifiable importItemsWithCircuit;
 
-    private static final int FONT_HEIGHT = 9; // Minecraft's FontRenderer FONT_HEIGHT value
+    private static final int FONT_HEIGHT = 9; // Minecraft's Font FONT_HEIGHT value
 
     public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing) {
         this(metaTileEntityId, recipeMap, renderer, tier, hasFrontFacing, Util.defaultTankSizeFunction);

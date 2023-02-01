@@ -120,7 +120,7 @@ public class MetaTileEntityAutoMaintenanceHatch extends MetaTileEntityMultiblock
     }
 
     @Override
-    public void getSubItems(CreativeTabs creativeTab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeModeTab creativeTab, NonNullList<ItemStack> subItems) {
         if (ConfigHolder.machines.enableMaintenance) {
             super.getSubItems(creativeTab, subItems);
             // keeps things in order despite IDs being out of order, due to the Cleaning Hatch being added later

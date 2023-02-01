@@ -59,7 +59,7 @@ public class FakeModularGui implements IRenderContext {
         poseStack.translate(-scale * halfW, -scale * halfH, 0);
         poseStack.scale(scale, scale, 1);
         RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
-        modularUI.backgroundPath.draw(0, 0, modularUI.getWidth(), modularUI.getHeight());
+        modularUI.backgroundPath.draw(poseStack, 0, 0, modularUI.getWidth(), modularUI.getHeight());
         poseStack.translate(0, 0, 0.001);
         RenderSystem.depthMask(false);
 
@@ -172,7 +172,7 @@ public class FakeModularGui implements IRenderContext {
             RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            widget.drawInBackground(poseStack, mouseX, mouseY, partialTicks, this);
+            widget.drawInBackground(poseStack, mouseY, mouseX, partialTicks, this);
             RenderSystem.disableBlend();
             poseStack.popPose();
         }

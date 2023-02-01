@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandlerModifiable;
@@ -16,7 +17,7 @@ public class FluidContainerSlotWidget extends SlotWidget {
 
     @Override
     public boolean canPutStack(ItemStack stack) {
-        IFluidHandlerItem fluidHandlerItem = FluidUtil.getFluidHandler(stack);
-        return fluidHandlerItem != null && (!requireFilledContainer || fluidHandlerItem.getTankProperties()[0].getContents() != null);
+        LazyOptional<IFluidHandlerItem> fluidHandlerItem = FluidUtil.getFluidHandler(stack);
+        return fluidHandlerItem.isPresent() && (!requireFilledContainer || !fluidHandlerItem.resolve().get().getFluidInTank(0).isEmpty());
     }
 }

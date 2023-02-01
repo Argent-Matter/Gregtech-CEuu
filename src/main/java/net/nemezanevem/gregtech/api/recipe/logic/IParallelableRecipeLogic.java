@@ -1,11 +1,12 @@
 package net.nemezanevem.gregtech.api.recipe.logic;
 
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.blockentity.IVoidable;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.capability.impl.AbstractRecipeLogic;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.blockentity.IVoidable;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.common.datagen.recipe.builder.GTRecipeBuilder;
 
 import javax.annotation.Nonnull;

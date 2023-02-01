@@ -95,10 +95,12 @@ public class EnergyContainerHandler extends MTETrait implements IEnergyContainer
         return TraitNetworkIds.TRAIT_ID_ENERGY_CONTAINER;
     }
 
+    LazyOptional<IEnergyContainer> lazyOptional = LazyOptional.of(() -> this);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability) {
         if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
-            return GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(this);
+            return lazyOptional.cast();
         }
         return null;
     }

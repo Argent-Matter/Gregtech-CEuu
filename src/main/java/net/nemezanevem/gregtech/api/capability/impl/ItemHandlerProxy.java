@@ -1,7 +1,8 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
@@ -41,5 +42,10 @@ public class ItemHandlerProxy implements IItemHandler {
     @Override
     public int getSlotLimit(int slot) {
         return slot < insertHandler.getSlots() ? insertHandler.getSlotLimit(slot) : extractHandler.getSlotLimit(slot - insertHandler.getSlots());
+    }
+
+    @Override
+    public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+        return insertHandler.isItemValid(slot, stack);
     }
 }

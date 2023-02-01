@@ -267,11 +267,11 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundTexture != null) {
-            backgroundTexture.draw(pos.x, pos.y, size.width, size.height);
+            backgroundTexture.draw(poseStack, pos.x, pos.y, size.width, size.height);
         }
         if (lastFluidStack != null) {
             RenderSystem.disableBlend();
@@ -299,7 +299,7 @@ public class PhantomFluidWidget extends Widget implements IIngredientSlot, IGhos
                     hoverStringList.add(Component.literal(lastFluidStack.getAmount() + " L"));
                     hoverStringList.add(Component.translatable("cover.fluid_filter.config_amount"));
                 }
-                drawHoveringText(poseStack, ItemStack.EMPTY, hoverStringList, -1, mouseX, mouseY);
+                drawHoveringText(poseStack, ItemStack.EMPTY, hoverStringList, -1, (int) mouseX, (int) mouseY);
             }
         }
     }

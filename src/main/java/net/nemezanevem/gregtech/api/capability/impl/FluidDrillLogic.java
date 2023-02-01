@@ -1,15 +1,14 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.GTValues;
-import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.worldgen.bedrockFluids.BedrockFluidVeinHandler;
-import gregtech.common.ConfigHolder;
-import gregtech.common.metatileentities.multi.electric.MetaTileEntityFluidDrill;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fluids.Fluid;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.MetaTileEntityFluidDrill;
 
 import javax.annotation.Nonnull;
 

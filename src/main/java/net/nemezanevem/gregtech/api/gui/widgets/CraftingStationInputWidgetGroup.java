@@ -1,12 +1,13 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.IRenderContext;
-import gregtech.api.gui.Widget;
-import gregtech.api.util.Position;
-import gregtech.common.metatileentities.storage.CraftingRecipeLogic;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.IRenderContext;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.util.Position;
+import net.nemezanevem.gregtech.common.metatileentities.storage.CraftingRecipeLogic;
 
 public class CraftingStationInputWidgetGroup extends AbstractWidgetGroup {
     protected CraftingRecipeLogic recipeResolver;
@@ -27,16 +28,15 @@ public class CraftingStationInputWidgetGroup extends AbstractWidgetGroup {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
-        super.drawInBackground(mouseX, mouseY, partialTicks, context);
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+        super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
         if(this.widgets.size() == 9) { // In case someone added more...
             for (int i = 0; i < 9; i++) {
                 Widget widget = widgets.get(i);
-                if (widget instanceof PhantomSlotWidget && ((tintLocations >> i) & 1) == 0) { // In other words, is this slot usable?
+                if (widget instanceof PhantomSlotWidget phantomSlotWidget && ((tintLocations >> i) & 1) == 0) { // In other words, is this slot usable?
                     int color = LIGHT_RED;
 
-                    PhantomSlotWidget phantomSlotWidget = (PhantomSlotWidget) widget;
-                    drawSolidRect(phantomSlotWidget.getPosition().x + 1, phantomSlotWidget.getPosition().y + 1,
+                    drawSolidRect(poseStack, phantomSlotWidget.getPosition().x + 1, phantomSlotWidget.getPosition().y + 1,
                             phantomSlotWidget.getSize().getWidth() - 2, phantomSlotWidget.getSize().getWidth() - 2, color);
                 }
             }

@@ -1,13 +1,11 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 
 import javax.annotation.Nonnull;
 
-import static net.minecraftforge.fluids.capability.templates.EmptyFluidHandler.EMPTY_TANK_PROPERTIES_ARRAY;
 
 /**
  * Implements an item that voids fluids
@@ -44,25 +42,20 @@ public class VoidFluidHandlerItemStack extends FluidHandlerItemStack {
     }
 
     @Override
-    public IFluidTankProperties[] getTankProperties() {
-        return EMPTY_TANK_PROPERTIES_ARRAY;
-    }
-
-    @Override
-    public int fill(FluidStack resource, boolean doFill) {
-        if (resource == null || resource.amount <= 0)
+    public int fill(FluidStack resource, FluidAction doFill) {
+        if (resource == null || resource.getAmount() <= 0)
             return 0;
-        return Math.min(this.capacity, resource.amount);
+        return Math.min(this.capacity, resource.getAmount());
     }
 
     @Override
-    public FluidStack drain(FluidStack resource, boolean doDrain) {
-        return null;
+    public FluidStack drain(FluidStack resource, FluidAction doDrain) {
+        return FluidStack.EMPTY;
     }
 
     @Override
-    public FluidStack drain(int maxDrain, boolean doDrain) {
-        return null;
+    public FluidStack drain(int maxDrain, FluidAction doDrain) {
+        return FluidStack.EMPTY;
     }
 
     @Override

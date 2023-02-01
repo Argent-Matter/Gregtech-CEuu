@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.widgets;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.nemezanevem.gregtech.api.gui.IRenderContext;
 import net.nemezanevem.gregtech.api.gui.Widget;
@@ -39,17 +40,17 @@ public class ProgressWidget extends Widget {
     public ProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height, TextureArea fullImage, MoveType moveType) {
         super(new Position(x, y), new Size(width, height));
         this.progressSupplier = progressSupplier;
-        this.emptyBarArea = fullImage.getSubArea(0.0, 0.0, 1.0, 0.5);
+        this.emptyBarArea = fullImage.getSubArea(0.0f, 0.0f, 1.0f, 0.5f);
         this.moveType = moveType;
         if (moveType == MoveType.CIRCULAR) {
             this.filledBarArea = new TextureArea[]{
-                    fullImage.getSubArea(0.0, 0.75, 0.5, 0.25), // UP
-                    fullImage.getSubArea(0.0, 0.5, 0.5, 0.25), // LEFT
-                    fullImage.getSubArea(0.5, 0.5, 0.5, 0.25), // DOWN
-                    fullImage.getSubArea(0.5, 0.75, 0.5, 0.25), // RIGHT
+                    fullImage.getSubArea(0.0f, 0.75f, 0.5f, 0.25f), // UP
+                    fullImage.getSubArea(0.0f, 0.5f, 0.5f, 0.25f), // LEFT
+                    fullImage.getSubArea(0.5f, 0.5f, 0.5f, 0.25f), // DOWN
+                    fullImage.getSubArea(0.5f, 0.75f, 0.5f, 0.25f), // RIGHT
             };
         } else {
-            this.filledBarArea = new TextureArea[]{fullImage.getSubArea(0.0, 0.5, 1.0, 0.5)};
+            this.filledBarArea = new TextureArea[]{fullImage.getSubArea(0.0f, 0.5f, 1.0f, 0.5f)};
         }
     }
 
@@ -69,27 +70,27 @@ public class ProgressWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (emptyBarArea != null) {
-            emptyBarArea.draw(pos.x, pos.y, size.width, size.height);
+            emptyBarArea.draw(poseStack, pos.x, pos.y, size.width, size.height);
         }
         if (filledBarArea != null) {
             //fuck this precision-dependent things, they are so fucking annoying
             if (moveType == MoveType.HORIZONTAL) {
                 filledBarArea[0].drawSubArea(pos.x, pos.y, (int) (size.width * lastProgressValue), size.height,
-                        0.0, 0.0, ((int) (size.width * lastProgressValue)) / (size.width * 1.0), 1.0);
+                        0.0f, 0.0f, ((int) (size.width * lastProgressValue)) / (size.width * 1.0f), 1.0f);
             } else if (moveType == MoveType.VERTICAL) {
                 int progressValueScaled = (int) (size.height * lastProgressValue);
                 filledBarArea[0].drawSubArea(pos.x, pos.y + size.height - progressValueScaled, size.width, progressValueScaled,
-                        0.0, 1.0 - (progressValueScaled / (size.height * 1.0)),
-                        1.0, (progressValueScaled / (size.height * 1.0)));
+                        0.0f, 1.0f - (progressValueScaled / (size.height * 1.0f)),
+                        1.0f, (progressValueScaled / (size.height * 1.0f)));
             } else if (moveType == MoveType.VERTICAL_INVERTED) {
                 int progressValueScaled = (int) (size.height * lastProgressValue);
                 filledBarArea[0].drawSubArea(pos.x, pos.y, size.width, progressValueScaled,
-                        0.0, 0.0,
-                        1.0, (progressValueScaled / (size.height * 1.0)));
+                        0.0f, 0.0f,
+                        1.0f, (progressValueScaled / (size.height * 1.0f)));
             } else if (moveType == MoveType.CIRCULAR) {
                 double[] subAreas = new double[] {
                         Math.min(1, Math.max(0, lastProgressValue / 0.25)),
@@ -104,36 +105,36 @@ public class ProgressWidget extends Widget {
                 filledBarArea[0].drawSubArea(
                         pos.x, pos.y + size.height - progressScaled,
                         halfWidth, progressScaled,
-                        0.0, 1.0 - progressScaled / (halfHeight * 1.0),
-                        1.0, progressScaled / (halfHeight * 1.0)
+                        0.0f, 1.0f - progressScaled / (halfHeight * 1.0f),
+                        1.0f, progressScaled / (halfHeight * 1.0f)
                 ); // BL, draw UP
 
                 progressScaled = (int) Math.round(subAreas[1] * halfWidth);
                 filledBarArea[1].drawSubArea(
                         pos.x, pos.y,
                         progressScaled, halfHeight,
-                        0.0, 0.0,
-                        progressScaled / (halfWidth * 1.0), 1.0
+                        0.0f, 0.0f,
+                        progressScaled / (halfWidth * 1.0f), 1.0f
                 ); // TL, draw RIGHT
 
                 progressScaled = (int) Math.round(subAreas[2] * halfHeight);
                 filledBarArea[2].drawSubArea(
                         pos.x + halfWidth, pos.y,
                         halfWidth, progressScaled,
-                        0.0, 0.0,
-                        1.0, progressScaled / (halfHeight * 1.0)
+                        0.0f, 0.0f,
+                        1.0f, progressScaled / (halfHeight * 1.0f)
                 ); // TR, draw DOWN
 
                 progressScaled = (int) Math.round(subAreas[3] * halfWidth);
                 filledBarArea[3].drawSubArea(
                         pos.x + size.width - progressScaled, pos.y + halfHeight,
                         progressScaled, halfHeight,
-                        1.0 - progressScaled / (halfWidth * 1.0), 0.0,
-                        progressScaled / (halfWidth * 1.0), 1.0
+                        1.0f - progressScaled / (halfWidth * 1.0f), 0.0f,
+                        progressScaled / (halfWidth * 1.0f), 1.0f
                 ); // BR, draw LEFT
             } else if (moveType == MoveType.VERTICAL_DOWNWARDS) {
                 filledBarArea[0].drawSubArea(pos.x, pos.y, size.width, (int) (size.height * lastProgressValue),
-                        0.0, 0.0, 1.0, ((int) (size.height * lastProgressValue)) / (size.height * 1.0));
+                        0.0f, 0.0f, 1.0f, ((int) (size.height * lastProgressValue)) / (size.height * 1.0f));
             }
         }
     }

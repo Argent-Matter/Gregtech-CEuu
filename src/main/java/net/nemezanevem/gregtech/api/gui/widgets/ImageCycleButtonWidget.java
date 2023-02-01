@@ -64,7 +64,7 @@ public class ImageCycleButtonWidget extends Widget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
@@ -78,7 +78,7 @@ public class ImageCycleButtonWidget extends Widget {
     public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         if (isMouseOverElement(mouseX, mouseY) && tooltipHoverString != null) {
             List<Component> hoverList = List.of(Component.translatable(tooltipHoverString.apply(currentOption)));
-            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+            drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, (int) mouseX, (int) mouseY);
         }
     }
 

@@ -22,7 +22,7 @@ public class ItemTabInfo implements ITabInfo {
 
     @Override
     public void renderTab(IGuiTexture tabTexture, int posX, int posY, int xSize, int ySize, boolean isSelected) {
-        tabTexture.draw(posX, posY, xSize, ySize);
+        tabTexture.draw(poseStack, posX, posY, xSize, ySize);
         RenderSystem.disablePolygonOffset();
         Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
         Minecraft.getInstance().getItemRenderer().renderGuiItem(iconStack, posX + xSize / 2 - 8, posY + ySize / 2 - 8);

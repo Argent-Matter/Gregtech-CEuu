@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderSystem;
 import net.minecraft.client.renderer.RenderHelper;
@@ -34,7 +35,7 @@ public class ItemStackTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
         RenderSystem.disableDepth();
             Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();

@@ -679,7 +679,7 @@ public class GTRecipeType<R extends GTRecipeBuilder<R>> implements RecipeType<GT
                             return v;
                         } else {
                             if (ConfigHolder.misc.debug || GTValues.isDeobfEnvironment()) {
-                                GregTech.LOGGER.warn("Recipe duplicate or conflict found in RecipeType {} and was not added. See next lines for details", this.id);
+                                GregTech.LOGGER.warn("Recipe duplicate or conflict found in RecipeType {} and was not added. See next lines for details", this.getId());
 
                                 GregTech.LOGGER.warn("Attempted to add Recipe: {}", recipe.toString());
 

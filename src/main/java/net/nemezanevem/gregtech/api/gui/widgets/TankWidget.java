@@ -121,12 +121,12 @@ public class TankWidget extends Widget implements IIngredientSlot {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundTexture != null) {
             for (IGuiTexture textureArea : backgroundTexture) {
-                textureArea.draw(pos.x, pos.y, size.width, size.height);
+                textureArea.draw(poseStack, pos.x, pos.y, size.width, size.height);
             }
         }
         //do not draw fluids if they are handled by JEI - it draws them itself
@@ -156,7 +156,7 @@ public class TankWidget extends Widget implements IIngredientSlot {
             RenderSystem.enableBlend();
         }
         if (overlayTexture != null) {
-            overlayTexture.draw(pos.x, pos.y, size.width, size.height);
+            overlayTexture.draw(poseStack, pos.x, pos.y, size.width, size.height);
         }
     }
 

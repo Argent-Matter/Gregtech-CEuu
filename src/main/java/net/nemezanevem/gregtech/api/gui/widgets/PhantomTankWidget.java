@@ -45,7 +45,7 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
     @Override
     public PhantomTankWidget setClient() {
         super.setClient();
-        this.lastPhantomStack = phantomTank != null ? phantomTank.getFluid() != null ? phantomTank.getFluid().copy() : null : null;
+        this.lastPhantomStack = phantomTank != null ? !phantomTank.getFluid().isEmpty() ? phantomTank.getFluid().copy() : null : null;
         return this;
     }
 
@@ -138,9 +138,9 @@ public class PhantomTankWidget extends TankWidget implements IGhostIngredientTar
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         if (this.lastFluidInTank != null) {
-            super.drawInBackground(poseStack, mouseX, mouseY, partialTicks, context);
+            super.drawInBackground(poseStack, mouseY, mouseX, partialTicks, context);
             return;
         }
         Position pos = getPosition();

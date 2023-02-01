@@ -4,45 +4,40 @@ import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import com.google.common.collect.Lists;
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.capability.IMultipleTankHandler;
-import gregtech.api.capability.IWorkable;
-import gregtech.api.capability.impl.EnergyContainerList;
-import gregtech.api.capability.impl.FluidDrillLogic;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.metatileentity.ITieredMetaTileEntity;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.IMultiblockPart;
-import gregtech.api.metatileentity.multiblock.MultiblockAbility;
-import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
-import gregtech.api.pattern.BlockPattern;
-import gregtech.api.pattern.FactoryBlockPattern;
-import gregtech.api.pattern.PatternMatchContext;
-import gregtech.api.pattern.TraceabilityPredicate;
-import gregtech.api.unification.material.Materials;
-import gregtech.api.util.GTTransferUtils;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.common.blocks.BlockMetalCasing;
-import gregtech.common.blocks.MetaBlocks;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.ITieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IMultiblockPart;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
+import net.nemezanevem.gregtech.api.capability.*;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
+import net.nemezanevem.gregtech.api.capability.impl.FluidDrillLogic;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.pattern.BlockPattern;
+import net.nemezanevem.gregtech.api.pattern.FactoryBlockPattern;
+import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
+import net.nemezanevem.gregtech.api.pattern.TraceabilityPredicate;
+import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.block.BlockMetalCasing;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -70,9 +65,9 @@ public class MetaTileEntityFluidDrill extends MultiblockWithDisplayBase implemen
     }
 
     protected void initializeAbilities() {
-        this.inputFluidInventory = new FluidTankList(true, getAbilities(MultiblockAbility.IMPORT_FLUIDS));
-        this.outputFluidInventory = new FluidTankList(true, getAbilities(MultiblockAbility.EXPORT_FLUIDS));
-        this.energyContainer = new EnergyContainerList(getAbilities(MultiblockAbility.INPUT_ENERGY));
+        this.inputFluidInventory = new FluidTankList(true, getAbilities(GtMultiblockAbilities.IMPORT_FLUIDS.get()));
+        this.outputFluidInventory = new FluidTankList(true, getAbilities(GtMultiblockAbilities.EXPORT_FLUIDS.get()));
+        this.energyContainer = new EnergyContainerList(getAbilities(GtMultiblockAbilities.INPUT_ENERGY.get()));
     }
 
     private void resetTileAbilities() {
@@ -110,8 +105,8 @@ public class MetaTileEntityFluidDrill extends MultiblockWithDisplayBase implemen
                 .aisle("XSX", "#F#", "#F#", "#F#", "###", "###", "###")
                 .where('S', selfPredicate())
                 .where('X', states(getCasingState()).setMinGlobalLimited(3)
-                        .or(abilities(MultiblockAbility.INPUT_ENERGY).setMinGlobalLimited(1).setMaxGlobalLimited(3))
-                        .or(abilities(MultiblockAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1)))
+                        .or(abilities(GtMultiblockAbilities.INPUT_ENERGY.get()).setMinGlobalLimited(1).setMaxGlobalLimited(3))
+                        .or(abilities(GtMultiblockAbilities.EXPORT_FLUIDS.get()).setMaxGlobalLimited(1)))
                 .where('C', states(getCasingState()))
                 .where('F', getFramePredicate())
                 .where('#', any())
@@ -120,23 +115,23 @@ public class MetaTileEntityFluidDrill extends MultiblockWithDisplayBase implemen
 
     private BlockState getCasingState() {
         if (tier == GTValues.MV)
-            return MetaBlocks.METAL_CASING.getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID);
+            return MetaBlocks.METAL_CASING.get().getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID);
         if (tier == GTValues.HV)
-            return MetaBlocks.METAL_CASING.getState(BlockMetalCasing.MetalCasingType.TITANIUM_STABLE);
+            return MetaBlocks.METAL_CASING.get().getState(BlockMetalCasing.MetalCasingType.TITANIUM_STABLE);
         if (tier == GTValues.EV)
-            return MetaBlocks.METAL_CASING.getState(BlockMetalCasing.MetalCasingType.TUNGSTENSTEEL_ROBUST);
-        return MetaBlocks.METAL_CASING.getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID);
+            return MetaBlocks.METAL_CASING.get().getState(BlockMetalCasing.MetalCasingType.TUNGSTENSTEEL_ROBUST);
+        return MetaBlocks.METAL_CASING.get().getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID);
     }
 
     @Nonnull
     private TraceabilityPredicate getFramePredicate() {
         if (tier == GTValues.MV)
-            return frames(Materials.Steel);
+            return frames(GtMaterials.Steel.get());
         if (tier == GTValues.HV)
-            return frames(Materials.Titanium);
+            return frames(GtMaterials.Titanium.get());
         if (tier == GTValues.EV)
-            return frames(Materials.TungstenSteel);
-        return frames(Materials.Steel);
+            return frames(GtMaterials.TungstenSteel.get());
+        return frames(GtMaterials.Steel.get());
     }
 
     @Override
@@ -175,11 +170,11 @@ public class MetaTileEntityFluidDrill extends MultiblockWithDisplayBase implemen
         }
 
         if (!drainEnergy(true)) {
-            textList.add(Component.translatable("gregtech.multiblock.not_enough_energy").setStyle(new Style().setColor(TextFormatting.RED)));
+            textList.add(Component.translatable("gregtech.multiblock.not_enough_energy").withStyle(ChatFormatting.RED));
         }
 
         if (minerLogic.isInventoryFull())
-            textList.add(Component.translatable("gregtech.multiblock.large_miner.invfull").setStyle(new Style().setColor(TextFormatting.RED)));
+            textList.add(Component.translatable("gregtech.multiblock.large_miner.invfull").withStyle(ChatFormatting.RED));
     }
 
     @Override
@@ -313,12 +308,15 @@ public class MetaTileEntityFluidDrill extends MultiblockWithDisplayBase implemen
         return FluidDrillLogic.MAX_PROGRESS;
     }
 
+    private LazyOptional<IWorkable> workableLazy = LazyOptional.of(() -> this);
+    private LazyOptional<IControllable> controllableLazy = LazyOptional.of(() -> this);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if (capability == GregtechTileCapabilities.CAPABILITY_WORKABLE)
-            return GregtechTileCapabilities.CAPABILITY_WORKABLE.cast(this);
+            return workableLazy.cast();
         if (capability == GregtechTileCapabilities.CAPABILITY_CONTROLLABLE)
-            return GregtechTileCapabilities.CAPABILITY_CONTROLLABLE.cast(this);
+            return controllableLazy.cast();
         return super.getCapability(capability, side);
     }
 

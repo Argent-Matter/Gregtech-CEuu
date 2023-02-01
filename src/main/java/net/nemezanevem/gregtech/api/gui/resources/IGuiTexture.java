@@ -1,7 +1,9 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+
 public interface IGuiTexture {
-    void draw(double x, double y, int width, int height);
+    void draw(PoseStack poseStack, double x, double y, int width, int height);
     default void updateTick() { }
-    IGuiTexture EMPTY = (x, y, width, height) -> {};
+    IGuiTexture EMPTY = (poseStack, x, y, width, height) -> {};
 }

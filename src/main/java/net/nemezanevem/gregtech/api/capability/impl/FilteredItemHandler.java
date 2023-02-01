@@ -1,7 +1,7 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 public class FilteredItemHandler extends ItemStackHandler {
 
     public static Predicate<ItemStack> getCapabilityFilter(Capability<?> cap) {
-        return stack -> stack.hasCapability(cap, null);
+        return stack -> stack.getCapability(cap, null).isPresent();
     }
 
     private Predicate<ItemStack> fillPredicate;

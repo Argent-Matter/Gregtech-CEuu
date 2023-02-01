@@ -2,15 +2,16 @@ package net.nemezanevem.gregtech.api.capability.impl;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
+import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.FeCompat;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 

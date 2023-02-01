@@ -1,6 +1,6 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStackSimple;
 
@@ -17,22 +17,22 @@ public class GTSimpleFluidHandlerItemStack extends FluidHandlerItemStackSimple {
     }
 
     @Override
-    public FluidStack drain(FluidStack resource, boolean doDrain) {
+    public FluidStack drain(FluidStack resource, FluidAction doDrain) {
         FluidStack drained = super.drain(resource, doDrain);
         this.removeTagWhenEmpty(doDrain);
         return drained;
     }
 
     @Override
-    public FluidStack drain(int maxDrain, boolean doDrain) {
+    public FluidStack drain(int maxDrain, FluidAction doDrain) {
         FluidStack drained = super.drain(maxDrain, doDrain);
         this.removeTagWhenEmpty(doDrain);
         return drained;
     }
 
-    private void removeTagWhenEmpty(boolean doDrain) {
-        if (doDrain && this.getFluid() == null) {
-            this.container.setTagCompound(null);
+    private void removeTagWhenEmpty(FluidAction doDrain) {
+        if (doDrain.execute() && this.getFluid().isEmpty()) {
+            this.container.setTag(null);
         }
     }
 }

@@ -85,12 +85,12 @@ public class SlotWidget extends Widget implements INativeWidget {
     }
 
     @Override
-    public void drawInBackground(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, IRenderContext context) {
+    public void drawInBackground(PoseStack poseStack, int mouseY, int mouseX, float partialTicks, IRenderContext context) {
         Position pos = getPosition();
         Size size = getSize();
         if (backgroundTexture != null) {
             for (IGuiTexture backgroundTexture : this.backgroundTexture) {
-                backgroundTexture.draw(pos.x, pos.y, size.width, size.height);
+                backgroundTexture.draw(poseStack, pos.x, pos.y, size.width, size.height);
             }
         }
         ItemStack itemStack = slotReference.getItem();
@@ -132,11 +132,9 @@ public class SlotWidget extends Widget implements INativeWidget {
                 }
             }
         } else {
-            RenderSystem.disableDepth();
             RenderSystem.colorMask(true, true, true, false);
-            drawSolidRect(getPosition().x + 1, getPosition().y + 1, 16, 16, 0xbf000000);
+            drawSolidRect(poseStack, getPosition().x + 1, getPosition().y + 1, 16, 16, 0xbf000000);
             RenderSystem.colorMask(true, true, true, true);
-            RenderSystem.enableDepth();
             RenderSystem.enableBlend();
         }
     }

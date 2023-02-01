@@ -1,18 +1,18 @@
 package net.nemezanevem.gregtech.integration.jei.recipe;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.forge.ForgeTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
-import mezz.jei.api.recipe.vanilla.IJeiAnvilRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.ItemStackHandler;
@@ -28,11 +28,10 @@ import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.api.gui.widgets.TankWidget;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
-import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
-import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
 
     public static final RecipeType<GTRecipeWrapper> GREGTECH = RecipeType.create(GregTech.MODID, "gregtech", GTRecipeWrapper.class);
 
-    private final GTRecipeType<?> recipeMap;
+    private final GTRecipeType<?> recipeType;
     private final ModularUI modularUI;
     private final ItemStackHandler importItems, exportItems;
     private final FluidTankList importFluids, exportFluids;
@@ -52,7 +51,7 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
     private static final HashMap<GTRecipeType<?>, RecipeTypeCategory> categoryMap = new HashMap<>();
 
     public RecipeTypeCategory(GTRecipeType<?> recipeMap, IGuiHelper guiHelper) {
-        this.recipeMap = recipeMap;
+        this.recipeType = recipeMap;
         FluidTank[] importFluidTanks = new FluidTank[recipeMap.getMaxFluidInputs()];
         for (int i = 0; i < importFluidTanks.length; i++)
             importFluidTanks[i] = new FluidTank(16000);
@@ -72,8 +71,8 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
 
     @Nonnull
     @Override
-    public ResourceLocation getRegistryName(GTRecipe recipe) {
-        return recipe.id;
+    public ResourceLocation getRegistryName(GTRecipeWrapper recipe) {
+        return recipe.getRecipe().getId();
     }
 
     @Override
@@ -84,7 +83,7 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
     @Override
     @Nonnull
     public Component getTitle() {
-        return recipeMap.getLocalizedName();
+        return recipeType.getLocalizedName();
     }
 
     @Nullable
@@ -113,8 +112,10 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, GTRecipeWrapper recipe, IFocusGroup focuses) {
-        List<FluidIngredient> fluidStackGroup = recipe.getRecipe().getFluidInputs();
+    public void setRecipe(IRecipeLayoutBuilder builder, GTRecipeWrapper recipeWrapper, IFocusGroup focuses) {
+        List<List<FluidStack>> inputsList = recipeWrapper.getRecipe().getFluidInputs().stream().map(input -> Arrays.asList(input.getFluids())).toList();
+        List<FluidStack> outputsList = recipeWrapper.getRecipe().getFluidOutputs().stream().toList();
+
         for (Widget uiWidget : modularUI.guiWidgets.values()) {
 
             if (uiWidget instanceof SlotWidget slotWidget) {
@@ -122,73 +123,99 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
                     continue;
                 }
                 if (handle.getItemHandler() == importItems) {
-                    recipe.
                     //this is input item stack slot widget, so add it to item group
-                    itemStackGroup.init(handle.getSlotIndex(), true,
-                            new ItemStackTextRenderer(recipeWrapper.isNotConsumedItem(handle.getSlotIndex())),
-                            slotWidget.getPosition().x + 1,
-                            slotWidget.getPosition().y + 1,
-                            slotWidget.getSize().width - 2,
-                            slotWidget.getSize().height - 2, 0, 0);
+                    if(recipeWrapper.getRecipe().getInputs().get(handle.getSlotIndex()).isConsumable()) {
+                        builder.addSlot(RecipeIngredientRole.INPUT,
+                                        slotWidget.getPosition().x + 1,
+                                        slotWidget.getPosition().y + 1)
+                                .addItemStacks(Arrays.asList(recipeWrapper.getRecipe().getIngredients().get(handle.getSlotIndex()).getItems()))
+                                .addTooltipCallback(recipeWrapper::addItemTooltip)
+                                .setSlotName(slotWidget.getPosition().x + " " + slotWidget.getPosition().y);
+                    } else {
+                        builder.addSlot(RecipeIngredientRole.CATALYST,
+                                        slotWidget.getPosition().x + 1,
+                                        slotWidget.getPosition().y + 1)
+                                .addItemStacks(Arrays.asList(recipeWrapper.getRecipe().getIngredients().get(handle.getSlotIndex()).getItems()))
+                                .addTooltipCallback(recipeWrapper::addItemTooltip)
+                                .setSlotName(slotWidget.getPosition().x + " " + slotWidget.getPosition().y);
+                    }
+
                 } else if (handle.getItemHandler() == exportItems) {
                     //this is output item stack slot widget, so add it to item group
-                    itemStackGroup.init(importItems.getSlots() + handle.getSlotIndex(), false,
-                            new ItemStackTextRenderer(recipeWrapper.getOutputChance(handle.getSlotIndex() - recipeWrapper.getRecipe().getOutputs().size())),
-                            slotWidget.getPosition().x + 1,
-                            slotWidget.getPosition().y + 1,
-                            slotWidget.getSize().width - 2,
-                            slotWidget.getSize().height - 2, 0, 0);
+                    builder.addSlot(RecipeIngredientRole.OUTPUT,
+                                    slotWidget.getPosition().x + 1,
+                                    slotWidget.getPosition().y + 1)
+                            .addItemStack(recipeWrapper.getRecipe().getOutputs().get(handle.getSlotIndex()))
+                            .addTooltipCallback(recipeWrapper::addItemTooltip)
+                            .setSlotName(slotWidget.getPosition().x + " " + slotWidget.getPosition().y);
                 }
-            } else if (uiWidget instanceof TankWidget) {
-                TankWidget tankWidget = (TankWidget) uiWidget;
+
+            } else if (uiWidget instanceof TankWidget tankWidget) {
                 if (importFluids.getFluidTanks().contains(tankWidget.fluidTank)) {
                     int importIndex = importFluids.getFluidTanks().indexOf(tankWidget.fluidTank);
-                    List<List<FluidStack>> inputsList = ingredients.getInputs(VanillaTypes.FLUID);
                     int fluidAmount = 0;
                     if (inputsList.size() > importIndex && !inputsList.get(importIndex).isEmpty())
-                        fluidAmount = inputsList.get(importIndex).get(0).amount;
+                        fluidAmount = inputsList.get(importIndex).get(0).getAmount();
                     //this is input tank widget, so add it to fluid group
-                    fluidStackGroup.init(importIndex, true,
-                            new FluidStackTextRenderer(fluidAmount, false,
-                                    tankWidget.getSize().width - (2 * tankWidget.fluidRenderOffset),
-                                    tankWidget.getSize().height - (2 * tankWidget.fluidRenderOffset), null)
-                                    .setNotConsumed(recipeWrapper.isNotConsumedFluid(importIndex)),
-                            tankWidget.getPosition().x + tankWidget.fluidRenderOffset,
-                            tankWidget.getPosition().y + tankWidget.fluidRenderOffset,
-                            tankWidget.getSize().width - (2 * tankWidget.fluidRenderOffset),
-                            tankWidget.getSize().height - (2 * tankWidget.fluidRenderOffset), 0, 0);
+                    if(recipeWrapper.getRecipe().getFluidInputs().get(importIndex).isConsumable()) {
+                        builder.addSlot(RecipeIngredientRole.INPUT,
+                                        tankWidget.getPosition().x,
+                                        tankWidget.getPosition().y)
+                                .setSlotName(tankWidget.getPosition().x + " " + tankWidget.getPosition().y)
+                                .addTooltipCallback(recipeWrapper::addFluidTooltip)
+                                .addIngredients(ForgeTypes.FLUID_STACK, inputsList.get(importIndex));
+                    } else {
+                        builder.addSlot(RecipeIngredientRole.CATALYST,
+                                        tankWidget.getPosition().x,
+                                        tankWidget.getPosition().y)
+                                .setSlotName(tankWidget.getPosition().x + " " + tankWidget.getPosition().y)
+                                .addTooltipCallback(recipeWrapper::addFluidTooltip)
+                                .addIngredients(ForgeTypes.FLUID_STACK, inputsList.get(importIndex));
+                    }
 
                 } else if (exportFluids.getFluidTanks().contains(tankWidget.fluidTank)) {
                     int exportIndex = exportFluids.getFluidTanks().indexOf(tankWidget.fluidTank);
-                    List<List<FluidStack>> inputsList = ingredients.getOutputs(VanillaTypes.FLUID);
                     int fluidAmount = 0;
-                    if (inputsList.size() > exportIndex && !inputsList.get(exportIndex).isEmpty())
-                        fluidAmount = inputsList.get(exportIndex).get(0).amount;
+                    if (outputsList.size() > exportIndex && !outputsList.get(exportIndex).isEmpty())
+                        fluidAmount = outputsList.get(exportIndex).getAmount();
                     //this is output tank widget, so add it to fluid group
-                    fluidStackGroup.init(importFluids.getFluidTanks().size() + exportIndex, false,
-                            new FluidStackTextRenderer(fluidAmount, false,
-                                    tankWidget.getSize().width - (2 * tankWidget.fluidRenderOffset),
-                                    tankWidget.getSize().height - (2 * tankWidget.fluidRenderOffset), null),
-                            tankWidget.getPosition().x + tankWidget.fluidRenderOffset,
-                            tankWidget.getPosition().y + tankWidget.fluidRenderOffset,
-                            tankWidget.getSize().width - (2 * tankWidget.fluidRenderOffset),
-                            tankWidget.getSize().height - (2 * tankWidget.fluidRenderOffset), 0, 0);
+                    builder.addSlot(RecipeIngredientRole.INPUT,
+                                    tankWidget.getPosition().x,
+                                    tankWidget.getPosition().y)
+                            .setSlotName(tankWidget.getPosition().x + " " + tankWidget.getPosition().y)
+                            .addIngredient(ForgeTypes.FLUID_STACK, outputsList.get(exportIndex));
 
                 }
             }
         }
-        itemStackGroup.addTooltipCallback(recipeWrapper::addItemTooltip);
-        fluidStackGroup.addTooltipCallback(recipeWrapper::addFluidTooltip);
-        itemStackGroup.set(ingredients);
-        fluidStackGroup.set(ingredients);
+        builder.setShapeless();
     }
 
     @Override
-    public void drawExtras(PoseStack poseStack, @Nonnull Minecraft minecraft) {
+    public void draw(GTRecipeWrapper recipe, IRecipeSlotsView recipeSlotsView, PoseStack stack, double mouseX, double mouseY) {
+        var slots = recipeSlotsView.getSlotViews();
+        for (int i = 0; i < slots.size(); ++i) {
+            if(slots.get(i).getRole() == RecipeIngredientRole.OUTPUT) {
+                GTRecipe.ChanceEntry entry = recipe.getOutputChance(i);
+                if(entry != null) {
+                    String[] xy = slots.get(i).getSlotName().get().split(" ");
+                    int x = Integer.decode(xy[0]);
+                    int y = Integer.decode(xy[1]);
+
+                    stack.pushPose();
+                    stack.scale(0.5f, 0.5f, 0.5f);
+                    Minecraft.getInstance().font.draw(stack, Float.toString(entry.chance() / 1000f), x - 5, y - 5, 0xFFFFFF00);
+                    stack.popPose();
+                }
+            }
+        }
+
+        recipe.drawInfo(stack, Minecraft.getInstance(), 128, 128, mouseX, mouseY);
+
         for (Widget widget : modularUI.guiWidgets.values()) {
             if (widget instanceof ProgressWidget) widget.detectAndSendChanges();
-            widget.drawInBackground(poseStack, 0, 0, minecraft.getPartialTick(), new IRenderContext() {});
-            widget.drawInForeground(poseStack, 0, 0);
+            widget.drawInBackground(stack, mouseY, mouseX, Minecraft.getInstance().getPartialTick(), new IRenderContext() {});
+            widget.drawInForeground(stack, (int) mouseX, (int) mouseY);
         }
     }
 
@@ -210,5 +237,10 @@ public class RecipeTypeCategory implements IRecipeCategory<GTRecipeWrapper> {
             }
         }
         return maxPropertyCount * FONT_HEIGHT;
+    }
+
+    @Override
+    public boolean isHandled(GTRecipeWrapper recipe) {
+        return recipe.getRecipe().getType() == this.recipeType;
     }
 }

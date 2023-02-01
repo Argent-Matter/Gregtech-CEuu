@@ -1,12 +1,11 @@
 package net.nemezanevem.gregtech.api.gui.impl;
 
-
-import codechicken.lib.math.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -19,7 +18,6 @@ import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
 import net.nemezanevem.gregtech.common.network.packets.PacketUIWidgetUpdate;
 
-import java.io.IOException;
 import java.util.Set;
 
 import static net.nemezanevem.gregtech.api.gui.Widget.drawGradientRect;
@@ -183,7 +181,6 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
             int deltaY = this.snapbackEnd.x - this.snapbackStartY;
             int currentX = this.snapbackStartX + (int) ((float) deltaX * partialTicks);
             int currentY = this.snapbackStartY + (int) ((float) deltaY * partialTicks);
-            //noinspection ConstantConditions
             this.itemRenderer.renderGuiItem(this.snapbackItem, currentX, currentY);
         }
     }
@@ -205,12 +202,12 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
         RenderSystem.enableBlend();
         poseStack.popPose();
-        modularUI.backgroundPath.draw(leftPos, topPos, imageWidth, imageHeight);
+        modularUI.backgroundPath.draw(poseStack, leftPos, topPos, imageWidth, imageHeight);
         modularUI.guiWidgets.values().forEach(widget -> {
             if (!widget.isVisible()) return;
             poseStack.pushPose();
             RenderSystem.enableBlend();
-            widget.drawInBackground(poseStack, pMouseX, pMouseY, partialTicks,this);
+            widget.drawInBackground(poseStack, pMouseY, pMouseX, partialTicks,this);
             RenderSystem.setShaderColor(modularUI.getRColorForOverlay(), modularUI.getGColorForOverlay(), modularUI.getBColorForOverlay(), 1.0F);
             poseStack.popPose();
         });
@@ -274,7 +271,7 @@ public class ModularUIGui extends AbstractContainerScreen<ModularUIContainer> im
         return super.mouseReleased(pMouseX, pMouseY, pButton);
     }
 
-    public void superMouseReleased(int mouseX, int mouseY, int state) {
+    public void superMouseReleased(double mouseX, double mouseY, int state) {
         super.mouseReleased(mouseX, mouseY, state);
     }
 

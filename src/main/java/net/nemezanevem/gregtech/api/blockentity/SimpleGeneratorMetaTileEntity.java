@@ -37,7 +37,7 @@ import java.util.function.Function;
 
 public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity implements IActiveOutputSide {
 
-    private static final int FONT_HEIGHT = 9; // Minecraft's FontRenderer FONT_HEIGHT value
+    private static final int FONT_HEIGHT = 9; // Minecraft's Font FONT_HEIGHT value
 
     public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                          Function<Integer, Integer> tankScalingFunction) {

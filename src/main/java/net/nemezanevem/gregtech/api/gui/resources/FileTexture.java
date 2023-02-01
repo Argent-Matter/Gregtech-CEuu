@@ -1,5 +1,6 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gregtech.api.gui.Widget;
 import gregtech.api.gui.resources.picturetexture.AnimatedPictureTexture;
 import gregtech.api.gui.resources.picturetexture.OrdinaryTexture;
@@ -89,7 +90,7 @@ public class FileTexture implements IGuiTexture{
     }
 
     @Override
-    public void draw(double x, double y, int width, int height) {
+    public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         if (texture != null && texture.hasTexture()) {
             texture.render((float)x, (float)y, width, height, 0, 1, 1, false, false);
         } else {
