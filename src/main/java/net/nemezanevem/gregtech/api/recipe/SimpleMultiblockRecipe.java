@@ -44,7 +44,7 @@ public class SimpleMultiblockRecipe implements Recipe<CraftingContainer> {
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public GTRecipeType<?> getType() {
         return null;
     }
 

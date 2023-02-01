@@ -61,7 +61,6 @@ import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.util.GTTransferUtils;
 import net.nemezanevem.gregtech.api.util.Util;
@@ -1388,9 +1387,9 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
     }
 
     public GTRecipeType<?> getRecipeType() {
-        for (int i = 0; i < mteTraits.size(); i++) {
-            if (mteTraits.get(i).getName().equals("RecipeTypeWorkable")) {
-                return ((AbstractRecipeLogic) mteTraits.get(i)).getRecipeType();
+        for (MTETrait mteTrait : mteTraits) {
+            if (mteTrait.getName().equals("RecipeTypeWorkable")) {
+                return ((AbstractRecipeLogic) mteTrait).getRecipeType();
             }
         }
         return null;

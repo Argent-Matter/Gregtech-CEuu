@@ -18,7 +18,6 @@ import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.capability.IMultipleRecipeTypes;
 import net.nemezanevem.gregtech.api.pattern.TraceabilityPredicate;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 
 import javax.annotation.Nullable;
 import java.util.List;

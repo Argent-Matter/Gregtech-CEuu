@@ -1,14 +1,14 @@
 package net.nemezanevem.gregtech.api.gui.widgets.tab;
 
-import com.google.common.collect.Lists;
-import gregtech.api.gui.resources.IGuiTexture;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.client.config.GuiUtils;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
+
+import java.util.Collections;
+import java.util.Optional;
 
 public class ItemTabInfo implements ITabInfo {
 
@@ -23,21 +23,19 @@ public class ItemTabInfo implements ITabInfo {
     @Override
     public void renderTab(IGuiTexture tabTexture, int posX, int posY, int xSize, int ySize, boolean isSelected) {
         tabTexture.draw(posX, posY, xSize, ySize);
-        RenderSystem.enableRescaleNormal();
-            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
-        Minecraft.getMinecraft().getRenderItem().renderItemIntoGUI(iconStack, posX + xSize / 2 - 8, posY + ySize / 2 - 8);
+        RenderSystem.disablePolygonOffset();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+        Minecraft.getInstance().getItemRenderer().renderGuiItem(iconStack, posX + xSize / 2 - 8, posY + ySize / 2 - 8);
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
-        RenderSystem.disableRescaleNormal();
+        RenderSystem.enablePolygonOffset();
     }
 
     @Override
-    public void renderHoverText(int posX, int posY, int xSize, int ySize, int guiWidth, int guiHeight, boolean isSelected, int mouseX, int mouseY) {
+    public void renderHoverText(PoseStack poseStack, int posX, int posY, int xSize, int ySize, int guiWidth, int guiHeight, boolean isSelected, int mouseX, int mouseY) {
         if (nameLocale != null) {
-            String localizedText = Component.translatable(nameLocale);
-            Minecraft mc = Minecraft.getMinecraft();
-            ScaledResolution resolution = new ScaledResolution(mc);
-            GuiUtils.drawHoveringText(Lists.newArrayList(localizedText), mouseX, mouseY,
-                    resolution.getScaledWidth(), resolution.getScaledHeight(), -1, mc.fontRenderer);
+            Component localizedText = Component.translatable(nameLocale);
+            Minecraft mc = Minecraft.getInstance();
+            mc.screen.renderTooltip(poseStack, Collections.singletonList(localizedText), Optional.empty(), mouseX, mouseY, mc.font);
         }
     }
 }

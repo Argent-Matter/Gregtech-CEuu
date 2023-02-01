@@ -24,7 +24,6 @@ import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
 import net.nemezanevem.gregtech.api.capability.IMiner;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;

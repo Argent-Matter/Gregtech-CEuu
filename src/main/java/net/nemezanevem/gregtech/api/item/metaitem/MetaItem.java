@@ -179,7 +179,7 @@ public abstract class MetaItem extends Item implements ItemUIFactory {
     //////////////////////////////////////////////////////////////////
 
     @Override
-    public int getBurnTime(@Nonnull ItemStack itemStack, RecipeType<?> recipeType) {
+    public int getBurnTime(@Nonnull ItemStack itemStack, GTRecipeType<?> recipeType) {
         Item item = itemStack.getItem();
         if (item instanceof MetaItem metaItem) {
             return metaItem.getBurnValue();

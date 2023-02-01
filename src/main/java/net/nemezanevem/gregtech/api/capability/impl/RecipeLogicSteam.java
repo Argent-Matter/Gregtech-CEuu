@@ -56,7 +56,7 @@ public class RecipeLogicSteam extends AbstractRecipeLogic implements IVentable {
     private boolean ventingStuck;
     private Direction ventingSide;
 
-    public RecipeLogicSteam(MetaTileEntity tileEntity, RecipeType<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
+    public RecipeLogicSteam(MetaTileEntity tileEntity, GTRecipeType<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
         super(tileEntity, recipeMap);
         this.steamFluidTank = steamFluidTank;
         this.conversionRate = conversionRate;

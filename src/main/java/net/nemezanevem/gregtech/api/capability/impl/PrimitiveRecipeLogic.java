@@ -6,7 +6,6 @@ import gregtech.api.recipes.RecipeType;
 import gregtech.api.recipes.recipeproperties.IRecipePropertyStorage;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypePrimitiveMultiblockController;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;
 
 import javax.annotation.Nonnull;

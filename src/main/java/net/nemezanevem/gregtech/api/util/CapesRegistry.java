@@ -140,7 +140,7 @@ public class CapesRegistry {
     private static List<Tuple<ResourceLocation, ResourceLocation>> ctRegisterCapes = new ArrayList<>();
 
     @Optional.Method(modid = GregTech.MODID_CT)
-    @ZenMethod
+    
     public static void registerCape(String advancement, String cape) {
         ctRegisterCapes.add(new Tuple<>(new ResourceLocation(advancement), new ResourceLocation(cape)));
     }

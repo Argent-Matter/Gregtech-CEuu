@@ -8,11 +8,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.crafting.AbstractIngredient;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -23,12 +22,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-public class FluidIngredient extends AbstractIngredient {
+public class FluidIngredient extends ExtendedIngredient {
 
-    public static final FluidIngredient EMPTY = new FluidIngredient(Stream.empty(), false);
-    private final FluidIngredient.Value[] values;
+    public static final FluidIngredient EMPTY = new FluidIngredient(new FluidValue(FluidStack.EMPTY), false);
+    private final FluidIngredient.Value value;
     @Nullable
     private FluidStack[] fluidStacks;
     @Nullable
@@ -37,9 +35,9 @@ public class FluidIngredient extends AbstractIngredient {
 
     private final boolean isConsumable;
 
-    protected FluidIngredient(Stream<? extends FluidIngredient.Value> pValues, boolean isConsumable) {
-        super(Stream.empty());
-        this.values = pValues.toArray(FluidIngredient.Value[]::new);
+    protected FluidIngredient(FluidIngredient.Value pValue, boolean isConsumable) {
+        super(pValue, isConsumable);
+        this.value = pValue;
         this.isConsumable = isConsumable;
     }
 
@@ -59,7 +57,7 @@ public class FluidIngredient extends AbstractIngredient {
 
     private void dissolve() {
         if (this.fluidStacks == null) {
-            this.fluidStacks = Arrays.stream(this.values).flatMap((value) -> value.getFluids().stream()).distinct().toArray(FluidStack[]::new);
+            this.fluidStacks = this.value.getFluids().stream().distinct().toArray(FluidStack[]::new);
         }
     }
 
@@ -92,21 +90,11 @@ public class FluidIngredient extends AbstractIngredient {
     }
 
     public JsonElement toJson() {
-        if (this.values.length == 1) {
-            return this.values[0].serialize();
-        } else {
-            JsonArray jsonarray = new JsonArray();
-
-            for(FluidIngredient.Value value : this.values) {
-                jsonarray.add(value.serialize());
-            }
-
-            return jsonarray;
-        }
+        return this.value.serialize();
     }
 
     public boolean isEmpty() {
-        return this.values.length == 0 && (this.fluidStacks == null || this.fluidStacks.length == 0) && (this.stackingIds == null || this.stackingIds.isEmpty());
+        return this.value.getFluids().stream().allMatch(FluidStack::isEmpty) && (this.fluidStacks == null || this.fluidStacks.length == 0) && (this.stackingIds == null || this.stackingIds.isEmpty());
     }
 
     protected void invalidate() {
@@ -122,9 +110,9 @@ public class FluidIngredient extends AbstractIngredient {
         return FluidIngredientSerializer.INSTANCE;
     }
 
-    public static FluidIngredient fromValuesFluid(boolean isConsumable, Stream<? extends FluidIngredient.Value> pStream) {
-        FluidIngredient ingredient = new FluidIngredient(pStream, isConsumable);
-        return ingredient.values.length == 0 ? EMPTY : ingredient;
+    public static FluidIngredient fromValuesFluid(boolean isConsumable, FluidIngredient.Value value) {
+        FluidIngredient ingredient = new FluidIngredient(value, isConsumable);
+        return ingredient.value.isEmpty() ? EMPTY : ingredient;
     }
 
     public static FluidIngredient ofFluid() {
@@ -140,40 +128,36 @@ public class FluidIngredient extends AbstractIngredient {
     }
 
     public static FluidIngredient ofFluid(boolean isConsumable, Stream<FluidStack> pStacks) {
-        return fromValuesFluid(isConsumable, pStacks.filter((stack) -> {
-            return !stack.isEmpty();
-        }).map(FluidIngredient.FluidValue::new));
+        return fromValuesFluid(isConsumable, pStacks.filter((stack) -> !stack.isEmpty()).map(FluidIngredient.FluidValue::new).findFirst().get());
     }
 
     public static FluidIngredient ofFluid(boolean isConsumable, TagKey<Fluid> pTag) {
-        return fromValuesFluid(isConsumable, Stream.of(new FluidIngredient.FluidTagValue(pTag, 1000)));
+        return fromValuesFluid(isConsumable, new FluidIngredient.FluidTagValue(pTag, 1000));
     }
 
     public static FluidIngredient ofFluid(boolean isConsumable, TagKey<Fluid> pTag, int amount) {
-        return fromValuesFluid(isConsumable, Stream.of(new FluidIngredient.FluidTagValue(pTag, amount)));
+        return fromValuesFluid(isConsumable, new FluidIngredient.FluidTagValue(pTag, amount));
     }
 
     public static FluidIngredient fromNetwork(FriendlyByteBuf pBuffer) {
         var size = pBuffer.readVarInt();
         if (size == -1) return FluidIngredientSerializer.INSTANCE.parse(pBuffer);
-        return fromValuesFluid(pBuffer.readBoolean(), Stream.generate(() -> new FluidIngredient.FluidValue(pBuffer.readFluidStack())).limit(size));
+        return fromValuesFluid(pBuffer.readBoolean(), new FluidIngredient.FluidValue(pBuffer.readFluidStack()));
     }
 
     public static FluidIngredient fromJson(@Nullable JsonElement pJson) {
         if (pJson != null && !pJson.isJsonNull()) {
             if (pJson.isJsonObject()) {
                 var obj = pJson.getAsJsonObject();
-                return fromValuesFluid(obj.get("consumable").getAsBoolean(), Stream.of(valueFromJsonFluid(obj)));
-            } else if (pJson.isJsonArray()) {
+                return fromValuesFluid(obj.get("consumable").getAsBoolean(), valueFromJsonFluid(obj));
+            }/* else if (pJson.isJsonArray()) {
                 JsonArray jsonarray = pJson.getAsJsonArray();
                 if (jsonarray.size() == 0) {
                     throw new JsonSyntaxException("Item array cannot be empty, at least one item must be defined");
                 } else {
-                    return fromValuesFluid(true, StreamSupport.stream(jsonarray.spliterator(), false).map((p_151264_) -> {
-                        return valueFromJsonFluid(GsonHelper.convertToJsonObject(p_151264_, "item"));
-                    }));
+                    return fromValuesFluid(GsonHelper.getAsBoolean(pJson.getAsJsonObject(), "consumable"), valueFromJsonFluid(GsonHelper.convertToJsonObject(jsonarray.get(0), "fluid")));
                 }
-            } else {
+            }*/ else {
                 throw new JsonSyntaxException("Expected item to be object or array of objects");
             }
         } else {
@@ -209,8 +193,8 @@ public class FluidIngredient extends AbstractIngredient {
         }
     }
 
-    public static FluidIngredient mergeFluid(Collection<FluidIngredient> parts) {
-        return fromValuesFluid(parts.stream().anyMatch(val -> val.isConsumable), parts.stream().flatMap(i -> Arrays.stream(i.values)));
+    public static FluidIngredient mergeFluid(FluidIngredient part) {
+        return fromValuesFluid(part.isConsumable, part.value);
     }
 
     public static class FluidValue implements FluidIngredient.Value {
@@ -222,6 +206,11 @@ public class FluidIngredient extends AbstractIngredient {
 
         public Collection<FluidStack> getFluids() {
             return Collections.singleton(this.fluid);
+        }
+
+        @Override
+        public Collection<ItemStack> getItems() {
+            return Collections.emptyList();
         }
 
         public JsonObject serialize() {
@@ -249,6 +238,11 @@ public class FluidIngredient extends AbstractIngredient {
             return list;
         }
 
+        @Override
+        public Collection<ItemStack> getItems() {
+            return Collections.emptyList();
+        }
+
         public JsonObject serialize() {
             JsonObject jsonobject = new JsonObject();
             jsonobject.addProperty("tag", this.tag.location().toString());
@@ -256,9 +250,13 @@ public class FluidIngredient extends AbstractIngredient {
         }
     }
 
-    public interface Value {
+    public interface Value extends Ingredient.Value {
         Collection<FluidStack> getFluids();
 
         JsonObject serialize();
+
+        default boolean isEmpty() {
+            return this.getFluids().stream().allMatch(FluidStack::isEmpty);
+        }
     }
 }

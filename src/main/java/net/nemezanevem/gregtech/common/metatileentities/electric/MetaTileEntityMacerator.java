@@ -13,7 +13,7 @@ public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
 
     private final int outputAmount;
 
-    public MetaTileEntityMacerator(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, int outputAmount, ICubeRenderer renderer, int tier) {
+    public MetaTileEntityMacerator(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, int outputAmount, ICubeRenderer renderer, int tier) {
         super(metaTileEntityId, recipeMap, renderer, tier, true);
         this.outputAmount = outputAmount;
         initializeInventory();

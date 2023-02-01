@@ -3,10 +3,9 @@ package net.nemezanevem.gregtech.api.recipe.ingredient;
 import com.google.gson.JsonObject;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
-import net.minecraftforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
-import java.util.stream.Stream;
+import java.util.Arrays;
 
 public class FluidIngredientSerializer implements IIngredientSerializer<FluidIngredient> {
     public static final FluidIngredientSerializer INSTANCE  = new FluidIngredientSerializer();
@@ -15,7 +14,7 @@ public class FluidIngredientSerializer implements IIngredientSerializer<FluidIng
     @Override
     public FluidIngredient parse(FriendlyByteBuf buffer)
     {
-        return FluidIngredient.fromValuesFluid(buffer.readBoolean(), Stream.generate(() -> new FluidIngredient.FluidValue(buffer.readFluidStack())).limit(buffer.readVarInt()));
+        return FluidIngredient.fromValuesFluid(buffer.readBoolean(), new FluidIngredient.FluidValue(buffer.readFluidStack()));
     }
 
     @Nonnull
@@ -30,11 +29,6 @@ public class FluidIngredientSerializer implements IIngredientSerializer<FluidIng
     public void write(FriendlyByteBuf buffer, FluidIngredient ingredient)
     {
         buffer.writeBoolean(ingredient.isConsumable());
-
-        FluidStack[] fluids = ingredient.getFluids();
-        buffer.writeVarInt(fluids.length);
-
-        for (FluidStack stack : fluids)
-            buffer.writeFluidStack(stack);
+        buffer.writeFluidStack(Arrays.stream(ingredient.getFluids()).findFirst().get());
     }
 }

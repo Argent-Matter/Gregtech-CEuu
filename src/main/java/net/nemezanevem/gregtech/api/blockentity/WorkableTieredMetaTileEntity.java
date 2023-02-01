@@ -3,27 +3,21 @@ package net.nemezanevem.gregtech.api.blockentity;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.impl.*;
-import gregtech.api.metatileentity.multiblock.ICleanroomProvider;
-import gregtech.api.metatileentity.multiblock.ICleanroomReceiver;
-import gregtech.api.recipes.FluidKey;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomProvider;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomReceiver;
+import net.nemezanevem.gregtech.api.capability.impl.*;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,7 +28,7 @@ import java.util.function.Function;
 public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity implements IDataInfoProvider, ICleanroomReceiver {
 
     protected final RecipeLogicEnergy workable;
-    protected final RecipeType<?> recipeMap;
+    protected final GTRecipeType<?> recipeMap;
     protected final ICubeRenderer renderer;
 
     private final Function<Integer, Integer> tankScalingFunction;
@@ -43,12 +37,12 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
 
     private ICleanroomProvider cleanroom;
 
-    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
+    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                         Function<Integer, Integer> tankScalingFunction) {
         this(metaTileEntityId, recipeMap, renderer, tier, tankScalingFunction, true);
     }
 
-    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
+    public WorkableTieredMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                         Function<Integer, Integer> tankScalingFunction, boolean handlesRecipeOutputs) {
         super(metaTileEntityId, tier);
         this.renderer = renderer;
@@ -60,7 +54,7 @@ public abstract class WorkableTieredMetaTileEntity extends TieredMetaTileEntity 
         reinitializeEnergyContainer();
     }
 
-    protected RecipeLogicEnergy createWorkable(RecipeType<?> recipeMap) {
+    protected RecipeLogicEnergy createWorkable(GTRecipeType<?> recipeMap) {
         return new RecipeLogicEnergy(this, recipeMap, () -> energyContainer);
     }
 

@@ -19,7 +19,6 @@ import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.RecipeTypeSteamMultiblockController;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;

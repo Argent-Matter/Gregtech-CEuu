@@ -119,7 +119,7 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
             int[] tabSizes = tabOnMouse.getB();
             ITabInfo tabInfo = tabOnMouse.getA();
             boolean isSelected = tabInfos.get(selectedTabIndex) == tabInfo;
-            tabInfo.renderHoverText(tabSizes[0], tabSizes[1], tabSizes[2], tabSizes[3], sizes.getWidth(), sizes.getHeight(), isSelected, mouseX, mouseY);
+            tabInfo.renderHoverText(poseStack, tabSizes[0], tabSizes[1], tabSizes[2], tabSizes[3], sizes.getWidth(), sizes.getHeight(), isSelected, mouseX, mouseY);
         }
     }
 
@@ -163,7 +163,7 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
         }
     }
 
-    private Tuple<ITabInfo, int[]> getTabOnMouse(int mouseX, int mouseY) {
+    private Tuple<ITabInfo, int[]> getTabOnMouse(double mouseX, double mouseY) {
         for (int tabIndex = 0; tabIndex < tabInfos.size(); tabIndex++) {
             ITabInfo tabInfo = tabInfos.get(tabIndex);
             int[] tabSizes = tabListRenderer.getTabPos(tabIndex, sizes.getWidth(), sizes.getHeight());
@@ -176,7 +176,7 @@ public class TabGroup<T extends AbstractWidgetGroup> extends AbstractWidgetGroup
         return null;
     }
 
-    private static boolean isMouseOverTab(int mouseX, int mouseY, int[] tabSizes) {
+    private static boolean isMouseOverTab(double mouseX, double mouseY, int[] tabSizes) {
         int minX = tabSizes[0];
         int minY = tabSizes[1];
         int maxX = tabSizes[0] + tabSizes[2];

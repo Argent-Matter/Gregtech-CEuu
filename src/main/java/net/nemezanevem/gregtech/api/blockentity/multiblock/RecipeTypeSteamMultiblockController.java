@@ -22,7 +22,6 @@ import net.nemezanevem.gregtech.api.gui.widgets.AdvancedTextWidget;
 import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
 import net.nemezanevem.gregtech.api.pattern.TraceabilityPredicate;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.List;

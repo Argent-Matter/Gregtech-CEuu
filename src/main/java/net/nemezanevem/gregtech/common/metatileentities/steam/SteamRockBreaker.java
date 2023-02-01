@@ -115,7 +115,7 @@ public class SteamRockBreaker extends SteamMetaTileEntity {
 
     protected class SteamRockBreakerRecipeLogic extends RecipeLogicSteam {
 
-        public SteamRockBreakerRecipeLogic(MetaTileEntity tileEntity, RecipeType<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
+        public SteamRockBreakerRecipeLogic(MetaTileEntity tileEntity, GTRecipeType<?> recipeMap, boolean isHighPressure, IFluidTank steamFluidTank, double conversionRate) {
             super(tileEntity, recipeMap, isHighPressure, steamFluidTank, conversionRate);
         }
 

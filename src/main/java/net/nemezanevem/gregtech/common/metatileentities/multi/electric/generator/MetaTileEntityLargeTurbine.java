@@ -21,7 +21,6 @@ import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
 import net.nemezanevem.gregtech.api.pattern.BlockPattern;
 import net.nemezanevem.gregtech.api.pattern.FactoryBlockPattern;
 import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 import javax.annotation.Nonnull;

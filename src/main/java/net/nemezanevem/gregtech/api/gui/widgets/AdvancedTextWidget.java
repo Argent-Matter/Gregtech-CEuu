@@ -19,7 +19,9 @@ import net.nemezanevem.gregtech.client.util.MouseButtonHelper;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -256,7 +258,7 @@ public class AdvancedTextWidget extends Widget {
 
         @Override
         public void renderComponentTooltip(PoseStack pPoseStack, @Nonnull List<Component> textLines, int x, int y) {
-            GuiUtils.drawHoveringText(textLines, x, y, width, height, 256, font);
+            minecraft.screen.renderTooltip(pPoseStack, Collections.singletonList(Component.translatable("gui.widget.recipeProgressWidget.default_tooltip")), Optional.empty(), x, y, font);
             //super.renderComponentTooltip(pPoseStack, textLines, x, y);
         }
     }

@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.gui.impl;
 
-import codechicken.lib.math.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.ChatFormatting;
@@ -11,6 +10,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -20,6 +20,7 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
 
 import java.util.List;
+import java.util.Optional;
 
 public class FakeModularGui implements IRenderContext {
     public final ModularUI modularUI;
@@ -74,7 +75,7 @@ public class FakeModularGui implements IRenderContext {
         for (int i = 0; i < this.container.inventorySlots.size(); ++i) {
             Slot slot = this.container.inventorySlots.get(i);
             if (!slot.getItem().isEmpty() && slot.x < mouseX && mouseX < slot.x + 18 && slot.y < mouseY && mouseY < slot.y + 18) {
-                renderToolTip(slot.getItem(), slot.x, slot.y);
+                renderToolTip(poseStack, slot.getItem(), slot.x, slot.y);
             }
         }
 
@@ -151,11 +152,8 @@ public class FakeModularGui implements IRenderContext {
         Tesselator.getInstance().end();
     }
 
-    protected void renderToolTip(ItemStack stack, int x, int y) {
-        Font font = Minecraft.getInstance().font;
-        GuiUtils.preItemToolTip(stack);
-        GuiUtils.drawHoveringText(this.getItemToolTip(stack), x, y, modularUI.getScreenWidth(), modularUI.getScreenHeight(), -1, font);
-        GuiUtils.postItemToolTip();
+    protected void renderToolTip(PoseStack poseStack, ItemStack stack, int x, int y) {
+        mc.screen.renderTooltip(poseStack, this.getItemToolTip(stack), Optional.empty(), x, y, mc.font, stack);
     }
 
     protected List<Component> getItemToolTip(ItemStack itemStack) {
@@ -184,7 +182,7 @@ public class FakeModularGui implements IRenderContext {
         for (Widget widget : modularUI.guiWidgets.values()) {
             poseStack.pushPose();
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-            widget.drawInForeground(mouseX, mouseY);
+            widget.drawInForeground(poseStack, mouseX, mouseY);
             poseStack.popPose();
         }
     }

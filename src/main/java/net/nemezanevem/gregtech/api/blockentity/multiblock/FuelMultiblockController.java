@@ -5,12 +5,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
 import net.nemezanevem.gregtech.api.capability.impl.MultiblockFuelRecipeLogic;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 

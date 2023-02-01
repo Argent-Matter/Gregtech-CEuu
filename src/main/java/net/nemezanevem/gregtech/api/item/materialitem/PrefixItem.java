@@ -174,7 +174,7 @@ public class PrefixItem extends StandardMetaItem {
     }
 
     @Override
-    public int getBurnTime(@Nonnull ItemStack itemStack, RecipeType<?> recipeType) {
+    public int getBurnTime(@Nonnull ItemStack itemStack, GTRecipeType<?> recipeType) {
         DustProperty property = material == null ? null : material.getProperty(GtMaterialProperties.DUST.get());
         if (property != null) return (int) (property.getBurnTime() * prefix.getMaterialAmount(material) / GTValues.M);
         return super.getBurnTime(itemStack, recipeType);

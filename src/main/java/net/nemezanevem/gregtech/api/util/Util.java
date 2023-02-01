@@ -60,6 +60,7 @@ import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
 import javax.annotation.Nonnull;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Function;
 
 import static net.nemezanevem.gregtech.api.GTValues.V;
 
@@ -74,6 +75,60 @@ public class Util {
             tierByVoltage.put(V[i], (byte) i);
         }
     }
+
+    /**
+     * Default function for tank sizes, takes a tier input and returns the corresponding size
+     */
+    public static final Function<Integer, Integer> defaultTankSizeFunction = tier -> {
+        if (tier <= GTValues.LV)
+            return 8000;
+        if (tier == GTValues.MV)
+            return 12000;
+        if (tier == GTValues.HV)
+            return 16000;
+        if (tier == GTValues.EV)
+            return 32000;
+        // IV+
+        return 64000;
+    };
+
+    /**
+     * Alternative function for tank sizes, takes a tier input and returns the corresponding size
+     * <p>
+     * This function scales the same as the default function except it stops scaling past HV
+     */
+    public static final Function<Integer, Integer> hvCappedTankSizeFunction = tier -> {
+        if (tier <= GTValues.LV)
+            return 8000;
+        if (tier == GTValues.MV)
+            return 12000;
+        // HV+
+        return 16000;
+    };
+
+    /**
+     * Alternative function for tank sizes, takes a tier input and returns the corresponding size
+     * <p>
+     * This function is meant for use with machines that need very large tanks, it stops scaling past HV
+     */
+    public static final Function<Integer, Integer> largeTankSizeFunction = tier -> {
+        if (tier <= GTValues.LV)
+            return 32000;
+        if (tier == GTValues.MV)
+            return 48000;
+        // HV+
+        return 64000;
+    };
+
+    /**
+     * Alternative function for tank sizes, takes a tier input and returns the corresponding size
+     * <p>
+     * This function is meant for use with generators
+     */
+    public static final Function<Integer, Integer> steamGeneratorTankSizeFunction = tier -> Math.min(16000 * (1 << (tier - 1)), 64000);
+
+    public static final Function<Integer, Integer> genericGeneratorTankSizeFunction = tier -> Math.min(4000 * (1 << (tier - 1)), 16000);
+
 
     public static ResourceLocation gtResource(String path) {
         return new ResourceLocation(GregTech.MODID, path);

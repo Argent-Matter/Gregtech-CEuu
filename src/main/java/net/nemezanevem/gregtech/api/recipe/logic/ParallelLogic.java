@@ -9,7 +9,6 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 import net.nemezanevem.gregtech.api.capability.IMultipleTankHandler;
 import net.nemezanevem.gregtech.api.recipe.FluidKey;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
 import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
 import net.nemezanevem.gregtech.api.blockentity.IVoidable;

@@ -1,50 +1,68 @@
 package net.nemezanevem.gregtech.integration.jei.recipe;
 
-import mezz.jei.api.recipe.category.extensions.IExtendableRecipeCategory;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.forge.ForgeTypes;
+import mezz.jei.api.ingredients.IIngredientType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.recipe.GTRecipe;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe.ChanceEntry;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
+import net.nemezanevem.gregtech.api.recipe.ingredient.ExtendedIngredient;
+import net.nemezanevem.gregtech.api.recipe.ingredient.FluidIngredient;
+import net.nemezanevem.gregtech.api.recipe.property.PrimitiveProperty;
+import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.util.TooltipHelper;
 
-public class GTRecipeWrapper extends IExtendableRecipeCategory<> {
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class GTRecipeWrapper {
 
     private static final int LINE_HEIGHT = 10;
 
-    private final RecipeType<?> recipeMap;
+    private final GTRecipeType<?> recipeMap;
     private final GTRecipe recipe;
 
-    public GTRecipeWrapper(RecipeType<?> recipeMap, Recipe recipe) {
+    public GTRecipeWrapper(GTRecipeType<?> recipeMap, GTRecipe recipe) {
         this.recipeMap = recipeMap;
         this.recipe = recipe;
     }
 
-    public Recipe getRecipe() {
+    public GTRecipe getRecipe() {
         return recipe;
     }
 
-    @Override
-    public void getIngredients(@Nonnull IIngredients ingredients) {
+    public Map<IIngredientType<?>, ? extends ExtendedIngredient> getIngredients() {
+        Map<IIngredientType<?>, List<? extends ExtendedIngredient>> ingredients = new Object2ObjectOpenHashMap<>();
+
 
         // Inputs
         if (!recipe.getInputs().isEmpty()) {
             List<List<ItemStack>> matchingInputs = new ArrayList<>(recipe.getInputs().size());
-            for (GTRecipeInput recipeInput : recipe.getInputs()) {
-                matchingInputs.add(Arrays.stream(recipeInput.getInputStacks())
+            for (ExtendedIngredient recipeInput : recipe.getInputs()) {
+                matchingInputs.add(Arrays.stream(recipeInput.getItems())
                         .map(ItemStack::copy)
                         .collect(Collectors.toList()));
             }
-            ingredients.setInputLists(VanillaTypes.ITEM, matchingInputs);
+            ingredients.put(VanillaTypes.ITEM_STACK, recipe.getInputs());
         }
 
         // Fluid Inputs
         if (!recipe.getFluidInputs().isEmpty()) {
             List<FluidStack> matchingFluidInputs = new ArrayList<>(recipe.getFluidInputs().size());
 
-            for (GTRecipeInput fluidInput : recipe.getFluidInputs()) {
-                FluidStack fluidStack = fluidInput.getInputFluidStack();
-                Collections.addAll(matchingFluidInputs, fluidStack);
+            for (FluidIngredient fluidInput : recipe.getFluidInputs()) {
+                Collections.addAll(matchingFluidInputs, fluidInput.getFluids());
             }
-            ingredients.setInputs(VanillaTypes.FLUID, matchingFluidInputs);
+            ingredients.put(ForgeTypes.FLUID_STACK, recipe.getFluidInputs());
         }
 
         // Outputs
@@ -53,11 +71,11 @@ public class GTRecipeWrapper extends IExtendableRecipeCategory<> {
                     .stream().map(ItemStack::copy).collect(Collectors.toList());
 
             List<ChanceEntry> chancedOutputs = recipe.getChancedOutputs();
-            chancedOutputs.sort(Comparator.comparingInt(entry -> entry == null ? 0 : entry.getChance()));
+            chancedOutputs.sort(Comparator.comparingInt(entry -> entry == null ? 0 : entry.chance()));
             for (ChanceEntry chancedEntry : chancedOutputs) {
                 recipeOutputs.add(chancedEntry.getItemStackRaw());
             }
-            ingredients.setOutputs(VanillaTypes.ITEM, recipeOutputs);
+            ingredients.setOutputs(VanillaTypes.ITEM_STACK, recipeOutputs);
         }
 
         // Fluid Outputs
@@ -66,6 +84,8 @@ public class GTRecipeWrapper extends IExtendableRecipeCategory<> {
                     .map(FluidStack::copy)
                     .collect(Collectors.toList()));
         }
+
+        return ingredients;
     }
 
     public void addItemTooltip(int slotIndex, boolean input, Object ingredient, List<Component> tooltip) {
@@ -110,29 +130,6 @@ public class GTRecipeWrapper extends IExtendableRecipeCategory<> {
         }
     }
 
-    @Override
-    public void initExtras() {
-        BooleanSupplier creativePlayerCtPredicate = () -> Minecraft.getMinecraft().player != null && Minecraft.getMinecraft().player.isCreative() && Loader.isModLoaded(GTValues.MODID_CT);
-        final String mod = GroovyScriptCompat.isLoaded() ? "GroovyScript" : "CraftTweaker";
-        buttons.add(new JeiButton(166, 2, 10, 10)
-                .setTextures(GuiTextures.BUTTON_CLEAR_GRID)
-                .setTooltipBuilder(lines -> lines.add("Copies a " + mod + " script, to remove this recipe, to the clipboard"))
-                .setClickAction((minecraft, mouseX, mouseY, mouseButton) -> {
-                    String recipeLine = GroovyScriptCompat.isLoaded() ?
-                            GroovyScriptCompat.getRecipeRemoveLine(recipeMap, recipe) :
-                            CTRecipeHelper.getRecipeRemoveLine(recipeMap, recipe);
-                    String output = CTRecipeHelper.getFirstOutputString(recipe);
-                    if (!output.isEmpty()) {
-                        output = "// " + output + "\n";
-                    }
-                    String copyString = output + recipeLine + "\n";
-                    ClipboardUtil.copyToClipboard(copyString);
-                    Minecraft.getInstance().player.sendSystemMessage(Component.literal("Copied [\u00A76" + recipeLine + "\u00A7r] to the clipboard"));
-                    return true;
-                })
-                .setActiveSupplier(creativePlayerCtPredicate));
-    }
-
     public ChanceEntry getOutputChance(int slot) {
         if (slot >= recipe.getChancedOutputs().size() || slot < 0) return null;
         return recipe.getChancedOutputs().get(slot);
@@ -140,16 +137,16 @@ public class GTRecipeWrapper extends IExtendableRecipeCategory<> {
 
     public boolean isNotConsumedItem(int slot) {
         if (slot >= recipe.getInputs().size()) return false;
-        return recipe.getInputs().get(slot).isNonConsumable();
+        return !recipe.getInputs().get(slot).isConsumable();
     }
 
     public boolean isNotConsumedFluid(int slot) {
         if (slot >= recipe.getFluidInputs().size()) return false;
-        return recipe.getFluidInputs().get(slot).isNonConsumable();
+        return !recipe.getFluidInputs().get(slot).isConsumable();
     }
 
     private int getPropertyListHeight() {
-        if (recipeMap == RecipeTypes.COKE_OVEN_RECIPES)
+        if (recipeMap == GtRecipeTypes.COKE_OVEN_RECIPES)
             return LINE_HEIGHT - 6; // fun hack TODO Make this easier to position
         return (recipe.getUnhiddenPropertyCount() + 3) * LINE_HEIGHT - 3;
     }

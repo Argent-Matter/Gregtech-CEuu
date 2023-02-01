@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -59,7 +60,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      * Items to recover in a muffler hatch
      */
     protected final List<ItemStack> recoveryItems = new ArrayList<>() {{
-        add(new ItemStack(TagUnifier.get(TagPrefix.dustTiny, GtMaterials.Ash.get()));
+        add(new ItemStack(TagUnifier.get(TagPrefix.dustTiny, GtMaterials.Ash.get())));
     }};
 
     private int timeActive;
@@ -238,12 +239,12 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      * Outputs the recovery items into the muffler hatch
      */
     public void outputRecoveryItems() {
-        IMufflerHatch muffler = getAbilities(MultiblockAbility.MUFFLER_HATCH).get(0);
+        IMufflerHatch muffler = getAbilities(GtMultiblockAbilities.MUFFLER_HATCH.get()).get(0);
         muffler.recoverItemsTable(Util.copyStackList(recoveryItems));
     }
 
     public void outputRecoveryItems(int parallel) {
-        IMufflerHatch muffler = getAbilities(MultiblockAbility.MUFFLER_HATCH).get(0);
+        IMufflerHatch muffler = getAbilities(GtMultiblockAbilities.MUFFLER_HATCH.get()).get(0);
         ArrayList<ItemStack> parallelRecover = new ArrayList<>();
         IntStream.range(0, parallel).forEach(value -> parallelRecover.addAll(recoveryItems));
         muffler.recoverItemsTable(Util.copyStackList(parallelRecover));
@@ -253,17 +254,17 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
      * @return whether the muffler hatch's front face is free
      */
     public boolean isMufflerFaceFree() {
-        if (hasMufflerMechanics() && getAbilities(MultiblockAbility.MUFFLER_HATCH).size() == 0)
+        if (hasMufflerMechanics() && getAbilities(GtMultiblockAbilities.MUFFLER_HATCH.get()).size() == 0)
             return false;
 
-        return isStructureFormed() && hasMufflerMechanics() && getAbilities(MultiblockAbility.MUFFLER_HATCH).get(0).isFrontFaceFree();
+        return isStructureFormed() && hasMufflerMechanics() && getAbilities(GtMultiblockAbilities.MUFFLER_HATCH.get()).get(0).isFrontFaceFree();
     }
 
     /**
      * Produces the muffler particles
      */
     public void runMufflerEffect(float xPos, float yPos, float zPos, float xSpd, float ySpd, float zSpd) {
-        getWorld().addParticle(EnumParticleTypes.SMOKE_LARGE, xPos, yPos, zPos, xSpd, ySpd, zSpd);
+        getWorld().addParticle(ParticleTypes.LARGE_SMOKE, xPos, yPos, zPos, xSpd, ySpd, zSpd);
     }
 
     /**
@@ -326,7 +327,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
                     .setMinGlobalLimited(ConfigHolder.machines.enableMaintenance ? 1 : 0).setMaxGlobalLimited(1));
         }
         if (checkMuffler && hasMufflerMechanics()) {
-            predicate =  predicate.or(abilities(MultiblockAbility.MUFFLER_HATCH).setMinGlobalLimited(1).setMaxGlobalLimited(1));
+            predicate =  predicate.or(abilities(GtMultiblockAbilities.MUFFLER_HATCH.get()).setMinGlobalLimited(1).setMaxGlobalLimited(1));
         }
         return predicate;
     }
@@ -363,7 +364,7 @@ public abstract class MultiblockWithDisplayBase extends MultiblockControllerBase
         } else {
 
             MutableComponent hoverEventTranslation = Component.translatable("gregtech.multiblock.universal.has_problems_header")
-                    .setStyle(new Style().setColor(ChatFormatting.GRAY));
+                    .withStyle(ChatFormatting.GRAY);
 
             if (((this.maintenance_problems) & 1) == 0)
                 hoverEventTranslation.append(Component.translatable("gregtech.multiblock.universal.problem.wrench", "\n"));

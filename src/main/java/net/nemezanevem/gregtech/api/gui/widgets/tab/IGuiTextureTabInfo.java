@@ -1,11 +1,12 @@
 package net.nemezanevem.gregtech.api.gui.widgets.tab;
 
-import com.google.common.collect.Lists;
-import gregtech.api.gui.resources.IGuiTexture;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fml.client.config.GuiUtils;
+import net.minecraft.network.chat.Component;
+import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
+
+import java.util.Collections;
+import java.util.Optional;
 
 public class IGuiTextureTabInfo implements ITabInfo {
     public final IGuiTexture texture;
@@ -23,10 +24,9 @@ public class IGuiTextureTabInfo implements ITabInfo {
     }
 
     @Override
-    public void renderHoverText(int posX, int posY, int xSize, int ySize, int guiWidth, int guiHeight, boolean isSelected, int mouseX, int mouseY) {
-        String localizedText = Component.translatable(nameLocale);
-        Minecraft mc = Minecraft.getMinecraft();
-        ScaledResolution resolution = new ScaledResolution(mc);
-        GuiUtils.drawHoveringText(Lists.newArrayList(localizedText), mouseX, mouseY, resolution.getScaledWidth(), resolution.getScaledHeight(), -1, mc.fontRenderer);
+    public void renderHoverText(PoseStack poseStack, int posX, int posY, int xSize, int ySize, int guiWidth, int guiHeight, boolean isSelected, int mouseX, int mouseY) {
+        Component localizedText = Component.translatable(nameLocale);
+        Minecraft mc = Minecraft.getInstance();
+        mc.screen.renderTooltip(poseStack, Collections.singletonList(localizedText), Optional.empty(), mouseX, mouseY, mc.font);
     }
 }

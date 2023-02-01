@@ -5,7 +5,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.nemezanevem.gregtech.api.blockentity.MTETrait;
 import net.nemezanevem.gregtech.api.capability.impl.*;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 
 import java.util.ArrayList;
 import java.util.List;

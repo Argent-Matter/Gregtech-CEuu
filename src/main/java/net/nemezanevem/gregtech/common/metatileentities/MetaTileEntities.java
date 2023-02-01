@@ -11,6 +11,8 @@ import net.nemezanevem.gregtech.api.blockentity.SimpleMachineMetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.IMultiblockAbilityPart;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockAbility;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockControllerBase;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.common.ConfigHolder;
@@ -762,7 +764,7 @@ public class MetaTileEntities {
     private static void registerSimpleMetaTileEntity(SimpleMachineMetaTileEntity[] machines,
                                                      int startId,
                                                      String name,
-                                                     RecipeType<?> map,
+                                                     GTRecipeType<?> map,
                                                      ICubeRenderer texture,
                                                      boolean hasFrontFacing,
                                                      Function<Integer, Integer> tankScalingFunction) {
@@ -772,7 +774,7 @@ public class MetaTileEntities {
     private static void registerSimpleMetaTileEntity(SimpleMachineMetaTileEntity[] machines,
                                                      int startId,
                                                      String name,
-                                                     RecipeType<?> map,
+                                                     GTRecipeType<?> map,
                                                      ICubeRenderer texture,
                                                      boolean hasFrontFacing) {
         registerSimpleMetaTileEntity(machines, startId, name, map, texture, hasFrontFacing, Util.defaultTankSizeFunction);
@@ -781,7 +783,7 @@ public class MetaTileEntities {
     public static void registerSimpleMetaTileEntity(SimpleMachineMetaTileEntity[] machines,
                                                     int startId,
                                                     String name,
-                                                    RecipeType<?> map,
+                                                    GTRecipeType<?> map,
                                                     ICubeRenderer texture,
                                                     boolean hasFrontFacing,
                                                     Function<String, ResourceLocation> resourceId,

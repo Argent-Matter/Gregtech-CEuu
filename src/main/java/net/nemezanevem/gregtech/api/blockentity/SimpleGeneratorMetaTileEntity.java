@@ -39,12 +39,12 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
 
     private static final int FONT_HEIGHT = 9; // Minecraft's FontRenderer FONT_HEIGHT value
 
-    public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
+    public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                          Function<Integer, Integer> tankScalingFunction) {
         this(metaTileEntityId, recipeMap, renderer, tier, tankScalingFunction, false);
     }
 
-    public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
+    public SimpleGeneratorMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier,
                                          Function<Integer, Integer> tankScalingFunction, boolean handlesRecipeOutputs) {
         super(metaTileEntityId, recipeMap, renderer, tier, tankScalingFunction, handlesRecipeOutputs);
     }
@@ -55,7 +55,7 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
     }
 
     @Override
-    protected RecipeLogicEnergy createWorkable(RecipeType<?> recipeMap) {
+    protected RecipeLogicEnergy createWorkable(GTRecipeType<?> recipeMap) {
         return new FuelRecipeLogic(this, recipeMap, () -> energyContainer);
     }
 
@@ -94,7 +94,7 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
     }
 
     protected ModularUI.Builder createGuiTemplate(Player player) {
-        RecipeType<?> workableRecipeType = workable.getRecipeType();
+        GTRecipeType<?> workableRecipeType = workable.getRecipeType();
         int yOffset = 0;
         if (workableRecipeType.getMaxInputs() >= 6 || workableRecipeType.getMaxFluidInputs() >= 6 ||
                 workableRecipeType.getMaxOutputs() >= 6 || workableRecipeType.getMaxFluidOutputs() >= 6)

@@ -4,61 +4,38 @@ import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.capability.IActiveOutputSide;
-import gregtech.api.capability.impl.*;
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.cover.CoverDefinition;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.TextureArea;
-import gregtech.api.gui.widgets.*;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.recipes.ingredients.IntCircuitIngredient;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.RenderUtil;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.Direction;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Direction;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.World;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.capability.IActiveOutputSide;
 import net.nemezanevem.gregtech.api.capability.impl.*;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
-import net.nemezanevem.gregtech.api.gui.widgets.ClickButtonWidget;
-import net.nemezanevem.gregtech.api.gui.widgets.ImageWidget;
-import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
-import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.gui.widgets.*;
+import net.nemezanevem.gregtech.api.recipe.ingredient.IntCircuitIngredient;
+import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 import net.nemezanevem.gregtech.client.util.RenderUtil;
@@ -68,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static gregtech.api.capability.GregtechDataCodes.*;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.*;
 
 public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity implements IActiveOutputSide {
 
@@ -90,11 +67,11 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
 
     private static final int FONT_HEIGHT = 9; // Minecraft's FontRenderer FONT_HEIGHT value
 
-    public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing) {
+    public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing) {
         this(metaTileEntityId, recipeMap, renderer, tier, hasFrontFacing, Util.defaultTankSizeFunction);
     }
 
-    public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing,
+    public SimpleMachineMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier, boolean hasFrontFacing,
                                        Function<Integer, Integer> tankScalingFunction) {
         super(metaTileEntityId, recipeMap, renderer, tier, tankScalingFunction);
         this.hasFrontFacing = hasFrontFacing;
@@ -216,23 +193,32 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         return true;
     }
 
+    private LazyOptional<IFluidHandler> inputFluidLazy = LazyOptional.of(() -> fluidInventory);
+    private LazyOptional<IFluidHandler> outputFluidLazy = LazyOptional.of(() -> outputFluidInventory);
+
+    private LazyOptional<IItemHandler> inputItemLazy = LazyOptional.of(() -> itemInventory);
+    private LazyOptional<IItemHandler> outputItemLazy = LazyOptional.of(() -> outputItemInventory);
+
+
+    private LazyOptional<IActiveOutputSide> thisLazy = LazyOptional.of(() -> this);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER) {
-            IFluidHandler fluidHandler = (side == getOutputFacingFluids() && !isAllowInputFromOutputSideFluids()) ? outputFluidInventory : fluidInventory;
-            if (fluidHandler.getTankProperties().length > 0) {
-                return CapabilityFluidHandler.FLUID_HANDLER.cast(fluidHandler);
+        if (capability == ForgeCapabilities.FLUID_HANDLER) {
+            LazyOptional<IFluidHandler> fluidHandler = (side == getOutputFacingFluids() && !isAllowInputFromOutputSideFluids()) ? outputFluidLazy : inputFluidLazy;
+            if (fluidHandler.resolve().get().getTanks() > 0) {
+                return fluidHandler.cast();
             }
             return null;
-        } else if (capability == CapabilityItemHandler.ITEM_HANDLER) {
-            IItemHandler itemHandler = (side == getOutputFacingItems() && !isAllowInputFromOutputSideFluids()) ? outputItemInventory : itemInventory;
-            if (itemHandler.getSlots() > 0) {
-                return CapabilityItemHandler.ITEM_HANDLER.cast(itemHandler);
+        } else if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            LazyOptional<IItemHandler> itemHandler = (side == getOutputFacingItems() && !isAllowInputFromOutputSideFluids()) ? outputItemLazy : inputItemLazy;
+            if (itemHandler.resolve().get().getSlots() > 0) {
+                return itemHandler.cast();
             }
             return null;
         } else if (capability == GregtechTileCapabilities.CAPABILITY_ACTIVE_OUTPUT_SIDE) {
             if (side == getOutputFacingItems() || side == getOutputFacingFluids()) {
-                return GregtechTileCapabilities.CAPABILITY_ACTIVE_OUTPUT_SIDE.cast(this);
+                return thisLazy.cast();
             }
             return null;
         }
@@ -244,8 +230,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         super.writeToNBT(data);
         data.put("ChargerInventory", chargerInventory.serializeNBT());
         data.put("CircuitInventory", circuitInventory.serializeNBT());
-        data.putInt("OutputFacing", getOutputFacingItems().getIndex());
-        data.putInt("OutputFacingF", getOutputFacingFluids().getIndex());
+        data.putInt("OutputFacing", getOutputFacingItems().ordinal());
+        data.putInt("OutputFacingF", getOutputFacingFluids().ordinal());
         data.putBoolean("AutoOutputItems", autoOutputItems);
         data.putBoolean("AutoOutputFluids", autoOutputFluids);
         data.putBoolean("AllowInputFromOutputSide", allowInputFromOutputSideItems);
@@ -257,7 +243,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
         this.chargerInventory.deserializeNBT(data.getCompound("ChargerInventory"));
-        if (data.hasKey("CircuitInventory")) {
+        if (data.contains("CircuitInventory")) {
             this.circuitInventory.deserializeNBT(data.getCompound("CircuitInventory"));
         }
         this.outputFacingItems = Direction.values()[data.getInt("OutputFacing")];
@@ -271,8 +257,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     @Override
     public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
-        buf.writeByte(getOutputFacingItems().getIndex());
-        buf.writeByte(getOutputFacingFluids().getIndex());
+        buf.writeByte(getOutputFacingItems().ordinal());
+        buf.writeByte(getOutputFacingFluids().ordinal());
         buf.writeBoolean(autoOutputItems);
         buf.writeBoolean(autoOutputFluids);
     }
@@ -316,8 +302,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         if (!getWorld().isClientSide) {
             notifyBlockUpdate();
             writeCustomData(UPDATE_OUTPUT_FACING, buf -> {
-                buf.writeByte(outputFacingItems.getIndex());
-                buf.writeByte(outputFacingFluids.getIndex());
+                buf.writeByte(outputFacingItems.ordinal());
+                buf.writeByte(outputFacingFluids.ordinal());
             });
             markDirty();
         }
@@ -328,8 +314,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         if (!getWorld().isClientSide) {
             notifyBlockUpdate();
             writeCustomData(UPDATE_OUTPUT_FACING, buf -> {
-                buf.writeByte(outputFacingItems.getIndex());
-                buf.writeByte(outputFacingFluids.getIndex());
+                buf.writeByte(outputFacingItems.ordinal());
+                buf.writeByte(outputFacingFluids.ordinal());
             });
             markDirty();
         }
@@ -340,8 +326,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
         if (!getWorld().isClientSide) {
             notifyBlockUpdate();
             writeCustomData(UPDATE_OUTPUT_FACING, buf -> {
-                buf.writeByte(outputFacingItems.getIndex());
-                buf.writeByte(outputFacingFluids.getIndex());
+                buf.writeByte(outputFacingItems.ordinal());
+                buf.writeByte(outputFacingFluids.ordinal());
             });
             markDirty();
         }
@@ -423,7 +409,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     }
 
     protected ModularUI.Builder createGuiTemplate(Player player) {
-        RecipeType<?> workableRecipeType = workable.getRecipeType();
+        GTRecipeType<?> workableRecipeType = workable.getRecipeType();
         int yOffset = 0;
         if (workableRecipeType.getMaxInputs() >= 6 || workableRecipeType.getMaxFluidInputs() >= 6 || workableRecipeType.getMaxOutputs() >= 6 || workableRecipeType.getMaxFluidOutputs() >= 6) {
             yOffset = FONT_HEIGHT;

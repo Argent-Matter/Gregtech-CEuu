@@ -8,10 +8,12 @@ import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
+import net.nemezanevem.gregtech.integration.jei.recipe.RecipeTypeCategory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
 public class RecipeProgressWidget extends ProgressWidget {
@@ -59,9 +61,10 @@ public class RecipeProgressWidget extends ProgressWidget {
         super.drawInForeground(poseStack, mouseX, mouseY);
         if (isMouseOverElement(mouseX, mouseY) && ModList.get().isLoaded(GregTech.MODID_JEI)) {
             Minecraft mc = Minecraft.getInstance();
-            GuiUtils.drawHoveringText(Collections.singletonList(Component.translatable("gui.widget.recipeProgressWidget.default_tooltip")), mouseX, mouseY,
+            mc.screen.renderTooltip(poseStack, Collections.singletonList(Component.translatable("gui.widget.recipeProgressWidget.default_tooltip")), Optional.empty(), mouseX, mouseY, mc.font);
+            /*GuiUtils.drawHoveringText(Collections.singletonList(Component.translatable("gui.widget.recipeProgressWidget.default_tooltip")), mouseX, mouseY,
                     sizes.getScreenWidth(),
-                    sizes.getScreenHeight(), HOVER_TEXT_WIDTH, mc.font);
+                    sizes.getScreenHeight(), HOVER_TEXT_WIDTH, mc.font);*/
         }
     }
 

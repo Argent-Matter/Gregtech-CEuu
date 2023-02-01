@@ -16,7 +16,6 @@ import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.ParallelLogicType;
 import net.nemezanevem.gregtech.api.capability.*;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.logic.IParallelableRecipeLogic;
 import net.nemezanevem.gregtech.api.recipe.property.CleanroomProperty;
 import net.nemezanevem.gregtech.api.recipe.property.IRecipePropertyStorage;

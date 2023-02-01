@@ -21,7 +21,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
 
     private boolean hasValidFluids;
 
-    public MetaTileEntityRockBreaker(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, int tier) {
+    public MetaTileEntityRockBreaker(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, int tier) {
         super(metaTileEntityId, recipeMap, renderer, tier, true);
     }
 
@@ -31,7 +31,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
     }
 
     @Override
-    protected RecipeLogicEnergy createWorkable(RecipeType<?> recipeMap) {
+    protected RecipeLogicEnergy createWorkable(GTRecipeType<?> recipeMap) {
         return new RockBreakerRecipeLogic(this, RecipeTypes.ROCK_BREAKER_RECIPES, () -> energyContainer);
     }
 
@@ -94,7 +94,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
 
     protected class RockBreakerRecipeLogic extends RecipeLogicEnergy {
 
-        public RockBreakerRecipeLogic(MetaTileEntity metaTileEntity, RecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
+        public RockBreakerRecipeLogic(MetaTileEntity metaTileEntity, GTRecipeType<?> recipeMap, Supplier<IEnergyContainer> energyContainer) {
             super(metaTileEntity, recipeMap, energyContainer);
         }
 

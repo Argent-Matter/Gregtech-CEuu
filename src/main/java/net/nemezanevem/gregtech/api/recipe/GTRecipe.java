@@ -72,9 +72,9 @@ public class GTRecipe implements Recipe<CraftingContainer> {
     private final boolean hidden;
 
 
-    private RecipeType<?> type;
+    private GTRecipeType<?> type;
 
-    public GTRecipe(RecipeType<?> type, ResourceLocation id, NonNullList<ExtendedIngredient> inputs, NonNullList<ItemStack> outputs, NonNullList<ChanceEntry> chancedOutputs,
+    public GTRecipe(GTRecipeType<?> type, ResourceLocation id, NonNullList<ExtendedIngredient> inputs, NonNullList<ItemStack> outputs, NonNullList<ChanceEntry> chancedOutputs,
                     NonNullList<FluidIngredient> fluidInputs, NonNullList<FluidStack> fluidOutputs,
                     int duration, int EUt, boolean hidden,
                     IRecipePropertyStorage recipePropertyStorage) {
@@ -545,11 +545,11 @@ public class GTRecipe implements Recipe<CraftingContainer> {
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public GTRecipeType<?> getType() {
         return this.type;
     }
 
-    public void setType(RecipeType<?> type) {
+    public void setType(GTRecipeType<?> type) {
         this.type = type;
     }
 
@@ -687,7 +687,7 @@ public class GTRecipe implements Recipe<CraftingContainer> {
         }
 
         public GTRecipe fromNetwork(ResourceLocation pRecipeId, FriendlyByteBuf pBuffer) {
-            RecipeType<?> type = pBuffer.readRegistryId();
+            GTRecipeType<?> type = pBuffer.readRegistryId();
             ResourceLocation id = pBuffer.readResourceLocation();
 
             int size = pBuffer.readVarInt();

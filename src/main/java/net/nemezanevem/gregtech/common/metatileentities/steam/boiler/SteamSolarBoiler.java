@@ -51,7 +51,6 @@ public class SteamSolarBoiler extends SteamBoiler {
                 .build(getHolder(), entityPlayer);
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public void randomDisplayTick() {
         // Solar boilers do not display particles

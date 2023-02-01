@@ -173,7 +173,7 @@ public class MetaTileEntityProcessingArray extends RecipeTypeMultiblockControlle
         //The maximum Voltage of the machines the PA is operating upon
         private long machineVoltage;
         //The Recipe Map of the machines the PA is operating upon
-        private RecipeType<?> activeRecipeType;
+        private GTRecipeType<?> activeRecipeType;
 
         public ProcessingArrayWorkable(RecipeTypeMultiblockController tileEntity) {
             super(tileEntity);
@@ -198,7 +198,7 @@ public class MetaTileEntityProcessingArray extends RecipeTypeMultiblockControlle
          * @return {@code true} if the provided recipeMap is valid for use
          */
         @Override
-        public boolean isRecipeTypeValid(@Nonnull RecipeType<?> recipeMap) {
+        public boolean isRecipeTypeValid(@Nonnull GTRecipeType<?> recipeMap) {
             if (Util.findMachineInBlacklist(recipeMap.getUnlocalizedName(), ((IMachineHatchMultiblock) metaTileEntity).getBlacklist())) {
                 return false;
             }
@@ -227,7 +227,7 @@ public class MetaTileEntityProcessingArray extends RecipeTypeMultiblockControlle
 
         @Nullable
         @Override
-        public RecipeType<?> getRecipeType() {
+        public GTRecipeType<?> getRecipeType() {
             return activeRecipeType;
         }
 

@@ -10,7 +10,6 @@ import net.nemezanevem.gregtech.api.gui.impl.ModularUIGui;
 import net.nemezanevem.gregtech.api.gui.resources.IGuiTexture;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.gui.widgets.*;
-import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Position;
 
 import java.util.ArrayList;

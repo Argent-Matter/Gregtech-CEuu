@@ -49,7 +49,7 @@ public abstract class SteamMetaTileEntity extends MetaTileEntity {
     protected RecipeLogicSteam workableHandler;
     protected FluidTank steamFluidTank;
 
-    public SteamMetaTileEntity(ResourceLocation metaTileEntityId, RecipeType<?> recipeMap, ICubeRenderer renderer, boolean isHighPressure) {
+    public SteamMetaTileEntity(ResourceLocation metaTileEntityId, GTRecipeType<?> recipeMap, ICubeRenderer renderer, boolean isHighPressure) {
         super(metaTileEntityId);
         this.workableHandler = new RecipeLogicSteam(this,
                 recipeMap, isHighPressure, steamFluidTank, 1.0);

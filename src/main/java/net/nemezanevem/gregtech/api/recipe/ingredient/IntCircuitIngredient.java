@@ -1,13 +1,12 @@
 package net.nemezanevem.gregtech.api.recipe.ingredient;
 
-import codechicken.lib.math.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
+import net.nemezanevem.gregtech.common.item.metaitem.MetaItems;
 
 import javax.annotation.Nullable;
-import java.util.stream.Stream;
 
 public class IntCircuitIngredient extends ExtendedIngredient {
 
@@ -30,13 +29,13 @@ public class IntCircuitIngredient extends ExtendedIngredient {
     }
 
     public static ItemStack getIntegratedCircuit(int configuration) {
-        ItemStack stack = MetaItems.INTEGRATED_CIRCUIT.getStackForm();
+        ItemStack stack = new ItemStack(MetaItems.INTEGRATED_CIRCUIT.get(), 1);
         setCircuitConfiguration(stack, configuration);
         return stack;
     }
 
     public static void setCircuitConfiguration(ItemStack itemStack, int configuration) {
-        if (!MetaItems.INTEGRATED_CIRCUIT.isItemEqual(itemStack))
+        if (!itemStack.is(MetaItems.INTEGRATED_CIRCUIT.get()))
             throw new IllegalArgumentException("Given item stack is not an integrated circuit!");
         if (configuration < 0 || configuration > CIRCUIT_MAX)
             throw new IllegalArgumentException("Given configuration number is out of range!");
@@ -51,11 +50,11 @@ public class IntCircuitIngredient extends ExtendedIngredient {
     }
 
     public static boolean isIntegratedCircuit(ItemStack itemStack) {
-        boolean isCircuit = MetaItems.INTEGRATED_CIRCUIT.isItemEqual(itemStack);
+        boolean isCircuit = itemStack.is(MetaItems.INTEGRATED_CIRCUIT.get());
         if (isCircuit && !itemStack.hasTag()) {
             CompoundTag compound = new CompoundTag();
             compound.putInt("Configuration", 0);
-            itemStack.put(compound);
+            itemStack.setTag(compound);
         }
         return isCircuit;
     }
@@ -75,7 +74,7 @@ public class IntCircuitIngredient extends ExtendedIngredient {
 
     @Override
     public boolean test(@Nullable ItemStack itemStack) {
-        return itemStack != null && MetaItems.INTEGRATED_CIRCUIT.isItemEqual(itemStack) &&
+        return itemStack != null && itemStack.is(MetaItems.INTEGRATED_CIRCUIT.get()) &&
                 matchingConfigurations == getCircuitConfiguration(itemStack);
     }
 
