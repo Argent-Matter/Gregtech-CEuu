@@ -1,19 +1,19 @@
 package net.nemezanevem.gregtech.common.metatileentities.electric;
 
-import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.capability.impl.RecipeLogicEnergy;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.SimpleMachineMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.recipes.RecipeType;
-import gregtech.api.recipes.RecipeTypes;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.SimpleMachineMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.capability.impl.RecipeLogicEnergy;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import java.util.function.Supplier;
 
@@ -27,12 +27,12 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
 
     @Override
     public MetaTileEntity createMetaTileEntity(IGregTechTileEntity tileEntity) {
-        return new MetaTileEntityRockBreaker(metaTileEntityId, RecipeTypes.ROCK_BREAKER_RECIPES, Textures.ROCK_BREAKER_OVERLAY, getTier());
+        return new MetaTileEntityRockBreaker(metaTileEntityId, GtRecipeTypes.ROCK_BREAKER_RECIPES.get(), Textures.ROCK_BREAKER_OVERLAY, getTier());
     }
 
     @Override
     protected RecipeLogicEnergy createWorkable(GTRecipeType<?> recipeMap) {
-        return new RockBreakerRecipeLogic(this, RecipeTypes.ROCK_BREAKER_RECIPES, () -> energyContainer);
+        return new RockBreakerRecipeLogic(this, GtRecipeTypes.ROCK_BREAKER_RECIPES.get(), () -> energyContainer);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
         }
         boolean hasLava = false;
         boolean hasWater = false;
-        for (Direction side : Direction.VALUES) {
+        for (Direction side : Direction.values()) {
             if (hasLava && hasWater) {
                 break;
             }
@@ -61,10 +61,10 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
                 continue;
             }
 
-            Block block = getWorld().getBlockState(getPos().offset(side)).getBlock();
-            if (block == Blocks.FLOWING_LAVA || block == Blocks.LAVA) {
+            Fluid fluid = getWorld().getFluidState(getPos().offset(side.getNormal())).getType();
+            if (fluid == Fluids.FLOWING_LAVA || fluid == Fluids.LAVA) {
                 hasLava = true;
-            } else if (block == Blocks.FLOWING_WATER || block == Blocks.WATER) {
+            } else if (fluid == Fluids.FLOWING_WATER || fluid == Fluids.WATER) {
                 hasWater = true;
             }
         }
@@ -87,7 +87,7 @@ public class MetaTileEntityRockBreaker extends SimpleMachineMetaTileEntity {
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        if (data.hasKey("hasValidFluids")) {
+        if (data.contains("hasValidFluids")) {
             this.hasValidFluids = data.getBoolean("hasValidFluids");
         }
     }

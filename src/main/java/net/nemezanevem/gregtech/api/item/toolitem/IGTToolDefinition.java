@@ -2,6 +2,10 @@ package net.nemezanevem.gregtech.api.item.toolitem;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.block.state.BlockState;
+import net.nemezanevem.gregtech.api.item.toolitem.behavior.IToolBehavior;
+
+import java.util.List;
 
 /**
  * GT Tool Definition
@@ -13,7 +17,7 @@ public interface IGTToolDefinition {
      */
     List<IToolBehavior> getBehaviors();
 
-    boolean isToolEffective(IBlockState state);
+    boolean isToolEffective(BlockState state);
 
     /**
      * Durability Spec

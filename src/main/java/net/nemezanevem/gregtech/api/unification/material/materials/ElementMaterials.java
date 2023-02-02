@@ -1,19 +1,18 @@
 package net.nemezanevem.gregtech.api.unification.material.materials;
 
 
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.GtElements;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.BlastProperty.GasTier;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
-import net.nemezanevem.gregtech.api.GTValues;
 
-
+import static net.nemezanevem.gregtech.api.GTValues.*;
 import static net.nemezanevem.gregtech.api.registry.material.MaterialRegistry.MATERIALS;
 import static net.nemezanevem.gregtech.api.unification.material.GtMaterials.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets.*;
-import static net.nemezanevem.gregtech.api.GTValues.*;
 
 public class ElementMaterials {
 
@@ -55,7 +54,7 @@ public class ElementMaterials {
                 .build());
 
         Argon = MATERIALS.register("argon", () -> new Material.Builder("argon")
-                .fluid(GtFluidTypes.GAS.get()).plasma()
+                .fluid(GTFluidTypes.GAS).plasma()
                 .color(0x00FF00).iconSet(GAS.get())
                 .element(GtElements.Ar)
                 .build());
@@ -152,7 +151,7 @@ public class ElementMaterials {
                 .build());
 
         Chlorine = MATERIALS.register("chlorine", () -> new Material.Builder("chlorine")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .element(GtElements.Cl)
                 .build());
 
@@ -205,7 +204,7 @@ public class ElementMaterials {
                 .build());
 
         Deuterium = MATERIALS.register("deuterium", () -> new Material.Builder("deuterium")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .element(GtElements.D)
                 .build());
 
@@ -251,7 +250,7 @@ public class ElementMaterials {
                 .build());
 
         Fluorine = MATERIALS.register("fluorine", () -> new Material.Builder("fluorine")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .element(GtElements.F)
                 .build());
 
@@ -304,18 +303,18 @@ public class ElementMaterials {
                 .build());
 
         Hydrogen = MATERIALS.register("hydrogen", () -> new Material.Builder("hydrogen")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x0000B5)
                 .element(GtElements.H)
                 .build());
 
         Helium = MATERIALS.register("helium", () -> new Material.Builder("helium")
-                .fluid(GtFluidTypes.GAS.get()).plasma()
+                .fluid(GTFluidTypes.GAS).plasma()
                 .element(GtElements.He)
                 .build());
 
         Helium3 = MATERIALS.register("helium_3", () -> new Material.Builder("helium_3")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .element(GtElements.He3)
                 .build());
 
@@ -355,7 +354,7 @@ public class ElementMaterials {
                 .build());
 
         Krypton = MATERIALS.register("krypton", () -> new Material.Builder("krypton")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x80FF80).iconSet(GAS.get())
                 .element(GtElements.Kr)
                 .build());
@@ -457,7 +456,7 @@ public class ElementMaterials {
                 .build());
 
         Neon = MATERIALS.register("neon", () -> new Material.Builder("neon")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xFAB4B4).iconSet(GAS.get())
                 .element(GtElements.Ne)
                 .build());
@@ -490,7 +489,7 @@ public class ElementMaterials {
                 .build());
 
         Nitrogen = MATERIALS.register("nitrogen", () -> new Material.Builder("nitrogen")
-                .fluid(GtFluidTypes.GAS.get()).plasma()
+                .fluid(GTFluidTypes.GAS).plasma()
                 .color(0x00BFC1).iconSet(GAS.get())
                 .element(GtElements.N)
                 .build());
@@ -518,7 +517,7 @@ public class ElementMaterials {
                 .build());
 
         Oxygen = MATERIALS.register("oxygen", () -> new Material.Builder("oxygen")
-                .fluid(GtFluidTypes.GAS.get()).plasma()
+                .fluid(GTFluidTypes.GAS).plasma()
                 .color(0x4CC3FF)
                 .element(GtElements.O)
                 .build());
@@ -590,7 +589,7 @@ public class ElementMaterials {
                 .build());
 
         Radon = MATERIALS.register("radon", () -> new Material.Builder("radon")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xFF39FF)
                 .element(GtElements.Rn)
                 .build());
@@ -742,7 +741,7 @@ public class ElementMaterials {
                 .build());
 
         Tin = MATERIALS.register("tin", () -> new Material.Builder("tin")
-                .ingot(1).fluid(GtFluidTypes.LIQUID, true).ore()
+                .ingot(1).fluid(GTFluidTypes.LIQUID, true).ore()
                 .color(0xDCDCDC)
                 .flags(EXT2_METAL, MORTAR_GRINDABLE.get(), GENERATE_ROTOR.get(), GENERATE_SPRING.get(), GENERATE_SPRING_SMALL.get(), GENERATE_FINE_WIRE.get())
                 .element(GtElements.Sn)
@@ -764,7 +763,7 @@ public class ElementMaterials {
                 .build());
 
         Tritium = MATERIALS.register("tritium", () -> new Material.Builder("tritium")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .iconSet(METALLIC.get())
                 .element(GtElements.T)
                 .build());
@@ -805,7 +804,7 @@ public class ElementMaterials {
                 .build());
 
         Xenon = MATERIALS.register("xenon", () -> new Material.Builder("xenon")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x00FFFF).iconSet(GAS.get())
                 .element(GtElements.Xe)
                 .build());

@@ -1,17 +1,15 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.picturetexture.AnimatedPictureTexture;
-import gregtech.api.gui.resources.picturetexture.OrdinaryTexture;
-import gregtech.api.gui.resources.picturetexture.PictureTexture;
-import gregtech.api.gui.resources.utils.GifDecoder;
-import gregtech.api.gui.resources.utils.ImageUtils;
-import gregtech.api.gui.resources.utils.ProcessedImageData;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.AnimatedPictureTexture;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.OrdinaryTexture;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.PictureTexture;
+import net.nemezanevem.gregtech.api.gui.resources.utils.GifDecoder;
+import net.nemezanevem.gregtech.api.gui.resources.utils.ImageUtils;
+import net.nemezanevem.gregtech.api.gui.resources.utils.ProcessedImageData;
 import org.apache.commons.compress.utils.IOUtils;
 
 import javax.imageio.ImageIO;
@@ -22,9 +20,7 @@ import java.io.IOException;
 
 public class FileTexture implements IGuiTexture{
     public final File file;
-    @SideOnly(Side.CLIENT)
     private PictureTexture texture;
-    @SideOnly(Side.CLIENT)
     private ProcessedImageData imageData;
     private Thread downloadThread;
     private boolean failed;
@@ -33,7 +29,6 @@ public class FileTexture implements IGuiTexture{
         this.file = file;
     }
 
-    @SideOnly(Side.CLIENT)
     public void loadFile(){
         if (imageData != null) {
             if (imageData.isAnimated()) {
@@ -81,7 +76,6 @@ public class FileTexture implements IGuiTexture{
         }
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public void updateTick() {
         if(this.texture != null) {
@@ -92,13 +86,13 @@ public class FileTexture implements IGuiTexture{
     @Override
     public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         if (texture != null && texture.hasTexture()) {
-            texture.render((float)x, (float)y, width, height, 0, 1, 1, false, false);
+            texture.render(poseStack, (float)x, (float)y, width, height, 0, 1, 1, false, false);
         } else {
             if (failed || file == null) {
-                Minecraft.getMinecraft().fontRenderer.drawString(Component.translatable("texture.url_texture.fail"), (int)x + 2, (int)(y + height / 2.0 - 4), 0xffff0000);
+                Minecraft.getInstance().font.draw(poseStack, Component.translatable("texture.url_texture.fail"), (int)x + 2, (int)(y + height / 2.0 - 4), 0xffff0000);
             } else {
                 this.loadFile();
-                int s = (int) Math.floorMod(System.currentTimeMillis() / 200, 24);
+                int s = Math.floorMod(System.currentTimeMillis() / 200, 24);
                 Widget.drawSector((float)(x + width / 2.0), (float)(y + height / 2.0), (float)(Math.min(width, height) / 4.0),
                         0xFF94E2C1, 24, s, s + 5);
             }

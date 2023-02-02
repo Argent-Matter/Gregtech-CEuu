@@ -1,26 +1,25 @@
 package net.nemezanevem.gregtech.common.metatileentities.electric;
 
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.IElectricItem;
-import gregtech.api.capability.impl.EnergyContainerBatteryCharger;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.ModularUI.Builder;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.common.ConfigHolder;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.IElectricItem;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerBatteryCharger;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,9 +52,9 @@ public class MetaTileEntityCharger extends TieredMetaTileEntity {
             @Nonnull
             @Override
             public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-                IElectricItem electricItem = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-                if ((electricItem != null && getTier() >= electricItem.getTier()) ||
-                        (ConfigHolder.compat.energy.nativeEUToFE && stack.hasCapability(CapabilityEnergy.ENERGY, null))) {
+                LazyOptional<IElectricItem> electricItem = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+                if ((electricItem.isPresent() && getTier() >= electricItem.resolve().get().getTier()) ||
+                        (ConfigHolder.compat.energy.nativeEUToFE && stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent())) {
                     return super.insertItem(slot, stack, simulate);
                 }
                 return stack;
@@ -82,7 +81,7 @@ public class MetaTileEntityCharger extends TieredMetaTileEntity {
     @Override
     protected ModularUI createUI(Player entityPlayer) {
         int rowSize = (int) Math.sqrt(inventorySize);
-        Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176,
+        ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176,
                 18 + 18 * rowSize + 94)
                 .label(10, 5, getMetaFullName());
 
@@ -93,7 +92,7 @@ public class MetaTileEntityCharger extends TieredMetaTileEntity {
                         .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY));
             }
         }
-        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * rowSize + 12);
+        builder.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 18 + 18 * rowSize + 12);
         return builder.build(getHolder(), entityPlayer);
     }
 

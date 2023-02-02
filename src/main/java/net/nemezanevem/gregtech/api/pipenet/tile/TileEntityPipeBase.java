@@ -1,27 +1,36 @@
 package net.nemezanevem.gregtech.api.pipenet.tile;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.nemezanevem.gregtech.api.blockentity.SyncedTileEntityBase;
 import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.pipenet.PipeNet;
 import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.block.IPipeType;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
 import net.nemezanevem.gregtech.api.registry.material.MaterialRegistry;
-import net.nemezanevem.gregtech.api.blockentity.SyncedTileEntityBase;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 
 import javax.annotation.Nonnull;
@@ -83,7 +92,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public boolean supportsTicking() {
-        return this instanceof ITickable;
+        return this.getBlockState().getBlock() instanceof EntityBlock block && block.getTicker(this.level, this.getBlockState(), this.getType()) != null;
     }
 
     @Override
@@ -112,7 +121,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
             return this;
         }
         //create new tickable tile entity, transfer data, and replace it
-        IPipeTile<PipeType, NodeDataType> newTile = getPipeBlock().createNewTileEntity(true);
+        IPipeTile<PipeType, NodeDataType> newTile = getPipeBlock().createNewTileEntity(true, getBlockPos(), getBlockState());
         newTile.transferDataFrom(this);
         getLevel().setBlockEntity((BlockEntity) newTile);
         return newTile;
@@ -165,7 +174,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public boolean isConnected(Direction side) {
-        return (connections & 1 << side.getIndex()) > 0;
+        return (connections & 1 << side.ordinal()) > 0;
     }
 
     @Override
@@ -237,7 +246,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public boolean isFaceBlocked(Direction side) {
-        return (blockedConnections & (1 << side.getIndex())) > 0;
+        return (blockedConnections & (1 << side.ordinal())) > 0;
     }
 
     @Override
@@ -267,24 +276,26 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         float selfThickness = getPipeType().getThickness();
         for (Direction facing : Direction.values()) {
             if (isConnected(facing)) {
-                BlockEntity neighbourTile = world.getBlockEntity(pos.offset(facing));
+                BlockEntity neighbourTile = level.getBlockEntity(worldPosition.offset(facing.getNormal()));
                 if (neighbourTile instanceof IPipeTile) {
                     IPipeTile<?, ?> pipeTile = (IPipeTile<?, ?>) neighbourTile;
                     if (pipeTile.isConnected(facing.getOpposite()) && pipeTile.getPipeType().getThickness() < selfThickness) {
-                        connections |= 1 << (facing.getIndex() + 6);
+                        connections |= 1 << (facing.ordinal() + 6);
                     }
                 }
                 if (getCoverableImplementation().getCoverAtSide(facing) != null) {
-                    connections |= 1 << (facing.getIndex() + 12);
+                    connections |= 1 << (facing.ordinal() + 12);
                 }
             }
         }
         return connections;
     }
 
+    private LazyOptional<ICoverable> coverableLazyOptional = LazyOptional.of(() -> coverableImplementation);
+
     public <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
         if (capability == GregtechTileCapabilities.CAPABILITY_COVERABLE) {
-            return GregtechTileCapabilities.CAPABILITY_COVERABLE.cast(getCoverableImplementation());
+            return coverableLazyOptional.cast();
         }
         return super.getCapability(capability, facing);
     }
@@ -329,7 +340,6 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         }
         compound.putString("FrameMaterial", frameMaterial == null ? "" : frameMaterial.toString());
         this.coverableImplementation.writeToNBT(compound);
-        return compound;
     }
 
     @Override
@@ -384,7 +394,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         buf.writeVarInt(connections);
         buf.writeVarInt(blockedConnections);
         buf.writeInt(paintingColor);
-        buf.writeVarInt(frameMaterial == null ? -1 : GregTechAPI.MATERIAL_REGISTRY.getIDForObject(frameMaterial));
+        buf.writeRegistryId(GregTechRegistries.MATERIAL.get(), frameMaterial);
         this.coverableImplementation.writeInitialSyncData(buf);
     }
 
@@ -394,8 +404,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
         this.connections = buf.readVarInt();
         this.blockedConnections = buf.readVarInt();
         this.paintingColor = buf.readInt();
-        int frameMaterialId = buf.readVarInt();
-        this.frameMaterial = frameMaterialId < 0 ? null : GregTechAPI.MATERIAL_REGISTRY.getObjectById(frameMaterialId);
+        this.frameMaterial = buf.readRegistryId();
         this.coverableImplementation.readInitialSyncData(buf);
     }
 
@@ -416,8 +425,7 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
             this.blockedConnections = buf.readVarInt();
             scheduleChunkForRenderUpdate();
         } else if (discriminator == UPDATE_FRAME_MATERIAL) {
-            int frameMaterialId = buf.readVarInt();
-            this.frameMaterial = frameMaterialId < 0 ? null : GregTechAPI.MATERIAL_REGISTRY.getObjectById(frameMaterialId);
+            this.frameMaterial = buf.readRegistryId();
             scheduleChunkForRenderUpdate();
         }
     }
@@ -432,16 +440,20 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public void scheduleChunkForRenderUpdate() {
-        BlockPos pos = getPos();
-        getWorld().markBlockRangeForRenderUpdate(
-                pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1,
-                pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+        BlockPos pos = getBlockPos();
+        if(getLevel().isClientSide) {
+            LevelRenderer renderer = Minecraft.getInstance().levelRenderer;
+            renderer.setBlocksDirty(
+                    pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1,
+                    pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+        }
+
     }
 
     @Override
     public void notifyBlockUpdate() {
-        getWorld().notifyNeighborsOfStateChange(getPos(), getBlockType(), true);
-        getPipeBlock().updateActiveNodeStatus(getWorld(), getPos(), this);
+        getLevel().updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
+        getPipeBlock().updateActiveNodeStatus(getLevel(), getBlockPos(), this);
     }
 
     @Override
@@ -451,21 +463,21 @@ public abstract class TileEntityPipeBase<PipeType extends Enum<PipeType> & IPipe
 
     @Override
     public boolean isValidTile() {
-        return !isInvalid();
+        return !isRemoved();
     }
 
-    @Override
+    /*@Override
     public boolean shouldRefresh(@Nonnull Level world, @Nonnull BlockPos pos, BlockState oldState, BlockState newSate) {
         return oldState.getBlock() != newSate.getBlock();
-    }
+    }*/
 
     public void doExplosion(float explosionPower) {
-        getWorld().setBlockToAir(getPos());
-        if (!getWorld().isClientSide) {
-            ((WorldServer) getWorld()).spawnParticle(EnumParticleTypes.SMOKE_LARGE, getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5,
+        getLevel().setBlock(getBlockPos(), Blocks.AIR.defaultBlockState(), 3);
+        if (!getLevel().isClientSide) {
+            ((ServerLevel) getLevel()).sendParticles(ParticleTypes.LARGE_SMOKE, getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5,
                     10, 0.2, 0.2, 0.2, 0.0);
         }
-        getWorld().createExplosion(null, getPos().getX() + 0.5, getPos().getY() + 0.5, getPos().getZ() + 0.5,
-                explosionPower, false);
+        getLevel().explode(null, getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5,
+                explosionPower, Explosion.BlockInteraction.NONE);
     }
 }

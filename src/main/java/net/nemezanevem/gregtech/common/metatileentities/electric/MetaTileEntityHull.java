@@ -1,34 +1,28 @@
 package net.nemezanevem.gregtech.common.metatileentities.electric;
 
-import appeng.api.util.AECableType;
-import appeng.api.util.AEPartLocation;
-import appeng.me.helpers.AENetworkProxy;
-import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.metatileentity.MetaTileEntityHolder;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.IMultiblockAbilityPart;
-import gregtech.api.metatileentity.multiblock.IPassthroughHatch;
-import gregtech.api.metatileentity.multiblock.MultiblockAbility;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.PipelineUtil;
-import gregtech.common.metatileentities.multi.multiblockpart.MetaTileEntityMultiblockPart;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.Mth;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Optional;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IMultiblockAbilityPart;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IPassthroughHatch;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockAbility;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerHandler;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.util.PipelineUtil;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.metatileentities.multi.multiblockpart.MetaTileEntityMultiblockPart;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,7 +31,6 @@ import java.util.List;
 public class MetaTileEntityHull extends MetaTileEntityMultiblockPart implements IPassthroughHatch, IMultiblockAbilityPart<IPassthroughHatch> {
 
     protected IEnergyContainer energyContainer;
-    private AENetworkProxy gridProxy;
 
     public MetaTileEntityHull(ResourceLocation metaTileEntityId, int tier) {
         super(metaTileEntityId, tier);
@@ -45,7 +38,7 @@ public class MetaTileEntityHull extends MetaTileEntityMultiblockPart implements 
     }
 
     @Override
-    public gregtech.api.metatileentity.MetaTileEntity createMetaTileEntity(IGregTechTileEntity tileEntity) {
+    public MetaTileEntity createMetaTileEntity(IGregTechTileEntity tileEntity) {
         return new MetaTileEntityHull(metaTileEntityId, getTier());
     }
 
@@ -95,31 +88,11 @@ public class MetaTileEntityHull extends MetaTileEntityMultiblockPart implements 
     @Override
     public void tick() {
         super.tick();
-        if (isFirstTick() && Loader.isModLoaded(GTValues.MODID_APPENG)) {
-            getProxy().onReady();
-        }
-    }
-
-    @Nonnull
-    @Override
-    @Optional.Method(modid = GTValues.MODID_APPENG)
-    public AECableType getCableConnectionType(@Nonnull AEPartLocation part) {
-        return AECableType.SMART;
-    }
-
-    @Nullable
-    @Override
-    @Optional.Method(modid = GTValues.MODID_APPENG)
-    public AENetworkProxy getProxy() {
-        if (gridProxy == null && getHolder() instanceof MetaTileEntityHolder) {
-            gridProxy = new AENetworkProxy((MetaTileEntityHolder) getHolder(), "proxy", getStackForm(), true);
-        }
-        return gridProxy;
     }
 
     @Override
     public MultiblockAbility<IPassthroughHatch> getAbility() {
-        return MultiblockAbility.PASSTHROUGH_HATCH;
+        return GtMultiblockAbilities.PASSTHROUGH_HATCH.get();
     }
 
     @Override

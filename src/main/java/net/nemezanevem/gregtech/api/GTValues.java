@@ -1,10 +1,13 @@
 package net.nemezanevem.gregtech.api;
 
-import net.minecraftforge.common.MinecraftForge;
+import net.minecraft.core.Direction;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.nemezanevem.gregtech.api.util.XSTR;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import static net.minecraft.ChatFormatting.*;
 
@@ -94,4 +97,16 @@ public class GTValues {
         if (isDeobf == null) isDeobf = !FMLLoader.isProduction();
         return isDeobf;
     }
+
+    public static Supplier<Boolean> FOOLS = () -> {
+        String[] yearMonthDay = LocalDate.now().toString().split("-");
+        return yearMonthDay[1].equals("04") && yearMonthDay[2].equals("01");
+    };
+
+    public static Supplier<Boolean> XMAS = () -> {
+        String[] yearMonthDay = LocalDate.now().toString().split("-");
+        return yearMonthDay[1].equals("12") && (yearMonthDay[2].equals("24") || yearMonthDay[2].equals("25"));
+    };
+
+    public static final Direction[] HORIZONTAL_DIRECTION = Arrays.stream(Direction.values()).filter(dir -> dir.getAxis() == Direction.Axis.Y).toArray(Direction[]::new);
 }

@@ -13,6 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,6 +65,11 @@ public class BlockCable extends BlockMaterialPipe<Insulation, WireProperty, Worl
     }
 
     @Override
+    public WorldENet getWorldPipeNet(LevelReader world) {
+        return WorldENet.getWorldENet(world);
+    }
+
+    @Override
     protected WireProperty createProperties(Insulation insulation, Material material) {
         return insulation.modifyProperties(enabledMaterials.getOrDefault(material, getFallbackType()));
     }
@@ -82,6 +89,7 @@ public class BlockCable extends BlockMaterialPipe<Insulation, WireProperty, Worl
         return ToolHelper.isTool(stack, ToolClass.WIRE_CUTTER);
     }
 
+
     @Override
     public int getLightValue(BlockState state, BlockGetter world, BlockPos pos) {
         BlockEntity tile = world.getBlockEntity(pos);
@@ -100,14 +108,13 @@ public class BlockCable extends BlockMaterialPipe<Insulation, WireProperty, Worl
     }
 
 
-
     @Override
-    public void breakBlock(@Nonnull Level worldIn, @Nonnull BlockPos pos, @Nonnull BlockState state) {
-        if (worldIn.isClientSide) {
-            TileEntityCable cable = (TileEntityCable) getPipeTileEntity(worldIn, pos);
+    public void destroy(LevelAccessor pLevel, BlockPos pPos, BlockState pState) {
+        if (pLevel.isClientSide()) {
+            TileEntityCable cable = (TileEntityCable) getPipeTileEntity(pLevel, pPos);
             cable.killParticle();
         }
-        super.breakBlock(worldIn, pos, state);
+        super.destroy(pLevel, pPos, pState);
     }
 
     @Override
@@ -117,7 +124,7 @@ public class BlockCable extends BlockMaterialPipe<Insulation, WireProperty, Worl
 
     @Override
     public boolean canPipeConnectToBlock(IPipeTile<Insulation, WireProperty> selfTile, Direction side, BlockEntity tile) {
-        return tile != null && tile.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, side.getOpposite()) != null;
+        return tile != null && tile.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER, side.getOpposite()).isPresent();
     }
 
     @Override
@@ -156,16 +163,9 @@ public class BlockCable extends BlockMaterialPipe<Insulation, WireProperty, Worl
         }
     }
 
-    @Nonnull
     @Override
-    @SuppressWarnings("deprecation")
-    public RenderType getRenderType(@Nonnull BlockState state) {
-        return CableRenderer.INSTANCE.getBlockRenderType();
-    }
-
-    @Override
-    public TileEntityPipeBase<Insulation, WireProperty> createNewTileEntity(boolean supportsTicking) {
-        return supportsTicking ? new TileEntityCableTickable() : new TileEntityCable();
+    public TileEntityPipeBase<Insulation, WireProperty> createNewTileEntity(boolean supportsTicking, BlockPos pPos, BlockState pState) {
+        return supportsTicking ? new TileEntityCableTickable(pPos, pState) : new TileEntityCable(pPos, pState);
     }
 
     @Override

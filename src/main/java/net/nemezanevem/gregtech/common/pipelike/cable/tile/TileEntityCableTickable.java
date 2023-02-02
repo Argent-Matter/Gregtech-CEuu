@@ -1,15 +1,16 @@
 package net.nemezanevem.gregtech.common.pipelike.cable.tile;
 
-import net.minecraft.util.ITickable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class TileEntityCableTickable extends TileEntityCable implements  {
+public class TileEntityCableTickable extends TileEntityCable {
 
-    public TileEntityCableTickable() {
+    public TileEntityCableTickable(BlockPos pos, BlockState state) {
+        super(pos, state);
     }
 
-    @Override
     public void tick() {
-        getCoverableImplementation().update();
+        getCoverableImplementation().tick();
     }
 
     @Override

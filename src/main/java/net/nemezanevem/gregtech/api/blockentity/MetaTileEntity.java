@@ -52,6 +52,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.block.machine.BlockMachine;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
 import net.nemezanevem.gregtech.api.capability.IControllable;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
@@ -61,7 +62,8 @@ import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
-import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
 import net.nemezanevem.gregtech.api.util.GTTransferUtils;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
@@ -549,7 +551,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         coverBehavior.onAttached(itemStack, player);
         writeCustomData(COVER_ATTACHED_MTE, buffer -> {
             buffer.writeByte(side.ordinal());
-            buffer.writeVarInt(CoverDefinition.getNetworkIdForCover(coverDefinition));
+            buffer.writeRegistryId(GregTechRegistries.COVER.get(), coverDefinition);
             coverBehavior.writeInitialSyncData(buffer);
         });
         notifyBlockUpdate();
@@ -845,8 +847,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         for (Direction coverSide : Direction.values()) {
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             if (coverBehavior != null) {
-                int coverId = CoverDefinition.getNetworkIdForCover(coverBehavior.getCoverDefinition());
-                buf.writeVarInt(coverId);
+                buf.writeRegistryId(GregTechRegistries.COVER.get(), coverBehavior.getCoverDefinition());
                 coverBehavior.writeInitialSyncData(buf);
             } else {
                 buf.writeVarInt(-1);
@@ -870,13 +871,10 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
             trait.receiveInitialData(buf);
         }
         for (Direction coverSide : Direction.values()) {
-            int coverId = buf.readVarInt();
-            if (coverId != -1) {
-                CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
-                CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
-                coverBehavior.readInitialSyncData(buf);
-                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
-            }
+            CoverDefinition coverDefinition = buf.readRegistryId();
+            CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
+            coverBehavior.readInitialSyncData(buf);
+            this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
         }
         this.isFragile = buf.readBoolean();
         this.muffled = buf.readBoolean();
@@ -890,10 +888,10 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         });
     }
 
-    public void writeCoverData(CoverBehavior cover, int internalId, Consumer<FriendlyByteBuf> dataWriter) {
+    public void writeCoverData(CoverBehavior cover, Consumer<FriendlyByteBuf> dataWriter) {
         writeCustomData(UPDATE_COVER_DATA_MTE, buffer -> {
             buffer.writeByte(cover.attachedSide.ordinal());
-            buffer.writeVarInt(internalId);
+            buffer.writeRegistryId(GregTechRegistries.COVER.get(), cover.getCoverDefinition());
             dataWriter.accept(buffer);
         });
     }
@@ -913,8 +911,7 @@ public abstract class MetaTileEntity implements ICoverable, IVoidable {
         } else if (dataId == COVER_ATTACHED_MTE) {
             //cover placement event
             Direction placementSide = Direction.values()[buf.readByte()];
-            int coverId = buf.readVarInt();
-            CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
+            CoverDefinition coverDefinition = buf.readRegistryId();
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
             this.coverBehaviors[placementSide.ordinal()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);

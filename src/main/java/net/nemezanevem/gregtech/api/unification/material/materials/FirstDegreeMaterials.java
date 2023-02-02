@@ -1,19 +1,18 @@
 package net.nemezanevem.gregtech.api.unification.material.materials;
 
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.fluids.type.GTFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.BlastProperty.GasTier;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
-import net.nemezanevem.gregtech.api.GTValues;
 
-
+import static net.nemezanevem.gregtech.api.GTValues.*;
 import static net.nemezanevem.gregtech.api.registry.material.MaterialRegistry.MATERIALS;
 import static net.nemezanevem.gregtech.api.unification.material.GtMaterials.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialFlags.*;
 import static net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconSets.*;
-import static net.nemezanevem.gregtech.api.GTValues.*;
 
 public class FirstDegreeMaterials {
 
@@ -1081,7 +1080,7 @@ public class FirstDegreeMaterials {
                 .build());
 
         CarbonDioxide = MATERIALS.register("carbon_dioxide", () -> new Material.Builder("carbon_dioxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xA9D0F5)
                 .components(Carbon, 1, Oxygen, 2)
                 .build());
@@ -1094,74 +1093,74 @@ public class FirstDegreeMaterials {
                 .build());
 
         NitrogenDioxide = MATERIALS.register("nitrogen_dioxide", () -> new Material.Builder("nitrogen_dioxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x85FCFF).iconSet(GAS.get())
                 .components(Nitrogen, 1, Oxygen, 2)
                 .build());
 
         HydrogenSulfide = MATERIALS.register("hydrogen_sulfide", () -> new Material.Builder("hydrogen_sulfide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .components(Hydrogen, 2, Sulfur, 1)
                 .build());
 
         NitricAcid = MATERIALS.register("nitric_acid", () -> new Material.Builder("nitric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xCCCC00)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Hydrogen, 1, Nitrogen, 1, Oxygen, 3)
                 .build());
 
         SulfuricAcid = MATERIALS.register("sulfuric_acid", () -> new Material.Builder("sulfuric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Hydrogen, 2, Sulfur, 1, Oxygen, 4)
                 .build());
 
         PhosphoricAcid = MATERIALS.register("phosphoric_acid", () -> new Material.Builder("phosphoric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xDCDC01)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Hydrogen, 3, Phosphorus, 1, Oxygen, 4)
                 .build());
 
         SulfurTrioxide = MATERIALS.register("sulfur_trioxide", () -> new Material.Builder("sulfur_trioxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xA0A014)
                 .components(Sulfur, 1, Oxygen, 3)
                 .build());
 
         SulfurDioxide = MATERIALS.register("sulfur_dioxide", () -> new Material.Builder("sulfur_dioxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xC8C819)
                 .components(Sulfur, 1, Oxygen, 2)
                 .build());
 
         CarbonMonoxide = MATERIALS.register("carbon_monoxide", () -> new Material.Builder("carbon_monoxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x0E4880)
                 .components(Carbon, 1, Oxygen, 1)
                 .build());
 
         HypochlorousAcid = MATERIALS.register("hypochlorous_acid", () -> new Material.Builder("hypochlorous_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0x6F8A91)
                 .components(Hydrogen, 1, Chlorine, 1, Oxygen, 1)
                 .build());
 
         Ammonia = MATERIALS.register("ammonia", () -> new Material.Builder("ammonia")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x3F3480)
                 .components(Nitrogen, 1, Hydrogen, 3)
                 .build());
 
         HydrofluoricAcid = MATERIALS.register("hydrofluoric_acid", () -> new Material.Builder("hydrofluoric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0x0088AA)
                 .components(Hydrogen, 1, Fluorine, 1)
                 .build());
 
         NitricOxide = MATERIALS.register("nitric_oxide", () -> new Material.Builder("nitric_oxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x7DC8F0)
                 .components(Nitrogen, 1, Oxygen, 1)
                 .build());
@@ -1174,7 +1173,7 @@ public class FirstDegreeMaterials {
                 .build());
 
         UraniumHexafluoride = MATERIALS.register("uranium_hexafluoride", () -> new Material.Builder("uranium_hexafluoride")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x42D126)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Uranium238, 1, Fluorine, 6)
@@ -1182,7 +1181,7 @@ public class FirstDegreeMaterials {
                 .setFormula("UF6", true));
 
         EnrichedUraniumHexafluoride = MATERIALS.register("enriched_uranium_hexafluoride", () -> new Material.Builder("enriched_uranium_hexafluoride")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x4BF52A)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Uranium235, 1, Fluorine, 6)
@@ -1190,7 +1189,7 @@ public class FirstDegreeMaterials {
                 .setFormula("UF6", true));
 
         DepletedUraniumHexafluoride = MATERIALS.register("depleted_uranium_hexafluoride", () -> new Material.Builder("depleted_uranium_hexafluoride")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x74BA66)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Uranium238, 1, Fluorine, 6)
@@ -1198,7 +1197,7 @@ public class FirstDegreeMaterials {
                 .setFormula("UF6", true));
 
         NitrousOxide = MATERIALS.register("nitrous_oxide", () -> new Material.Builder("nitrous_oxide")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x7DC8FF)
                 .components(Nitrogen, 2, Oxygen, 1)
                 .build());
@@ -1228,12 +1227,12 @@ public class FirstDegreeMaterials {
         Neodymium.get().getProperty(GtMaterialProperties.INGOT.get()).setMagneticMaterial(NeodymiumMagnetic.get());
 
         HydrochloricAcid = MATERIALS.register("hydrochloric_acid", () -> new Material.Builder("hydrochloric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .components(Hydrogen, 1, Chlorine, 1)
                 .build());
 
         Steam = MATERIALS.register("steam", () -> new Material.Builder("steam")
-                .fluid(GtFluidTypes.GAS.get(), true)
+                .fluid(GTFluidTypes.GAS, true)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Hydrogen, 2, Oxygen, 1)
                 .fluidTemp(373)
@@ -1393,7 +1392,7 @@ public class FirstDegreeMaterials {
                 .build());
 
         FluoroantimonicAcid = MATERIALS.register("fluoroantimonic_acid", () -> new Material.Builder("fluoroantimonic_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .components(Hydrogen, 2, Antimony, 1, Fluorine, 7)
                 .build());
 

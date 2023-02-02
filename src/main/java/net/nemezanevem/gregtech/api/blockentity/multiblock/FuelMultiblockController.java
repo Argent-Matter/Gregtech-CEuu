@@ -9,6 +9,7 @@ import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
 import net.nemezanevem.gregtech.api.capability.impl.MultiblockFuelRecipeLogic;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 

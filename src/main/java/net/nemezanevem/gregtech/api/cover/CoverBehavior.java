@@ -99,8 +99,8 @@ public abstract class CoverBehavior implements IUIHolder {
     public void readUpdateData(int id, FriendlyByteBuf packetBuffer) {
     }
 
-    public final void writeUpdateData(int id, Consumer<FriendlyByteBuf> writer) {
-        coverHolder.writeCoverData(this, id, writer);
+    public final void writeUpdateData(Consumer<FriendlyByteBuf> writer) {
+        coverHolder.writeCoverData(this, writer);
     }
 
     /**
@@ -109,6 +109,8 @@ public abstract class CoverBehavior implements IUIHolder {
      * @return true if cover can be attached, false otherwise
      */
     public abstract boolean canAttach();
+
+    public abstract boolean isTickable();
 
     /**
      * Will be called on server side after the cover attachment to the meta tile entity

@@ -193,8 +193,8 @@ public class GTOreCategory extends BasicRecipeCategory<GTOreInfo, GTOreInfo> {
                     }
                 }
             } catch (IllegalArgumentException e) {
-                GTLog.logger.error("Something went wrong with AR JEI integration, No DimensionType found");
-                GTLog.logger.error(e);
+                GregTech.LOGGER.error("Something went wrong with AR JEI integration, No DimensionType found");
+                GregTech.LOGGER.error(e);
             }
         }
 

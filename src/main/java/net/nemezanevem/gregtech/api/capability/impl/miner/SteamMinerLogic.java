@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.capability.impl.miner;
 
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.capability.IVentable;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 public class SteamMinerLogic extends MinerLogic {
 

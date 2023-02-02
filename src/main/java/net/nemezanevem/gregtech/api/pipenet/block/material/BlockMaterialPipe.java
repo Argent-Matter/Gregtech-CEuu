@@ -1,15 +1,5 @@
 package net.nemezanevem.gregtech.api.pipenet.block.material;
 
-import gregtech.api.GregTechAPI;
-import gregtech.api.pipenet.PipeNet;
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.pipenet.block.BlockPipe;
-import gregtech.api.pipenet.block.IPipeType;
-import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.pipenet.tile.TileEntityPipeBase;
-import gregtech.api.unification.material.Material;
-import gregtech.api.unification.ore.TagPrefix;
-import net.minecraft.item.ItemStack;
 import net.minecraft.world.item.ItemStack;
 import net.nemezanevem.gregtech.api.pipenet.PipeNet;
 import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;

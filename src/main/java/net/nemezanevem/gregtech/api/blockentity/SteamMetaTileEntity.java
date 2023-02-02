@@ -27,6 +27,7 @@ import net.nemezanevem.gregtech.api.gui.GuiTextures;
 import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.widgets.ImageWidget;
 import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.ModHandler;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;

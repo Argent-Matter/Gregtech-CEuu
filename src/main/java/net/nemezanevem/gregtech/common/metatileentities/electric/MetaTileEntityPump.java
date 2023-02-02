@@ -5,45 +5,41 @@ import codechicken.lib.render.pipeline.ColourMultiplier;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.ModularUI.Builder;
-import gregtech.api.gui.widgets.FluidContainerSlotWidget;
-import gregtech.api.gui.widgets.ImageWidget;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.gui.widgets.TankWidget;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.common.ConfigHolder;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.IFluidBlock;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.FluidContainerSlotWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.ImageWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.TankWidget;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nullable;
@@ -51,7 +47,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
-import static gregtech.api.capability.GregtechDataCodes.PUMP_HEAD_LEVEL;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.PUMP_HEAD_LEVEL;
+
 
 public class MetaTileEntityPump extends TieredMetaTileEntity {
 
@@ -75,12 +72,11 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         super.renderMetaTileEntity(renderState, translation, pipeline);
         ColourMultiplier multiplier = new ColourMultiplier(Util.convertRGBtoOpaqueRGBA_CL(getPaintingColorForRendering()));
         IVertexOperation[] coloredPipeline = ArrayUtils.add(pipeline, multiplier);
-        for (Direction renderSide : Direction.HORIZONTALS) {
+        for (Direction renderSide : GTValues.HORIZONTAL_DIRECTION) {
             if (renderSide == getFrontFacing()) {
                 Textures.PIPE_OUT_OVERLAY.renderSided(renderSide, renderState, translation, pipeline);
             } else {
@@ -129,12 +125,12 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
-        return (side == null || side.getAxis() != Axis.Y) ? super.getCapability(capability, side) : null;
+        return (side == null || side.getAxis() != Direction.Axis.Y) ? super.getCapability(capability, side) : null;
     }
 
     @Override
     protected ModularUI createUI(Player entityPlayer) {
-        Builder builder = ModularUI.defaultBuilder();
+        ModularUI.Builder builder = ModularUI.defaultBuilder();
         builder.image(7, 16, 81, 55, GuiTextures.DISPLAY);
         TankWidget tankWidget = new TankWidget(exportFluids.getTankAt(0), 69, 52, 18, 18)
                 .setHideTooltip(true).setAlwaysShowFull(true);
@@ -148,7 +144,7 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
                 .widget(new ImageWidget(91, 36, 14, 15, GuiTextures.TANK_ICON))
                 .widget(new SlotWidget(exportItems, 0, 90, 54, true, false)
                         .setBackgroundTexture(GuiTextures.SLOT, GuiTextures.OUT_SLOT_OVERLAY))
-                .bindPlayerInventory(entityPlayer.inventory)
+                .bindPlayerInventory(entityPlayer.getInventory())
                 .build(getHolder(), entityPlayer);
     }
 
@@ -165,7 +161,7 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
     }
 
     private void updateQueueState(int blocksToCheckAmount) {
-        BlockPos selfPos = getPos().down(pumpHeadY);
+        BlockPos selfPos = getPos().below(pumpHeadY);
 
         for (int i = 0; i < blocksToCheckAmount; i++) {
             BlockPos checkPos = null;
@@ -178,7 +174,7 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
                 checkPos = blocksToCheck.poll();
 
             } while (checkPos != null &&
-                    !getWorld().isBlockLoaded(checkPos) &&
+                    !getWorld().isLoaded(checkPos) &&
                     amountIterated < blocksToCheck.size());
             if (checkPos != null) {
                 checkFluidBlockAt(selfPos, checkPos);
@@ -187,12 +183,12 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
 
         if (fluidSourceBlocks.isEmpty()) {
             if (getOffsetTimer() % 20 == 0) {
-                BlockPos downPos = selfPos.down(1);
+                BlockPos downPos = selfPos.below(1);
                 if (downPos.getY() >= 0) {
                     BlockState downBlock = getWorld().getBlockState(downPos);
-                    if (downBlock.getBlock() instanceof BlockLiquid ||
+                    if (downBlock.getBlock() instanceof LiquidBlock ||
                             downBlock.getBlock() instanceof IFluidBlock ||
-                            !downBlock.isSideSolid(getWorld(), downPos, Direction.UP)) {
+                            downBlock.skipRendering(getWorld().getBlockState(downPos), Direction.UP)) {
                         this.pumpHeadY++;
                     }
                 }
@@ -216,14 +212,14 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
         BlockState blockHere = getWorld().getBlockState(checkPos);
         boolean shouldCheckNeighbours = isStraightInPumpRange(checkPos);
 
-        if (blockHere.getBlock() instanceof BlockLiquid ||
+        if (blockHere.getBlock() instanceof LiquidBlock ||
                 blockHere.getBlock() instanceof IFluidBlock) {
-            IFluidHandler fluidHandler = FluidUtil.getFluidHandler(getWorld(), checkPos, null);
-            if (fluidHandler == null) {
+            LazyOptional<IFluidHandler> fluidHandler = FluidUtil.getFluidHandler(getWorld(), checkPos, null);
+            if (!fluidHandler.isPresent()) {
                 return;
             }
-            FluidStack drainStack = fluidHandler.drain(Integer.MAX_VALUE, false);
-            if (drainStack != null && drainStack.amount > 0) {
+            FluidStack drainStack = fluidHandler.resolve().get().drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.SIMULATE);
+            if (drainStack != FluidStack.EMPTY && drainStack.getAmount() > 0) {
                 this.fluidSourceBlocks.add(checkPos);
             }
             shouldCheckNeighbours = true;
@@ -231,9 +227,9 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
 
         if (shouldCheckNeighbours) {
             int maxPumpRange = getMaxPumpRange();
-            for (Direction facing : Direction.VALUES) {
-                BlockPos offsetPos = checkPos.offset(facing);
-                if (offsetPos.distanceSq(pumpHeadPos) > maxPumpRange * maxPumpRange)
+            for (Direction facing : Direction.values()) {
+                BlockPos offsetPos = checkPos.offset(facing.getNormal());
+                if (offsetPos.distSqr(pumpHeadPos) > maxPumpRange * maxPumpRange)
                     continue; //do not add blocks outside bounds
                 if (!fluidSourceBlocks.contains(offsetPos) &&
                         !blocksToCheck.contains(offsetPos)) {
@@ -247,16 +243,16 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
         BlockPos fluidBlockPos = fluidSourceBlocks.poll();
         if (fluidBlockPos == null) return;
         BlockState blockHere = getWorld().getBlockState(fluidBlockPos);
-        if (blockHere.getBlock() instanceof BlockLiquid ||
+        if (blockHere.getBlock() instanceof LiquidBlock ||
                 blockHere.getBlock() instanceof IFluidBlock) {
-            IFluidHandler fluidHandler = FluidUtil.getFluidHandler(getWorld(), fluidBlockPos, null);
-            if (fluidHandler == null) {
+            LazyOptional<IFluidHandler> fluidHandler = FluidUtil.getFluidHandler(getWorld(), fluidBlockPos, null);
+            if (!fluidHandler.isPresent()) {
                 return;
             }
-            FluidStack drainStack = fluidHandler.drain(Integer.MAX_VALUE, false);
-            if (drainStack != null && exportFluids.fill(drainStack, false) == drainStack.amount) {
-                exportFluids.fill(drainStack, true);
-                fluidHandler.drain(drainStack.amount, true);
+            FluidStack drainStack = fluidHandler.resolve().get().drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE);
+            if (drainStack != FluidStack.EMPTY && exportFluids.fill(drainStack, IFluidHandler.FluidAction.SIMULATE) == drainStack.getAmount()) {
+                exportFluids.fill(drainStack, IFluidHandler.FluidAction.EXECUTE);
+                fluidHandler.resolve().get().drain(drainStack.getAmount(), IFluidHandler.FluidAction.EXECUTE);
                 this.fluidSourceBlocks.remove(fluidBlockPos);
                 energyContainer.changeEnergy(-GTValues.V[getTier()] * 2);
             }
@@ -304,8 +300,8 @@ public class MetaTileEntityPump extends TieredMetaTileEntity {
         tooltip.add(Component.translatable("gregtech.machine.pump.tooltip"));
         if (ConfigHolder.machines.doTerrainExplosion)
             tooltip.add(Component.translatable("gregtech.universal.tooltip.terrain_resist"));
-        tooltip.add(Component.translatable("gregtech.universal.tooltip.uses_per_op", GTValues.V[getTier()] * 2)
-                + TextFormatting.GRAY + ", " + Component.translatable("gregtech.machine.pump.tooltip_buckets", getPumpingCycleLength()));
+        tooltip.add(Component.literal(Component.translatable("gregtech.universal.tooltip.uses_per_op", GTValues.V[getTier()] * 2).getString()
+                + ChatFormatting.GRAY + ", " + Component.translatable("gregtech.machine.pump.tooltip_buckets", getPumpingCycleLength()).getString()));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.voltage_in", energyContainer.getInputVoltage(), GTValues.VNF[getTier()]));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.energy_storage_capacity", energyContainer.getEnergyCapacity()));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.fluid_storage_capacity", exportFluids.getTankAt(0).getCapacity()));

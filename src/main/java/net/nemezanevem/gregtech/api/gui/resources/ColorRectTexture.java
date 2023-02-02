@@ -1,14 +1,11 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 
 import java.awt.*;
 
-public class ColorRectTexture implements IGuiTexture{
+public class ColorRectTexture implements IGuiTexture {
     public int color;
 
     public ColorRectTexture(int color) {
@@ -47,19 +44,19 @@ public class ColorRectTexture implements IGuiTexture{
         float f = (float)(color >> 16 & 255) / 255.0F;
         float f1 = (float)(color >> 8 & 255) / 255.0F;
         float f2 = (float)(color & 255) / 255.0F;
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.getBuilder();
         RenderSystem.enableBlend();
-        RenderSystem.disableTexture2D();
-        RenderSystem.tryBlendFuncSeparate(RenderSystem.SourceFactor.SRC_ALPHA, RenderSystem.DestFactor.ONE_MINUS_SRC_ALPHA, RenderSystem.SourceFactor.ONE, RenderSystem.DestFactor.ZERO);
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(f, f1, f2, f3);
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(x, bottom, 0.0D).endVertex();
-        bufferbuilder.pos(right, bottom, 0.0D).endVertex();
-        bufferbuilder.pos(right, y, 0.0D).endVertex();
-        bufferbuilder.pos(x, y, 0.0D).endVertex();
-        tessellator.draw();
-        RenderSystem.enableTexture2D();
+        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        bufferbuilder.vertex(x, bottom, 0.0D).endVertex();
+        bufferbuilder.vertex(right, bottom, 0.0D).endVertex();
+        bufferbuilder.vertex(right, y, 0.0D).endVertex();
+        bufferbuilder.vertex(x, y, 0.0D).endVertex();
+        tesselator.end();
+        RenderSystem.enableTexture();
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 }

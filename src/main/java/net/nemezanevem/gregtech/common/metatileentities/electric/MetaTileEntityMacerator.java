@@ -1,13 +1,13 @@
 package net.nemezanevem.gregtech.common.metatileentities.electric;
 
-import gregtech.api.capability.impl.NotifiableItemStackHandler;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.SimpleMachineMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.recipes.RecipeType;
-import gregtech.client.renderer.ICubeRenderer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.SimpleMachineMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.impl.NotifiableItemStackHandler;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 public class MetaTileEntityMacerator extends SimpleMachineMetaTileEntity {
 

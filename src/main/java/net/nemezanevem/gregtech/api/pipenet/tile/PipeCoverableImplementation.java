@@ -4,8 +4,8 @@ import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -15,10 +15,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
+import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import javax.annotation.Nullable;
@@ -59,7 +62,7 @@ public class PipeCoverableImplementation implements ICoverable {
             return false;
         }
         //if cover requires ticking and we're not tickable, update ourselves and redirect call to new tickable tile entity
-        boolean requiresTicking = coverBehavior instanceof ITickable;
+        boolean requiresTicking = coverBehavior.isTickable();
         if (requiresTicking && !holder.supportsTicking()) {
             IPipeTile<?, ?> newHolderTile = holder.setSupportsTicking();
             return newHolderTile.getCoverableImplementation().placeCoverOnSide(side, itemStack, coverDefinition, player);
@@ -71,7 +74,7 @@ public class PipeCoverableImplementation implements ICoverable {
         coverBehavior.onAttached(itemStack, player);
         writeCustomData(COVER_ATTACHED_PIPE, buffer -> {
             buffer.writeByte(side.ordinal());
-            buffer.writeVarInt(CoverDefinition.getNetworkIdForCover(coverDefinition));
+            buffer.writeRegistryId(GregTechRegistries.COVER.get(), coverDefinition);
             coverBehavior.writeInitialSyncData(buffer);
         });
         if (coverBehavior.shouldAutoConnect()) {
@@ -106,12 +109,12 @@ public class PipeCoverableImplementation implements ICoverable {
 
     public final void dropAllCovers() {
         for (Direction coverSide : Direction.values()) {
-            CoverBehavior coverBehavior = coverBehaviors[coverSide.getIndex()];
+            CoverBehavior coverBehavior = coverBehaviors[coverSide.ordinal()];
             if (coverBehavior == null) continue;
             List<ItemStack> drops = coverBehavior.getDrops();
             coverBehavior.onRemoved();
             for (ItemStack dropStack : drops) {
-                Block.spawnAsEntity(getWorld(), getPos(), dropStack);
+                Block.popResource(getWorld(), getPos(), dropStack);
             }
         }
     }
@@ -235,10 +238,10 @@ public class PipeCoverableImplementation implements ICoverable {
     }
 
     @Override
-    public void writeCoverData(CoverBehavior behavior, int id, Consumer<FriendlyByteBuf> writer) {
+    public void writeCoverData(CoverBehavior behavior, Consumer<FriendlyByteBuf> writer) {
         writeCustomData(UPDATE_COVER_DATA_PIPE, buffer -> {
             buffer.writeByte(behavior.attachedSide.ordinal());
-            buffer.writeVarInt(id);
+            buffer.writeRegistryId(GregTechRegistries.COVER.get(), behavior.getCoverDefinition());
             writer.accept(buffer);
         });
     }
@@ -247,8 +250,7 @@ public class PipeCoverableImplementation implements ICoverable {
         for (Direction coverSide : Direction.values()) {
             CoverBehavior coverBehavior = getCoverAtSide(coverSide);
             if (coverBehavior != null) {
-                int coverId = CoverDefinition.getNetworkIdForCover(coverBehavior.getCoverDefinition());
-                buf.writeVarInt(coverId);
+                buf.writeRegistryId(GregTechRegistries.COVER.get(), coverBehavior.getCoverDefinition());
                 coverBehavior.writeInitialSyncData(buf);
             } else {
                 // -1 means no cover attached
@@ -259,13 +261,10 @@ public class PipeCoverableImplementation implements ICoverable {
 
     public void readInitialSyncData(FriendlyByteBuf buf) {
         for (Direction coverSide : Direction.values()) {
-            int coverId = buf.readVarInt();
-            if (coverId != -1) {
-                CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
-                CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
-                coverBehavior.readInitialSyncData(buf);
-                this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
-            }
+            CoverDefinition coverDefinition = buf.readRegistryId();
+            CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, coverSide);
+            coverBehavior.readInitialSyncData(buf);
+            this.coverBehaviors[coverSide.ordinal()] = coverBehavior;
         }
     }
 
@@ -277,8 +276,7 @@ public class PipeCoverableImplementation implements ICoverable {
         if (dataId == COVER_ATTACHED_PIPE) {
             //cover placement event
             Direction placementSide = Direction.values()[buf.readByte()];
-            int coverId = buf.readVarInt();
-            CoverDefinition coverDefinition = CoverDefinition.getCoverByNetworkId(coverId);
+            CoverDefinition coverDefinition = buf.readRegistryId();
             CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, placementSide);
             this.coverBehaviors[placementSide.ordinal()] = coverBehavior;
             coverBehavior.readInitialSyncData(buf);

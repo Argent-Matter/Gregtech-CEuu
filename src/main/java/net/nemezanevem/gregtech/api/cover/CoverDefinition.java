@@ -3,17 +3,14 @@ package net.nemezanevem.gregtech.api.cover;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
 
 import java.util.function.BiFunction;
 
 public final class CoverDefinition {
 
     public static CoverDefinition getCoverById(ResourceLocation id) {
-        return GregTechAPI.COVER_REGISTRY.getObject(id);
-    }
-
-    public static CoverDefinition getCoverByNetworkId(int networkId) {
-        return GregTechAPI.COVER_REGISTRY.getObjectById(networkId);
+        return GregTechRegistries.COVER.get().getValue(id);
     }
 
     public static int getNetworkIdForCover(CoverDefinition definition) {

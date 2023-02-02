@@ -3,6 +3,7 @@ package net.nemezanevem.gregtech.common.metatileentities;
 
 import mezz.jei.api.constants.RecipeTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.ModList;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
@@ -36,6 +37,7 @@ import net.nemezanevem.gregtech.common.metatileentities.steam.boiler.SteamSolarB
 import net.nemezanevem.gregtech.common.metatileentities.steam.multiblockpart.MetaTileEntitySteamHatch;
 import net.nemezanevem.gregtech.common.metatileentities.steam.multiblockpart.MetaTileEntitySteamItemBus;
 import net.nemezanevem.gregtech.common.metatileentities.storage.*;
+import net.nemezanevem.gregtech.common.tileentity.GtMetaTileEntities;
 import net.nemezanevem.gregtech.common.tileentity.multi.MetaTileEntityLargeBoiler;
 
 import java.util.HashMap;
@@ -799,16 +801,15 @@ public class MetaTileEntities {
     }
 
     public static <T extends MetaTileEntity> T registerMetaTileEntity(int id, T sampleMetaTileEntity) {
-        if (sampleMetaTileEntity instanceof IMultiblockAbilityPart) {
-            IMultiblockAbilityPart<?> abilityPart = (IMultiblockAbilityPart<?>) sampleMetaTileEntity;
+        if (sampleMetaTileEntity instanceof IMultiblockAbilityPart<?> abilityPart) {
             MultiblockAbility.registerMultiblockAbility(abilityPart.getAbility(), sampleMetaTileEntity);
         }
-        if (sampleMetaTileEntity instanceof MultiblockControllerBase && Loader.isModLoaded(GTValues.MODID_JEI)) {
+        if (sampleMetaTileEntity instanceof MultiblockControllerBase && ModList.get().isLoaded(GTValues.MODID_JEI)) {
             if (((MultiblockControllerBase) sampleMetaTileEntity).shouldShowInJei()) {
                 MultiblockInfoCategory.registerMultiblock((MultiblockControllerBase) sampleMetaTileEntity);
             }
         }
-        GregTechAPI.MTE_REGISTRY.register(id, sampleMetaTileEntity.metaTileEntityId, sampleMetaTileEntity);
+        GtMetaTileEntities.register(id, sampleMetaTileEntity.metaTileEntityId, sampleMetaTileEntity);
         return sampleMetaTileEntity;
     }
 

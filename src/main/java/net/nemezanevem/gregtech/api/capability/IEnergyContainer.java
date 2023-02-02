@@ -1,6 +1,7 @@
 package net.nemezanevem.gregtech.api.capability;
 
 import net.minecraft.core.Direction;
+import net.minecraftforge.common.util.LazyOptional;
 
 public interface IEnergyContainer {
 
@@ -152,4 +153,6 @@ public interface IEnergyContainer {
             return 0;
         }
     };
+
+    LazyOptional<IEnergyContainer> defaultLazy = LazyOptional.of(() -> DEFAULT);
 }

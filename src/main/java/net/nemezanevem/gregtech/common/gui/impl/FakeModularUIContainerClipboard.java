@@ -12,12 +12,13 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.impl.FakeModularGuiContainer;
 import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntityClipboard;
+import net.nemezanevem.gregtech.common.network.packets.PacketClipboardUIWidgetUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static gregtech.api.capability.GregtechDataCodes.UPDATE_UI;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.UPDATE_UI;
 
 public class FakeModularUIContainerClipboard extends FakeModularGuiContainer {
     private final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
@@ -31,7 +32,7 @@ public class FakeModularUIContainerClipboard extends FakeModularGuiContainer {
     }
 
     protected void addSlotToContainer(Slot slotIn) {
-        slotIn.slotNumber = this.inventorySlots.size();
+        slotIn.index = this.inventorySlots.size();
         this.inventorySlots.add(slotIn);
         this.inventoryItemStacks.add(ItemStack.EMPTY);
     }
@@ -90,7 +91,7 @@ public class FakeModularUIContainerClipboard extends FakeModularGuiContainer {
         packetBuffer.writeVarInt(updateId);
         payloadWriter.accept(packetBuffer);
         GregTech.NETWORK_HANDLER.sendToServer(new PacketClipboardUIWidgetUpdate(
-                this.clipboard.getWorld().provider.getDimension(),
+                this.clipboard.getWorld().dimension(),
                 this.clipboard.getPos(),
                 updateId, packetBuffer));
     }

@@ -4,12 +4,12 @@ import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -34,6 +34,7 @@ import net.nemezanevem.gregtech.api.gui.ModularUI;
 import net.nemezanevem.gregtech.api.gui.Widget;
 import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.gui.widgets.*;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.recipe.ingredient.IntCircuitIngredient;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
@@ -422,7 +423,7 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
                         .setTooltipText("gregtech.gui.charger_slot.tooltip", GTValues.VNF[getTier()], GTValues.VNF[getTier()]))
                 .widget(new ImageWidget(79, 42 + yOffset, 18, 18, GuiTextures.INDICATOR_NO_ENERGY).setIgnoreColor(true)
                         .setPredicate(workable::isHasNotEnoughEnergy))
-                .bindPlayerInventory(player.inventory, GuiTextures.SLOT, yOffset);
+                .bindPlayerInventory(player.getInventory(), GuiTextures.SLOT, yOffset);
 
         int leftButtonStartX = 7;
 
@@ -498,8 +499,8 @@ public class SimpleMachineMetaTileEntity extends WorkableTieredMetaTileEntity im
     public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
         String key = this.metaTileEntityId.getPath().split("\\.")[0];
-        String mainKey = String.format("gregtech.machine.%s.tooltip", key);
-        if (I18n.hasKey(mainKey)) {
+        Component mainKey = Component.translatable(String.format("gregtech.machine.%s.tooltip", key));
+        if (ComponentUtils.isTranslationResolvable(mainKey)) {
             tooltip.add(1, mainKey);
         }
     }

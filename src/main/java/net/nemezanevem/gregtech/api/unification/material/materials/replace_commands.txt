@@ -1,4 +1,4 @@
 ﻿regex replace:
   'new Material\.Builder\(\d*\, (.*)\)' with 'MATERIALS.register($1, () -> new Material.Builder($1)'
-  'FluidTypes\.(.*)\)' with 'GtFluidTypes.$1.get())'
+  'FluidTypes\.(.*)\)' with 'GTFluidTypes.$1)'
   'build\(\);' with 'build());'

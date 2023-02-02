@@ -1,8 +1,10 @@
 package net.nemezanevem.gregtech.api.registry;
 
 import net.minecraftforge.registries.IForgeRegistry;
+import net.nemezanevem.gregtech.api.cover.CoverDefinition;
 import net.nemezanevem.gregtech.api.gui.UIFactory;
 import net.nemezanevem.gregtech.api.recipe.property.RecipeProperty;
+import net.nemezanevem.gregtech.api.registry.cover.CoverRegistry;
 import net.nemezanevem.gregtech.api.registry.gui.UIFactoryRegistry;
 import net.nemezanevem.gregtech.api.registry.material.*;
 import net.nemezanevem.gregtech.api.registry.material.info.*;
@@ -36,4 +38,5 @@ public class GregTechRegistries {
 
     public static Supplier<IForgeRegistry<MetaTileEntity>> META_TILE_ENTITY = MetaTileEntityRegistry.META_TILE_ENTITIES_BUILTIN;
     public static Supplier<IForgeRegistry<MultiblockAbility<?>>> MULTIBLOCK_ABILITY = MultiBlockAbilityRegistry.MULTIBLOCK_ABILITIES_BUILTIN;
+    public static Supplier<IForgeRegistry<CoverDefinition>> COVER = CoverRegistry.COVERS_BUILTIN;
 }

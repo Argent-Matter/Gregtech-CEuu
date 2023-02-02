@@ -1,7 +1,6 @@
 package net.nemezanevem.gregtech.api.unification.material.materials;
 
 import net.nemezanevem.gregtech.api.unification.material.Material;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 
 import static net.nemezanevem.gregtech.api.registry.material.MaterialRegistry.MATERIALS;
 import static net.nemezanevem.gregtech.api.unification.material.GtMaterials.*;
@@ -13,7 +12,7 @@ public class UnknownCompositionMaterials {
     public static void register() {
 
         WoodGas = MATERIALS.register("wood_gas", () -> new Material.Builder("wood_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0xDECD87).build());
+                .fluid(GTFluidTypes.GAS).color(0xDECD87).build());
 
         WoodVinegar = MATERIALS.register("wood_vinegar", () -> new Material.Builder("wood_vinegar")
                 .fluid().color(0xD45500).build());
@@ -55,7 +54,7 @@ public class UnknownCompositionMaterials {
                 .fluid().build());
 
         IndiumConcentrate = MATERIALS.register("indium_concentrate", () -> new Material.Builder("indium_concentrate")
-                .fluid(GtFluidTypes.ACID.get()).color(0x0E2950).build());
+                .fluid(GTFluidTypes.ACID).color(0x0E2950).build());
 
         SeedOil = MATERIALS.register("seed_oil", () -> new Material.Builder("seed_oil")
                 .fluid().color(0xFFFFFF)
@@ -124,87 +123,87 @@ public class UnknownCompositionMaterials {
                 .fluid().color(0xBFB608).fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SulfuricGas = MATERIALS.register("sulfuric_gas", () -> new Material.Builder("sulfuric_gas")
-                .fluid(GtFluidTypes.GAS.get()).build());
+                .fluid(GTFluidTypes.GAS).build());
 
         RefineryGas = MATERIALS.register("refinery_gas", () -> new Material.Builder("refinery_gas")
-                .fluid(GtFluidTypes.GAS.get()).flags(FLAMMABLE.get()).build());
+                .fluid(GTFluidTypes.GAS.get()).flags(FLAMMABLE).build());
 
         LightlyHydroCrackedGas = MATERIALS.register("lightly_hydrocracked_gas", () -> new Material.Builder("lightly_hydrocracked_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0xB4B4B4)
+                .fluid(GTFluidTypes.GAS).color(0xB4B4B4)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SeverelyHydroCrackedGas = MATERIALS.register("severely_hydrocracked_gas", () -> new Material.Builder("severely_hydrocracked_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0xB4B4B4)
+                .fluid(GTFluidTypes.GAS).color(0xB4B4B4)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         LightlySteamCrackedGas = MATERIALS.register("lightly_steamcracked_gas", () -> new Material.Builder("lightly_steamcracked_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0xB4B4B4)
+                .fluid(GTFluidTypes.GAS).color(0xB4B4B4)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SeverelySteamCrackedGas = MATERIALS.register("severely_steamcracked_gas", () -> new Material.Builder("severely_steamcracked_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0xB4B4B4)
+                .fluid(GTFluidTypes.GAS).color(0xB4B4B4)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedEthane = MATERIALS.register("hydrocracked_ethane", () -> new Material.Builder("hydrocracked_ethane")
-                .fluid(GtFluidTypes.GAS.get()).color(0x9696BC)
+                .fluid(GTFluidTypes.GAS).color(0x9696BC)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedEthylene = MATERIALS.register("hydrocracked_ethylene", () -> new Material.Builder("hydrocracked_ethylene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xA3A3A0)
+                .fluid(GTFluidTypes.GAS).color(0xA3A3A0)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedPropene = MATERIALS.register("hydrocracked_propene", () -> new Material.Builder("hydrocracked_propene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xBEA540)
+                .fluid(GTFluidTypes.GAS).color(0xBEA540)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedPropane = MATERIALS.register("hydrocracked_propane", () -> new Material.Builder("hydrocracked_propane")
-                .fluid(GtFluidTypes.GAS.get()).color(0xBEA540)
+                .fluid(GTFluidTypes.GAS).color(0xBEA540)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedButane = MATERIALS.register("hydrocracked_butane", () -> new Material.Builder("hydrocracked_butane")
-                .fluid(GtFluidTypes.GAS.get()).color(0x852C18)
+                .fluid(GTFluidTypes.GAS).color(0x852C18)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedButene = MATERIALS.register("hydrocracked_butene", () -> new Material.Builder("hydrocracked_butene")
-                .fluid(GtFluidTypes.GAS.get()).color(0x993E05)
+                .fluid(GTFluidTypes.GAS).color(0x993E05)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         HydroCrackedButadiene = MATERIALS.register("hydrocracked_butadiene", () -> new Material.Builder("hydrocracked_butadiene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xAD5203)
+                .fluid(GTFluidTypes.GAS).color(0xAD5203)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedEthane = MATERIALS.register("steamcracked_ethane", () -> new Material.Builder("steamcracked_ethane")
-                .fluid(GtFluidTypes.GAS.get()).color(0x9696BC)
+                .fluid(GTFluidTypes.GAS).color(0x9696BC)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedEthylene = MATERIALS.register("steamcracked_ethylene", () -> new Material.Builder("steamcracked_ethylene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xA3A3A0)
+                .fluid(GTFluidTypes.GAS).color(0xA3A3A0)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedPropene = MATERIALS.register("steamcracked_propene", () -> new Material.Builder("steamcracked_propene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xBEA540)
+                .fluid(GTFluidTypes.GAS).color(0xBEA540)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedPropane = MATERIALS.register("steamcracked_propane", () -> new Material.Builder("steamcracked_propane")
-                .fluid(GtFluidTypes.GAS.get()).color(0xBEA540)
+                .fluid(GTFluidTypes.GAS).color(0xBEA540)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedButane = MATERIALS.register("steamcracked_butane", () -> new Material.Builder("steamcracked_butane")
-                .fluid(GtFluidTypes.GAS.get()).color(0x852C18)
+                .fluid(GTFluidTypes.GAS).color(0x852C18)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedButene = MATERIALS.register("steamcracked_butene", () -> new Material.Builder("steamcracked_butene")
-                .fluid(GtFluidTypes.GAS.get()).color(0x993E05)
+                .fluid(GTFluidTypes.GAS).color(0x993E05)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         SteamCrackedButadiene = MATERIALS.register("steamcracked_butadiene", () -> new Material.Builder("steamcracked_butadiene")
-                .fluid(GtFluidTypes.GAS.get()).color(0xAD5203)
+                .fluid(GTFluidTypes.GAS).color(0xAD5203)
                 .fluidTemp(775).flags(FLAMMABLE.get()).build());
 
         //Free IDs 1560-1575
 
         LPG = MATERIALS.register("lpg", () -> new Material.Builder("lpg")
-                .fluid(GtFluidTypes.GAS.get()).flags(FLAMMABLE.get(), EXPLOSIVE.get()).build());
+                .fluid(GTFluidTypes.GAS.get()).flags(FLAMMABLE.get(), EXPLOSIVE).build());
 
         RawGrowthMedium = MATERIALS.register("raw_growth_medium", () -> new Material.Builder("raw_growth_medium")
                 .fluid().color(0xA47351).build());
@@ -213,31 +212,31 @@ public class UnknownCompositionMaterials {
                 .fluid().color(0xAC876E).build());
 
         Oil = MATERIALS.register("oil", () -> new Material.Builder("oil")
-                .fluid(GtFluidTypes.LIQUID.get(), true)
+                .fluid(GTFluidTypes.LIQUID, true)
                 .color(0x0A0A0A)
                 .flags(STICKY.get(), FLAMMABLE.get())
                 .build());
 
         OilHeavy = MATERIALS.register("oil_heavy", () -> new Material.Builder("oil_heavy")
-                .fluid(GtFluidTypes.LIQUID.get(), true)
+                .fluid(GTFluidTypes.LIQUID, true)
                 .color(0x0A0A0A)
                 .flags(STICKY.get(), FLAMMABLE.get())
                 .build());
 
         RawOil = MATERIALS.register("oil_medium", () -> new Material.Builder("oil_medium")
-                .fluid(GtFluidTypes.LIQUID.get(), true)
+                .fluid(GTFluidTypes.LIQUID, true)
                 .color(0x0A0A0A)
                 .flags(STICKY.get(), FLAMMABLE.get())
                 .build());
 
         OilLight = MATERIALS.register("oil_light", () -> new Material.Builder("oil_light")
-                .fluid(GtFluidTypes.LIQUID.get(), true)
+                .fluid(GTFluidTypes.LIQUID, true)
                 .color(0x0A0A0A)
                 .flags(STICKY.get(), FLAMMABLE.get())
                 .build());
 
         NaturalGas = MATERIALS.register("natural_gas", () -> new Material.Builder("natural_gas")
-                .fluid(GtFluidTypes.GAS.get(), true)
+                .fluid(GTFluidTypes.GAS, true)
                 .flags(FLAMMABLE.get(), EXPLOSIVE.get()).build());
 
         Bacteria = MATERIALS.register("bacteria", () -> new Material.Builder("bacteria")
@@ -269,7 +268,7 @@ public class UnknownCompositionMaterials {
         // free id: 1593
 
         CoalGas = MATERIALS.register("coal_gas", () -> new Material.Builder("coal_gas")
-                .fluid(GtFluidTypes.GAS.get()).color(0x333333).build());
+                .fluid(GTFluidTypes.GAS).color(0x333333).build());
 
         CoalTar = MATERIALS.register("coal_tar", () -> new Material.Builder("coal_tar")
                 .fluid().color(0x1A1A1A).flags(STICKY.get(), FLAMMABLE.get()).build());
@@ -459,7 +458,7 @@ public class UnknownCompositionMaterials {
                 .fluid().color(0x3AAD3A).build());
 
         AcidicEnrichedNaquadahSolution = MATERIALS.register("acidic_enriched_naquadah_solution", () -> new Material.Builder("acidic_enriched_naquadah_solution")
-                .fluid(GtFluidTypes.ACID.get()).color(0x3DD63D).build());
+                .fluid(GTFluidTypes.ACID).color(0x3DD63D).build());
 
         EnrichedNaquadahWaste = MATERIALS.register("enriched_naquadah_waste", () -> new Material.Builder("enriched_naquadah_waste")
                 .fluid().color(0x355B35).build());
@@ -471,7 +470,7 @@ public class UnknownCompositionMaterials {
                 .fluid().color(0x61AD61).build());
 
         AcidicNaquadriaSolution = MATERIALS.register("acidic_naquadria_solution", () -> new Material.Builder("acidic_naquadria_solution")
-                .fluid(GtFluidTypes.ACID.get()).color(0x70D670).build());
+                .fluid(GTFluidTypes.ACID).color(0x70D670).build());
 
         NaquadriaWaste = MATERIALS.register("naquadria_waste", () -> new Material.Builder("naquadria_waste")
                 .fluid().color(0x425B42).build());

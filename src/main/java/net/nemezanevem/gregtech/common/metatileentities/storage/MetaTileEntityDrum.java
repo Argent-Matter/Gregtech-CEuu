@@ -142,7 +142,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
     @Override
     public void initFromItemStackData(CompoundTag itemStack) {
         super.initFromItemStackData(itemStack);
-        if (itemStack.hasKey(FluidHandlerItemStack.FLUID_NBT_KEY, Constants.NBT.TAG_COMPOUND)) {
+        if (itemStack.hasKey(FluidHandlerItemStack.FLUID_NBT_KEY, Tag.TAG_COMPOUND)) {
             FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(itemStack.getCompound(FluidHandlerItemStack.FLUID_NBT_KEY));
             fluidTank.setFluid(fluidStack);
         }
@@ -311,7 +311,7 @@ public class MetaTileEntityDrum extends MetaTileEntity {
         }
 
         CompoundTag tagCompound = stack.getTagCompound();
-        if (tagCompound != null && tagCompound.hasKey("Fluid", Constants.NBT.TAG_COMPOUND)) {
+        if (tagCompound != null && tagCompound.hasKey("Fluid", Tag.TAG_COMPOUND)) {
             FluidStack fluidStack = FluidStack.loadFluidStackFromNBT(tagCompound.getCompound("Fluid"));
             if (fluidStack == null) return;
             tooltip.add(Component.translatable("gregtech.machine.fluid_tank.fluid", fluidStack.amount, Component.translatable(fluidStack.getUnlocalizedName())));

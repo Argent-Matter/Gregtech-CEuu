@@ -78,7 +78,7 @@ public class ToggleButtonWidget extends Widget {
             buttonTexture.draw(poseStack, pos.x, pos.y, size.width, size.height);
         } else {
             if (buttonTexture instanceof SizedTextureArea) {
-                ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, isPressed ? 0.5 : 0.0, 0.5);
+                ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, isPressed ? 0.5f : 0.0f, 0.5f);
             } else {
                 buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0, isPressed ? 0.5f : 0.0f, 1, 0.5f);
             }

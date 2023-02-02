@@ -3,44 +3,41 @@ package net.nemezanevem.gregtech.common.metatileentities.electric;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.ModularUI.Builder;
-import gregtech.api.gui.widgets.ClickButtonWidget;
-import gregtech.api.gui.widgets.ImageWidget;
-import gregtech.api.gui.widgets.SimpleTextWidget;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.util.GTTransferUtils;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.renderer.texture.cube.SimpleOverlayRenderer;
-import gregtech.common.covers.filter.ItemFilterContainer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.AABB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Mth;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.ClickButtonWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.ImageWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.SimpleTextWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.client.renderer.texture.cube.SimpleOverlayRenderer;
+import net.nemezanevem.gregtech.common.covers.filter.ItemFilterContainer;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static gregtech.api.capability.GregtechDataCodes.IS_WORKING;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.IS_WORKING;
 
 public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
 
@@ -122,8 +119,8 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
             BlockPos selfPos = getPos();
             if (areaCenterPos == null || areaBoundingBox == null || areaCenterPos.getX() != selfPos.getX() ||
                     areaCenterPos.getZ() != selfPos.getZ() || areaCenterPos.getY() != selfPos.getY() + 1) {
-                this.areaCenterPos = selfPos.up();
-                this.areaBoundingBox = new AABB(areaCenterPos).grow(itemSuckingRange, 1.0, itemSuckingRange);
+                this.areaCenterPos = selfPos.above();
+                this.areaBoundingBox = new AABB(areaCenterPos).inflate(itemSuckingRange, 1.0, itemSuckingRange);
             }
             moveItemsInEffectRange();
         }
@@ -135,29 +132,27 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
     }
 
     protected void moveItemsInEffectRange() {
-        List<EntityItem> itemsInRange = getWorld().getEntitiesWithinAABB(EntityItem.class, areaBoundingBox);
-        for (EntityItem entityItem : itemsInRange) {
-            if (entityItem.isDead) continue;
-            double distanceX = (areaCenterPos.getX() + 0.5) - entityItem.posX;
-            double distanceZ = (areaCenterPos.getZ() + 0.5) - entityItem.posZ;
-            double distance = Mth.sqrt(distanceX * distanceX + distanceZ * distanceZ);
+        List<ItemEntity> itemsInRange = getWorld().getEntitiesOfClass(ItemEntity.class, areaBoundingBox);
+        for (ItemEntity entityItem : itemsInRange) {
+            if (entityItem.isRemoved()) continue;
+            double distanceX = (areaCenterPos.getX() + 0.5) - entityItem.position().x;
+            double distanceZ = (areaCenterPos.getZ() + 0.5) - entityItem.position().z;
+            double distance = Math.sqrt(distanceX * distanceX + distanceZ * distanceZ);
             if (!itemFilter.testItemStack(entityItem.getItem())) {
                 continue;
             }
             if (distance >= 0.7) {
-                if (!entityItem.cannotPickup()) {
+                if (!entityItem.isPickable()) {
                     double directionX = distanceX / distance;
                     double directionZ = distanceZ / distance;
-                    entityItem.motionX = directionX * MOTION_MULTIPLIER * getTier();
-                    entityItem.motionZ = directionZ * MOTION_MULTIPLIER * getTier();
-                    entityItem.velocityChanged = true;
-                    entityItem.setPickupDelay(1);
+                    entityItem.setDeltaMovement(directionX * MOTION_MULTIPLIER * getTier(), entityItem.getDeltaMovement().y, directionZ * MOTION_MULTIPLIER * getTier());
+                    entityItem.setPickUpDelay(1);
                 }
             } else {
                 ItemStack itemStack = entityItem.getItem();
                 ItemStack remainder = GTTransferUtils.insertItem(exportItems, itemStack, false);
                 if (remainder.isEmpty()) {
-                    entityItem.setDead();
+                    entityItem.discard();
                 } else if (itemStack.getCount() > remainder.getCount()) {
                     entityItem.setItem(remainder);
                 }
@@ -169,7 +164,6 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, @Nullable Level player, List<Component> tooltip, boolean advanced) {
         tooltip.add(Component.translatable("gregtech.machine.item_collector.tooltip"));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.uses_per_tick", getEnergyConsumedPerTick()));
@@ -228,7 +222,7 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
     @Override
     protected ModularUI createUI(Player entityPlayer) {
         int rowSize = (int) Math.sqrt(exportItems.getSlots());
-        Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176,
+        ModularUI.Builder builder = ModularUI.builder(GuiTextures.BACKGROUND, 176,
                 45 + rowSize * 18 + 105 + 82)
                 .label(10, 5, getMetaFullName());
 
@@ -246,7 +240,7 @@ public class MetaTileEntityItemCollector extends TieredMetaTileEntity {
         }
 
         this.itemFilter.initUI(45 + rowSize * 18 + 5, builder::widget);
-        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 45 + rowSize * 18 + 105);
+        builder.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 45 + rowSize * 18 + 105);
         return builder.build(getHolder(), entityPlayer);
     }
 }

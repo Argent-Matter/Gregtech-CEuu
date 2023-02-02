@@ -1,21 +1,19 @@
 package net.nemezanevem.gregtech.common.pipelike.itempipe.net;
 
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.pipenet.PipeNetWalker;
-import gregtech.api.pipenet.tile.IPipeTile;
-import gregtech.api.unification.material.properties.ItemPipeProperty;
-import gregtech.api.util.Util;
-import gregtech.common.covers.CoverItemFilter;
-import gregtech.common.covers.CoverShutter;
-import gregtech.common.covers.ItemFilterMode;
-import gregtech.common.pipelike.itempipe.tile.TileEntityItemPipe;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.pipenet.PipeNetWalker;
+import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.ItemPipeProperty;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.pipelike.itempipe.tile.TileEntityItemPipe;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -80,8 +78,8 @@ public class ItemNetWalker extends PipeNetWalker {
         if (neighbourTile == null || (Util.arePosEqual(pipePos, sourcePipe) && faceToNeighbour == facingToHandler)) {
             return;
         }
-        IItemHandler handler = neighbourTile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, faceToNeighbour.getOpposite());
-        if (handler != null) {
+        LazyOptional<IItemHandler> handler = neighbourTile.getCapability(ForgeCapabilities.ITEM_HANDLER, faceToNeighbour.getOpposite());
+        if (handler.isPresent()) {
             List<Predicate<ItemStack>> filters = new ArrayList<>(this.filters);
             List<Predicate<ItemStack>> moreFilters = nextFilters.get(faceToNeighbour);
             if (moreFilters != null && !moreFilters.isEmpty()) {

@@ -1,29 +1,28 @@
 package net.nemezanevem.gregtech.common.metatileentities.steam.boiler;
 
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.IFuelInfo;
-import gregtech.api.capability.IFuelable;
-import gregtech.api.capability.impl.FilteredFluidHandler;
-import gregtech.api.capability.impl.FluidFuelInfo;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.TankWidget;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.unification.material.Materials;
-import gregtech.client.renderer.texture.Textures;
-import net.minecraft.entity.player.Player;
-import net.minecraft.util.Direction;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.IFuelInfo;
+import net.nemezanevem.gregtech.api.capability.IFuelable;
+import net.nemezanevem.gregtech.api.capability.impl.FluidFuelInfo;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.TankWidget;
+import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,8 +52,8 @@ public class SteamLavaBoiler extends SteamBoiler implements IFuelable {
 
     private Map<Fluid, Integer> getBoilerFuels() {
         Map<Fluid, Integer> fuels = new HashMap<>();
-        fuels.put(Materials.Lava.getFluid(), 100);
-        fuels.put(Materials.Creosote.getFluid(), 250);
+        fuels.put(GtMaterials.Lava.get().getFluid(), 100);
+        fuels.put(GtMaterials.Creosote.get().getFluid(), 250);
 
         return fuels;
     }
@@ -72,7 +71,7 @@ public class SteamLavaBoiler extends SteamBoiler implements IFuelable {
     protected void tryConsumeNewFuel() {
         for(Map.Entry<Fluid, Integer> fuels : boilerFuels.entrySet()) {
             if(fuelFluidTank.getFluid() != null && fuelFluidTank.getFluid().isFluidEqual(new FluidStack(fuels.getKey(), fuels.getValue())) && fuelFluidTank.getFluidAmount() >= fuels.getValue()) {
-                fuelFluidTank.drain(fuels.getValue(), true);
+                fuelFluidTank.drain(fuels.getValue(), IFluidHandler.FluidAction.EXECUTE);
                 setFuelMaxBurnTime(100);
             }
         }
@@ -88,22 +87,24 @@ public class SteamLavaBoiler extends SteamBoiler implements IFuelable {
         return 1;
     }
 
+    private LazyOptional<IFuelable> fuelableLazyOptional = LazyOptional.of(() -> this);
+
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
-        T result = super.getCapability(capability, side);
+        LazyOptional<T> result = super.getCapability(capability, side);
         if (result != null)
             return result;
         if (capability == GregtechCapabilities.CAPABILITY_FUELABLE) {
-            return GregtechCapabilities.CAPABILITY_FUELABLE.cast(this);
+            return fuelableLazyOptional.cast();
         }
-        return null;
+        return LazyOptional.empty();
     }
 
     @Override
     public Collection<IFuelInfo> getFuels() {
-        FluidStack fuel = fuelFluidTank.drain(Integer.MAX_VALUE, false);
-        if (fuel == null || fuel.amount == 0)
+        FluidStack fuel = fuelFluidTank.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.SIMULATE);
+        if (fuel == null || fuel.getAmount() == 0)
             return Collections.emptySet();
-        final int fuelRemaining = fuel.amount;
+        final int fuelRemaining = fuel.getAmount();
         final int fuelCapacity = fuelFluidTank.getCapacity();
         final long burnTime = (long) fuelRemaining * (this.isHighPressure ? 6 : 12); // 100 mb lasts 600 or 1200 ticks
         return Collections.singleton(new FluidFuelInfo(fuel, fuelRemaining, fuelCapacity, boilerFuels.get(fuel.getFluid()), burnTime));
@@ -117,12 +118,11 @@ public class SteamLavaBoiler extends SteamBoiler implements IFuelable {
                 .build(getHolder(), entityPlayer);
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public void randomDisplayTick(float x, float y, float z) {
         super.randomDisplayTick(x, y, z);
         if (GTValues.RNG.nextFloat() < 0.3F) {
-            getWorld().spawnParticle(EnumParticleTypes.LAVA, x + GTValues.RNG.nextFloat(), y, z + GTValues.RNG.nextFloat(), 0.0F, 0.0F, 0.0F);
+            getWorld().addParticle(ParticleTypes.LAVA, x + GTValues.RNG.nextFloat(), y, z + GTValues.RNG.nextFloat(), 0.0F, 0.0F, 0.0F);
         }
     }
 }

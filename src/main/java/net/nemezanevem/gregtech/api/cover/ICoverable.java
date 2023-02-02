@@ -69,7 +69,7 @@ public interface ICoverable {
 
     CoverBehavior getCoverAtSide(Direction side);
 
-    void writeCoverData(CoverBehavior behavior, int id, Consumer<FriendlyByteBuf> writer);
+    void writeCoverData(CoverBehavior behavior, Consumer<FriendlyByteBuf> writer);
 
     int getInputRedstoneSignal(Direction side, boolean ignoreCover);
 

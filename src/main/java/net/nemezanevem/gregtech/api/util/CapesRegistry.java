@@ -72,7 +72,7 @@ public class CapesRegistry {
             registerDevCapes();
             return;
         }
-        ListTag unlockedCapesTag = comp.getTagList("UnlockedCapesValList", Constants.NBT.TAG_COMPOUND);
+        ListTag unlockedCapesTag = comp.getTagList("UnlockedCapesValList", Tag.TAG_COMPOUND);
         for (int i = 0; i < unlockedCapesTag.tagCount(); i++) {
             CompoundTag tag = unlockedCapesTag.getCompoundAt(i);
             String capeLocation = tag.getString("Cape");
@@ -88,7 +88,7 @@ public class CapesRegistry {
             UNLOCKED_CAPES.put(uuid, capes);
         }
 
-        ListTag wornCapesTag = comp.getTagList("WornCapesValList", Constants.NBT.TAG_COMPOUND);
+        ListTag wornCapesTag = comp.getTagList("WornCapesValList", Tag.TAG_COMPOUND);
         for (int i = 0; i < wornCapesTag.tagCount(); i++) {
             CompoundTag tag = wornCapesTag.getCompoundAt(i);
             String capeLocation = tag.getString("Cape");

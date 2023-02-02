@@ -37,7 +37,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.nemezanevem.gregtech.api.pipenet.block.material.BlockMaterialPipe;
 import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
 import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
@@ -71,7 +70,7 @@ public class BlockItemPipe extends BlockMaterialPipe<ItemPipeType, ItemPipePrope
     }
 
     @Override
-    public TileEntityPipeBase<ItemPipeType, ItemPipeProperty> createNewTileEntity(boolean supportsTicking) {
+    public TileEntityPipeBase<ItemPipeType, ItemPipeProperty> createNewTileEntity(boolean supportsTicking, BlockPos pPos, BlockState pState) {
         return supportsTicking ? new TileEntityItemPipeTickable() : new TileEntityItemPipe();
     }
 

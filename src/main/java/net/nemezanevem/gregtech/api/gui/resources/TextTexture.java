@@ -1,32 +1,32 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraftforge.fml.loading.FMLLoader;
 
 import java.util.Collections;
 import java.util.List;
 
+import static com.mojang.blaze3d.Blaze3D.getTime;
+
 public class TextTexture implements IGuiTexture{
-    public String text;
+    public Component text;
     public int color;
     public int width;
     public boolean dropShadow;
     public TextType type;
-    @SideOnly(Side.CLIENT)
-    private List<String> texts;
+    private List<FormattedCharSequence> texts;
 
     public TextTexture(String text, int color) {
         this.color = color;
         this.type = TextType.NORMAL;
-        if (FMLCommonHandler.instance().getSide().isClient()) {
+        if (FMLLoader.getDist().isClient()) {
             this.text = Component.translatable(text);
-            texts = Collections.singletonList(this.text);
+            texts = Collections.singletonList(this.text.getVisualOrderText());
         }
     }
 
@@ -42,11 +42,11 @@ public class TextTexture implements IGuiTexture{
 
     public TextTexture setWidth(int width) {
         this.width = width;
-        if (FMLCommonHandler.instance().getSide().isClient()) {
+        if (FMLLoader.getDist().isClient()) {
             if (this.width > 0) {
-                texts = Minecraft.getMinecraft().fontRenderer.listFormattedStringToWidth(text, width);
+                texts = Minecraft.getInstance().font.split(text, width);
             } else {
-                texts = Collections.singletonList(text);
+                texts = Collections.singletonList(text.getVisualOrderText());
             }
         }
         return this;
@@ -59,30 +59,33 @@ public class TextTexture implements IGuiTexture{
 
     @Override
     public void draw(PoseStack poseStack, double x, double y, int width, int height) {
-        Font fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        int textH = fontRenderer.FONT_HEIGHT;
+        Font fontRenderer = Minecraft.getInstance().font;
+        int textH = fontRenderer.lineHeight;
         if (type == TextType.NORMAL) {
             textH *= texts.size();
             for (int i = 0; i < texts.size(); i++) {
-                String resultText = texts.get(i);
-                int textW = fontRenderer.getStringWidth(resultText);
+                FormattedCharSequence resultText = texts.get(i);
+                int textW = fontRenderer.width(resultText);
                 float _x = (float) (x + (width - textW) / 2f);
-                float _y = (float) (y + (height - textH) / 2f + i * fontRenderer.FONT_HEIGHT);
-                fontRenderer.drawString(resultText, _x, _y, color, dropShadow);
+                float _y = (float) (y + (height - textH) / 2f + i * fontRenderer.lineHeight);
+                if(dropShadow) fontRenderer.drawShadow(poseStack, resultText, _x, _y, color);
+                else fontRenderer.draw(poseStack, resultText, _x, _y, color);
             }
         } else if (type == TextType.HIDE) {
             String resultText = texts.get(0) + (texts.size() > 1 ? ".." : "");
-            int textW = fontRenderer.getStringWidth(resultText);
+            int textW = fontRenderer.width(resultText);
             float _x = (float) (x + (width - textW) / 2f);
             float _y = (float) (y + (height - textH) / 2f);
-            fontRenderer.drawString(resultText, _x, _y, color, dropShadow);
+            if(dropShadow) fontRenderer.drawShadow(poseStack, resultText, _x, _y, color);
+            else fontRenderer.draw(poseStack, resultText, _x, _y, color);
         } else if (type == TextType.ROLL) {
-            int i = (int) ((Minecraft.getSystemTime() / 1000) % texts.size());
-            String resultText = texts.get(i);
-            int textW = fontRenderer.getStringWidth(resultText);
+            int i = (int) ((getTime() / 1000) % texts.size());
+            FormattedCharSequence resultText = texts.get(i);
+            int textW = fontRenderer.width(resultText);
             float _x = (float) (x + (width - textW) / 2f);
             float _y = (float) (y + (height - textH) / 2f);
-            fontRenderer.drawString(resultText, _x, _y, color, dropShadow);
+            if(dropShadow) fontRenderer.drawShadow(poseStack, resultText, _x, _y, color);
+            else fontRenderer.draw(poseStack, resultText, _x, _y, color);
         }
 
         RenderSystem.setShaderColor(1, 1, 1, 1);

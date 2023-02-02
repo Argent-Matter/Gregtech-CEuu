@@ -1,8 +1,7 @@
 package net.nemezanevem.gregtech.api.gui.resources.picturetexture;
 
-
-import gregtech.api.gui.resources.utils.ProcessedImageData;
-import net.minecraft.client.renderer.RenderSystem;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.nemezanevem.gregtech.api.gui.resources.utils.ProcessedImageData;
 
 import java.util.Arrays;
 

@@ -3,67 +3,64 @@ package net.nemezanevem.gregtech.common.metatileentities.multi.electric.centralm
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.GregtechDataCodes;
-import gregtech.api.capability.IEnergyContainer;
-import gregtech.api.capability.impl.EnergyContainerList;
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.widgets.AdvancedTextWidget;
-import gregtech.api.gui.widgets.WidgetGroup;
-import gregtech.api.metatileentity.IFastRenderMetaTileEntity;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.IMultiblockPart;
-import gregtech.api.metatileentity.multiblock.MultiblockAbility;
-import gregtech.api.metatileentity.multiblock.MultiblockWithDisplayBase;
-import gregtech.api.pattern.BlockPattern;
-import gregtech.api.pattern.FactoryBlockPattern;
-import gregtech.api.pattern.PatternMatchContext;
-import gregtech.api.pipenet.tile.TileEntityPipeBase;
-import gregtech.api.util.BlockPosFace;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.RenderUtil;
-import gregtech.common.ConfigHolder;
-import gregtech.common.blocks.BlockMetalCasing;
-import gregtech.common.blocks.MetaBlocks;
-import gregtech.common.covers.CoverDigitalInterface;
-import gregtech.common.gui.widget.monitor.WidgetScreenGrid;
-import gregtech.common.metatileentities.MetaTileEntities;
-import gregtech.common.pipelike.cable.net.EnergyNet;
-import gregtech.common.pipelike.cable.net.WorldENet;
-import gregtech.common.pipelike.cable.tile.TileEntityCable;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.AABB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.blockentity.IFastRenderMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.GtMultiblockAbilities;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.IMultiblockPart;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockAbility;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockWithDisplayBase;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.widgets.AdvancedTextWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.WidgetGroup;
+import net.nemezanevem.gregtech.api.pattern.BlockPattern;
+import net.nemezanevem.gregtech.api.pattern.FactoryBlockPattern;
+import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.util.BlockPosFace;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.client.util.RenderUtil;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.block.BlockMetalCasing;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntities;
+import net.nemezanevem.gregtech.common.pipelike.cable.net.EnergyNet;
+import net.nemezanevem.gregtech.common.pipelike.cable.net.WorldENet;
+import net.nemezanevem.gregtech.common.pipelike.cable.tile.TileEntityCable;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-import static gregtech.api.util.RelativeDirection.*;
+import static net.nemezanevem.gregtech.api.util.RelativeDirection.*;
 
 public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase implements IFastRenderMetaTileEntity {
     private final static long ENERGY_COST = -ConfigHolder.machines.centralMonitorEuCost;
@@ -76,7 +73,6 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
     private List<BlockPos> activeNodes;
     private Set<BlockPosFace> netCovers;
     private Set<BlockPosFace> remoteCovers;
-    @SideOnly(Side.CLIENT)
     public List<BlockPos> parts;
     public MetaTileEntityMonitorScreen[][] screens;
     private boolean isActive;
@@ -90,7 +86,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
 
     private EnergyNet getEnergyNet() {
         if (!this.getWorld().isClientSide) {
-            TileEntity te = this.getWorld().getTileEntity(this.getPos().offset(frontFacing.getOpposite()));
+            BlockEntity te = this.getWorld().getBlockEntity(this.getPos().offset(frontFacing.getOpposite().getNormal()));
             if (te instanceof TileEntityCable) {
                 TileEntityPipeBase<?, ?> tileEntityCable = (TileEntityCable) te;
                 EnergyNet currentEnergyNet = this.currentEnergyNet.get();
@@ -140,13 +136,13 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
         Set<BlockPosFace> checkCovers = new HashSet<>();
         Level world = this.getWorld();
         for (BlockPos pos : activeNodes) {
-            TileEntity tileEntityCable = world.getTileEntity(pos);
+            BlockEntity tileEntityCable = world.getBlockEntity(pos);
             if (!(tileEntityCable instanceof TileEntityPipeBase)) {
                 continue;
             }
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 if (((TileEntityPipeBase<?,?>) tileEntityCable).isConnected(facing)) {
-                    TileEntity tileEntity = world.getTileEntity(pos.offset(facing));
+                    BlockEntity tileEntity = world.getBlockEntity(pos.offset(facing.getNormal()));
                     if (tileEntity instanceof IGregTechTileEntity) {
                         MetaTileEntity metaTileEntity = ((IGregTechTileEntity) tileEntity).getMetaTileEntity();
                         if (metaTileEntity != null) {
@@ -162,7 +158,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
         Iterator<BlockPosFace> iterator = remoteCovers.iterator();
         while (iterator.hasNext()) {
             BlockPosFace blockPosFace = iterator.next();
-            TileEntity tileEntity = world.getTileEntity(blockPosFace.pos);
+            BlockEntity tileEntity = world.getBlockEntity(blockPosFace.pos);
             if (tileEntity instanceof IGregTechTileEntity) {
                 MetaTileEntity metaTileEntity = ((IGregTechTileEntity) tileEntity).getMetaTileEntity();
                 if (metaTileEntity != null) {
@@ -189,7 +185,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
             buf.writeInt(netCovers.size());
             for (BlockPosFace cover : netCovers){
                 buf.writeBlockPos(cover.pos);
-                buf.writeByte(cover.facing.getIndex());
+                buf.writeByte(cover.facing.o());
             }
         }
         if(remoteCovers == null) {
@@ -198,7 +194,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
             buf.writeInt(remoteCovers.size());
             for (BlockPosFace cover : remoteCovers){
                 buf.writeBlockPos(cover.pos);
-                buf.writeByte(cover.facing.getIndex());
+                buf.writeByte(cover.facing.ordinal());
             }
         }
 
@@ -209,11 +205,11 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
         remoteCovers = new HashSet<>();
         int size = buf.readInt();
         for (int i = 0; i < size; i++) {
-            netCovers.add(new BlockPosFace(buf.readBlockPos(), Direction.byIndex(buf.readByte())));
+            netCovers.add(new BlockPosFace(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte())));
         }
         size = buf.readInt();
         for (int i = 0; i < size; i++) {
-            remoteCovers.add(new BlockPosFace(buf.readBlockPos(), Direction.byIndex(buf.readByte())));
+            remoteCovers.add(new BlockPosFace(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte())));
         }
     }
 
@@ -276,11 +272,11 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
         super.addDisplayText(textList);
         textList.add(Component.translatable("gregtech.multiblock.central_monitor.height", this.height));
         if (!isStructureFormed()) {
-            Component buttonText = Component.translatable("gregtech.multiblock.central_monitor.height_modify", height);
-            buttonText.appendText(" ");
-            buttonText.appendSibling(AdvancedTextWidget.withButton(new TextComponentString("[-]"), "sub"));
-            buttonText.appendText(" ");
-            buttonText.appendSibling(AdvancedTextWidget.withButton(new TextComponentString("[+]"), "add"));
+            MutableComponent buttonText = Component.translatable("gregtech.multiblock.central_monitor.height_modify", height);
+            buttonText.append(" ");
+            buttonText.append(AdvancedTextWidget.withButton(Component.literal("[-]"), "sub"));
+            buttonText.append(" ");
+            buttonText.append(AdvancedTextWidget.withButton(Component.literal("[+]"), "add"));
             textList.add(buttonText);
         } else {
             textList.add(Component.translatable("gregtech.multiblock.central_monitor.width", this.width));
@@ -351,7 +347,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.height = data.hasKey("screenH") ? data.getInt("screenH") : this.height;
+        this.height = data.contains("screenH") ? data.getInt("screenH") : this.height;
         reinitializeStructurePattern();
     }
 
@@ -407,15 +403,15 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
                 .aisle(slice.toString()).setRepeatable(3, MAX_WIDTH)
                 .aisle(end.toString())
                 .where('S', selfPredicate())
-                .where('A', states(MetaBlocks.METAL_CASING.getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID))
-                        .or(abilities(MultiblockAbility.INPUT_ENERGY).setMinGlobalLimited(1).setMaxGlobalLimited(3).setPreviewCount(1)))
+                .where('A', states(MetaBlocks.METAL_CASING.get().getState(BlockMetalCasing.MetalCasingType.STEEL_SOLID))
+                        .or(abilities(GtMultiblockAbilities.INPUT_ENERGY.get()).setMinGlobalLimited(1).setMaxGlobalLimited(3).setPreviewCount(1)))
                 .where('B', metaTileEntities(MetaTileEntities.MONITOR_SCREEN))
                 .build();
     }
 
     @Override
-    public String[] getDescription() {
-        return new String[]{Component.translatable("gregtech.multiblock.central_monitor.tooltip.1")};
+    public Component[] getDescription() {
+        return new Component[]{Component.translatable("gregtech.multiblock.central_monitor.tooltip.1")};
     }
 
     @Override
@@ -426,7 +422,7 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
         activeNodes = new ArrayList<>();
         netCovers = new HashSet<>();
         remoteCovers = new HashSet<>();
-        inputEnergy = new EnergyContainerList(this.getAbilities(MultiblockAbility.INPUT_ENERGY));
+        inputEnergy = new EnergyContainerList(this.getAbilities(GtMultiblockAbilities.INPUT_ENERGY.get()));
         width = 0;
         checkCovers();
         for (IMultiblockPart part : this.getMultiblockParts()) {
@@ -453,9 +449,9 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if(side == this.frontFacing.getOpposite() && capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
-            return GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(IEnergyContainer.DEFAULT);
+            return IEnergyContainer.defaultLazy.cast();
         }
-        return null;
+        return LazyOptional.empty();
     }
 
     @Override
@@ -472,32 +468,33 @@ public class MetaTileEntityCentralMonitor extends MultiblockWithDisplayBase impl
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public boolean isGlobalRenderer() {
         return true;
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public void renderMetaTileEntity(double x, double y, double z, float partialTicks) {
         if (!this.isStructureFormed()) return;
+        PoseStack poseStack = RenderSystem.getModelViewStack();
         RenderUtil.useStencil(()->{
-            GlStateManager.pushMatrix();
-            RenderUtil.moveToFace(x, y, z, this.frontFacing);
-            RenderUtil.rotateToFace(this.frontFacing, Direction.NORTH);
+            poseStack.pushPose();
+            RenderUtil.moveToFace(poseStack, x, y, z, this.frontFacing);
+            RenderUtil.rotateToFace(poseStack, this.frontFacing, Direction.NORTH);
             RenderUtil.renderRect(0.5f, -0.5f - (height - 2), width, height, 0.001f, 0xFF000000);
-            GlStateManager.popMatrix();
+            poseStack.popPose();
         }, ()->{
             if (isActive) {
-                GlStateManager.pushMatrix();
+                poseStack.pushPose();
                 /* hack the lightmap */
                 GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
                 net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+                disableStan
                 float lastBrightnessX = OpenGlHelper.lastBrightnessX;
                 float lastBrightnessY = OpenGlHelper.lastBrightnessY;
                 OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-                Player player = Minecraft.getMinecraft().player;
-                RayTraceResult rayTraceResult = player == null ? null : player.rayTrace(Minecraft.getMinecraft().playerController.getBlockReachDistance(), partialTicks);
+                Player player = Minecraft.getInstance().player;
+                Minecraft.getInstance().hitResult
+                HitResult rayTraceResult = player == null ? null : player.getPickedResult(Minecraft.getInstance().playerController.getBlockReachDistance(), partialTicks);
                 int size = 0;
                 for (int w = 0; w < width; w++) {
                     for (int h = 0; h < height; h++) {

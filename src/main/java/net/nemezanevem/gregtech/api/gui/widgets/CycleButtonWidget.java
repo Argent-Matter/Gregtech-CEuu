@@ -23,7 +23,7 @@ import java.util.function.*;
 
 public class CycleButtonWidget extends Widget {
 
-    protected TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0.0, 0.0, 1.0, 0.5);
+    protected TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0, 0, 1, 0.5f);
     private final String[] optionNames;
     private int textColor = 0xFFFFFF;
     private final IntSupplier currentOptionSupplier;
@@ -76,7 +76,7 @@ public class CycleButtonWidget extends Widget {
         Position pos = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
-            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, 0.0, 1.0);
+            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(pos.x, pos.y, size.width, size.height, 0.0f, 1.0f);
         } else {
             buttonTexture.drawSubArea(pos.x, pos.y, size.width, size.height, 0.0f, 0.0f, 1.0f, 1.0f);
         }

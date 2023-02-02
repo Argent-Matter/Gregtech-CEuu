@@ -117,7 +117,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public abstract WorldPipeNetType getWorldPipeNet(LevelReader world);
 
-    public abstract TileEntityPipeBase<PipeType, NodeDataType> createNewTileEntity(boolean supportsTicking);
+    public abstract TileEntityPipeBase<PipeType, NodeDataType> createNewTileEntity(boolean supportsTicking, BlockPos pPos, BlockState pState);
 
     public abstract NodeDataType createProperties(IPipeTile<PipeType, NodeDataType> pipeTile);
 
@@ -165,8 +165,8 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             if (placer instanceof Player) {
                 ItemStack offhand = placer.getOffhandItem();
                 for (int i = 0; i < DyeColor.values().length; i++) {
-                    if (offhand.is(MetaItems.SPRAY_CAN_DYES[i])) {
-                        MetaItems.SPRAY_CAN_DYES[i].getBehaviours().get(0).onItemUse((Player) placer, worldIn, pos, InteractionHand.OFF_HAND, Direction.UP, 0, 0 , 0);
+                    if (offhand.is(MetaItems.SPRAY_CAN_DYES.get(i).get())) {
+                        MetaItems.SPRAY_CAN_DYES.get(i).get().getBehaviours().get(0).onItemUse((Player) placer, worldIn, pos, InteractionHand.OFF_HAND, Direction.UP, 0, 0 , 0);
                         break;
                     }
                 }
@@ -247,8 +247,8 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     @Nullable
     @Override
-    public BlockEntity createNewTileEntity(@Nonnull Level worldIn, int meta) {
-        return createNewTileEntity(false);
+    public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
+        return createNewTileEntity(false, pPos, pState);
     }
 
     /**
@@ -258,17 +258,22 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     protected void onActiveModeChange(LevelReader world, BlockPos pos, boolean isActiveNow, boolean isInitialChange) {
     }
 
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter pLevel, BlockPos pPos, BlockState pState) {
+        return super.getCloneItemStack(pLevel, pPos, pState);
+    }
+
     @Nonnull
     @Override
-    public ItemStack getPickBlock(@Nonnull BlockState state, @Nonnull HitResult target, @Nonnull Level world, @Nonnull BlockPos pos, @Nonnull Player player) {
-        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(world, pos);
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
+        IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(level, pos);
         if (pipeTile == null) {
             return ItemStack.EMPTY;
         }
         if (target instanceof VoxelShapeBlockHitResult) {
             VoxelShapeBlockHitResult result = (VoxelShapeBlockHitResult) target;
             if (result.shape.getData() instanceof ICoverable.CoverSideData data) {
-                Direction coverSide = data.side;
+                Direction coverSide = data.side();
                 CoverBehavior coverBehavior = pipeTile.getCoverableImplementation().getCoverAtSide(coverSide);
                 return coverBehavior == null ? ItemStack.EMPTY : coverBehavior.getPickItem();
             }
@@ -307,11 +312,11 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
                 ItemBlockPipe<?, ?> itemBlockPipe = (ItemBlockPipe<?, ?>) itemStack.getItem();
                 if (itemBlockPipe.blockPipe.getItemPipeType(itemStack) == getItemPipeType(itemStack)) {
                     BlockFrame frameBlock = (BlockFrame) blockStateAtSide.getBlock();
-                    boolean wasPlaced = frameBlock.replaceWithFramedPipe(world, pos.offset(side.getNormal()), blockStateAtSide, entityPlayer, itemStack, side);
-                    if (wasPlaced) {
+                    InteractionResult wasPlaced = frameBlock.replaceWithFramedPipe(world, pos.offset(side.getNormal()), blockStateAtSide, entityPlayer, itemStack, side);
+                    if (wasPlaced == InteractionResult.SUCCESS) {
                         pipeTile.setConnection(side, true, false);
                     }
-                    return wasPlaced ? InteractionResult.SUCCESS : InteractionResult.PASS;
+                    return wasPlaced;
                 }
             }
         }
@@ -329,13 +334,13 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             return activateFrame(world, state, pos, entityPlayer, hand, hit, pipeTile);
         }
 
-        if (itemStack.getItem().getToolClasses(itemStack).contains(ToolClasses.SCREWDRIVER)) {
+        if (itemStack.getItem().getToolClasses(itemStack).contains(ToolClass.SCREWDRIVER)) {
             if (coverBehavior.onScrewdriverClick(entityPlayer, hand, hit) == InteractionResult.SUCCESS) {
                 ToolHelper.damageItem(itemStack, entityPlayer);
                 if (itemStack.getItem() instanceof IGTTool) {
                     ((IGTTool) itemStack.getItem()).playSound(entityPlayer);
                 }
-                return true;
+                return InteractionResult.SUCCESS;
             }
         }
 

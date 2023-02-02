@@ -199,8 +199,8 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
 
             // apply heat damage in area surrounding the pipe
             if (getOffsetTimer() % 20 == 0) {
-                List<EntityLivingBase> entities = getPipeWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(getPipePos()).grow(2));
-                for (EntityLivingBase entityLivingBase : entities) {
+                List<LivingEntity> entities = getPipeWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(getPipePos()).grow(2));
+                for (LivingEntity entityLivingBase : entities) {
                     EntityDamageUtil.applyTemperatureDamage(entityLivingBase, stack.getFluid().getTemperature(stack), 2.0F, 10);
                 }
             }
@@ -219,8 +219,8 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
 
             // apply chemical damage in area surrounding the pipe
             if (getOffsetTimer() % 20 == 0) {
-                List<EntityLivingBase> entities = getPipeWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(getPipePos()).grow(1));
-                for (EntityLivingBase entityLivingBase : entities) {
+                List<LivingEntity> entities = getPipeWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(getPipePos()).grow(1));
+                for (LivingEntity entityLivingBase : entities) {
                     EntityDamageUtil.applyChemicalDamage(entityLivingBase, 2);
                 }
             }
@@ -245,8 +245,8 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
 
             // apply heat damage in area surrounding the pipe
             if (isMelting && getOffsetTimer() % 20 == 0) {
-                List<EntityLivingBase> entities = getPipeWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(getPipePos()).grow(2));
-                for (EntityLivingBase entityLivingBase : entities) {
+                List<LivingEntity> entities = getPipeWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(getPipePos()).grow(2));
+                for (LivingEntity entityLivingBase : entities) {
                     EntityDamageUtil.applyTemperatureDamage(entityLivingBase, stack.getFluid().getTemperature(stack), 2.0F, 10);
                 }
             }
@@ -266,8 +266,8 @@ public class TileEntityFluidPipeTickable extends TileEntityFluidPipe implements 
 
             // apply frost damage in area surrounding the pipe
             if (getOffsetTimer() % 20 == 0) {
-                List<EntityLivingBase> entities = getPipeWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(getPipePos()).grow(2));
-                for (EntityLivingBase entityLivingBase : entities) {
+                List<LivingEntity> entities = getPipeWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(getPipePos()).grow(2));
+                for (LivingEntity entityLivingBase : entities) {
                     EntityDamageUtil.applyTemperatureDamage(entityLivingBase, stack.getFluid().getTemperature(stack), 2.0F, 10);
                 }
             }

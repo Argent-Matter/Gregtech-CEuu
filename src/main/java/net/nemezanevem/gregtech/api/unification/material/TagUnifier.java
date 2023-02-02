@@ -46,7 +46,6 @@ public class TagUnifier {
         if (stackComparator == null) {
             List<String> modPriorities = Arrays.asList(ConfigHolder.CompatConfig.modPriorities);
             if (modPriorities.isEmpty()) {
-                //noinspection ConstantConditions
                 Function<Item, String> modIdExtractor = item -> Util.getId(item).getNamespace();
                 stackComparator = Comparator.comparing(modIdExtractor);
             } else {
@@ -156,7 +155,7 @@ public class TagUnifier {
         }
     }
 
-    public static Set<String> getOreDictionaryNames(Item itemStack) {
+    public static Set<String> getTagNames(Item itemStack) {
         if (stackTagName.containsKey(itemStack))
             return Collections.unmodifiableSet(stackTagName.get(itemStack));
         return Collections.emptySet();
@@ -180,6 +179,13 @@ public class TagUnifier {
         }
         ItemMaterialInfo info = materialUnificationInfo.get(item);
         return info == null ? null : info.getMaterial().copy();
+    }
+
+
+
+    @Nullable
+    public static ItemMaterialInfo getMaterialInfo(Item item) {
+        return materialUnificationInfo.get(item);
     }
 
     @Nullable

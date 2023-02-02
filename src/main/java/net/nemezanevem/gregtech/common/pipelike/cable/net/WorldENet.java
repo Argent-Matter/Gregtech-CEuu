@@ -1,26 +1,29 @@
 package net.nemezanevem.gregtech.common.pipelike.cable.net;
 
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.unification.material.properties.WireProperty;
-import net.minecraft.world.World;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.LevelReader;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.WireProperty;
 
 public class WorldENet extends WorldPipeNet<WireProperty, EnergyNet> {
 
     private static final String DATA_ID_BASE = "gregtech.e_net";
 
-    public static WorldENet getWorldENet(Level world) {
-        final String DATA_ID = getDataID(DATA_ID_BASE, world);
-        WorldENet eNetWorldData = (WorldENet) world.loadData(WorldENet.class, DATA_ID);
-        if (eNetWorldData == null) {
-            eNetWorldData = new WorldENet(DATA_ID);
-            world.setData(DATA_ID, eNetWorldData);
+    public static WorldENet getWorldENet(LevelReader world) {
+        if(!world.isClientSide()) {
+            ServerLevel serverLevel = (ServerLevel) world;
+            final String DATA_ID = getDataID(DATA_ID_BASE, serverLevel);
+            WorldENet netWorldData = serverLevel.getDataStorage().computeIfAbsent(WorldENet::load, WorldENet::new, DATA_ID);
+            netWorldData.setWorldAndInit(serverLevel);
+            return netWorldData;
         }
-        eNetWorldData.setWorldAndInit(world);
-        return eNetWorldData;
+        return null;
     }
 
-    public WorldENet(String name) {
-        super(name);
+    public WorldENet() {
+        super();
     }
 
     @Override
@@ -28,4 +31,10 @@ public class WorldENet extends WorldPipeNet<WireProperty, EnergyNet> {
         return new EnergyNet(this);
     }
 
+
+    public static WorldENet load(CompoundTag tag) {
+        WorldENet instance = new WorldENet();
+        instance.readFromNBT(tag);
+        return instance;
+    }
 }

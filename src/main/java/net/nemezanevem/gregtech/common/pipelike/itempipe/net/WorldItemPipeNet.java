@@ -1,30 +1,37 @@
 package net.nemezanevem.gregtech.common.pipelike.itempipe.net;
 
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.unification.material.properties.ItemPipeProperty;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.ItemPipeProperty;
 
 public class WorldItemPipeNet extends WorldPipeNet<ItemPipeProperty, ItemPipeNet> {
 
     private static final String DATA_ID = "gregtech.item_pipe_net";
 
     public static WorldItemPipeNet getWorldPipeNet(Level world) {
-        WorldItemPipeNet netWorldData = (WorldItemPipeNet) world.loadData(WorldItemPipeNet.class, DATA_ID);
-        if (netWorldData == null) {
-            netWorldData = new WorldItemPipeNet(DATA_ID);
-            world.setData(DATA_ID, netWorldData);
+        if(!world.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) world;
+            WorldItemPipeNet netWorldData = serverLevel.getDataStorage().computeIfAbsent(WorldItemPipeNet::load, WorldItemPipeNet::new, DATA_ID);
+            netWorldData.setWorldAndInit(world);
+            return netWorldData;
         }
-        netWorldData.setWorldAndInit(world);
-        return netWorldData;
+        return null;
     }
 
-    public WorldItemPipeNet(String name) {
-        super(name);
+    public WorldItemPipeNet() {
+        super();
     }
 
     @Override
     protected ItemPipeNet createNetInstance() {
         return new ItemPipeNet(this);
+    }
+
+    public static WorldItemPipeNet load(CompoundTag tag) {
+        WorldItemPipeNet instance = new WorldItemPipeNet();
+        instance.readFromNBT(tag);
+        return instance;
     }
 }

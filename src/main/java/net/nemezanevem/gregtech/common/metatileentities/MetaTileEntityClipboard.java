@@ -143,7 +143,7 @@ public class MetaTileEntityClipboard extends MetaTileEntity implements IFastRend
                 this.guiCache = new FakeModularGui(ui, fakeModularUIContainer);
             this.writeCustomData(CREATE_FAKE_UI, buffer -> {});
         } catch (Exception e) {
-            GTLog.logger.error(e);
+            GregTech.LOGGER.error(e);
         }
     }
 
@@ -363,7 +363,7 @@ public class MetaTileEntityClipboard extends MetaTileEntity implements IFastRend
                 this.setClipboard(clipboard);
             }
         } catch (Exception e) {
-            GTLog.logger.error("Could not initialize Clipboard from InitialSyncData buffer", e);
+            GregTech.LOGGER.error("Could not initialize Clipboard from InitialSyncData buffer", e);
         }
     }
 
@@ -397,7 +397,7 @@ public class MetaTileEntityClipboard extends MetaTileEntity implements IFastRend
                     this.setClipboard(clipboard);
                 }
             } catch (Exception e) {
-                GTLog.logger.error("Could not read Clipboard Init NBT from CustomData buffer", e);
+                GregTech.LOGGER.error("Could not read Clipboard Init NBT from CustomData buffer", e);
             }
         }
     }

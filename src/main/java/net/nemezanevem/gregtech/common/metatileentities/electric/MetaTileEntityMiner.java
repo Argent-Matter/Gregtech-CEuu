@@ -4,41 +4,45 @@ import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.capability.IControllable;
-import gregtech.api.capability.IMiner;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.capability.impl.NotifiableItemStackHandler;
-import gregtech.api.capability.impl.miner.MinerLogic;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.AdvancedTextWidget;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.metatileentity.IDataInfoProvider;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.core.sound.GTSoundEvents;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.text.*;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
+import net.nemezanevem.gregtech.api.capability.IControllable;
+import net.nemezanevem.gregtech.api.capability.IMiner;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerHandler;
+import net.nemezanevem.gregtech.api.capability.impl.NotifiableItemStackHandler;
+import net.nemezanevem.gregtech.api.capability.impl.miner.MinerLogic;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.AdvancedTextWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner, IControllable, IDataInfoProvider {
 
@@ -80,11 +84,10 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
     public void renderMetaTileEntity(CCRenderState renderState, Matrix4 translation, IVertexOperation[] pipeline) {
         super.renderMetaTileEntity(renderState, translation, pipeline);
         Textures.SCREEN.renderSided(Direction.UP, renderState, translation, pipeline);
-        for (Direction renderSide : Direction.HORIZONTALS) {
+        for (Direction renderSide : GTValues.HORIZONTAL_DIRECTION) {
             if (renderSide == getFrontFacing()) {
                 Textures.PIPE_OUT_OVERLAY.renderSided(renderSide, renderState, translation, pipeline);
             } else
@@ -97,7 +100,7 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
     protected ModularUI createUI(@Nonnull Player entityPlayer) {
         int rowSize = (int) Math.sqrt(inventorySize);
         ModularUI.Builder builder = new ModularUI.Builder(GuiTextures.BACKGROUND, 195, 176);
-        builder.bindPlayerInventory(entityPlayer.inventory, 94);
+        builder.bindPlayerInventory(entityPlayer.getInventory(), 94);
 
         if (getTier() == GTValues.HV) {
             for (int y = 0; y < rowSize; y++) {
@@ -135,15 +138,15 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
         textList.add(Component.translatable("gregtech.machine.miner.startz", this.minerLogic.getZ().get()));
         textList.add(Component.translatable("gregtech.machine.miner.radius", this.minerLogic.getCurrentRadius()));
         if (this.minerLogic.isDone())
-            textList.add(Component.translatable("gregtech.multiblock.large_miner.done").setStyle(new Style().setColor(TextFormatting.GREEN)));
+            textList.add(Component.translatable("gregtech.multiblock.large_miner.done").withStyle(ChatFormatting.GREEN));
         else if (this.minerLogic.isWorking())
-            textList.add(Component.translatable("gregtech.multiblock.large_miner.working").setStyle(new Style().setColor(TextFormatting.GOLD)));
+            textList.add(Component.translatable("gregtech.multiblock.large_miner.working").withStyle(ChatFormatting.GOLD));
         else if (!this.isWorkingEnabled())
             textList.add(Component.translatable("gregtech.multiblock.work_paused"));
         if (isInventoryFull)
-            textList.add(Component.translatable("gregtech.multiblock.large_miner.invfull").setStyle(new Style().setColor(TextFormatting.RED)));
+            textList.add(Component.translatable("gregtech.multiblock.large_miner.invfull").withStyle(ChatFormatting.RED));
         if (!drainEnergy(true))
-            textList.add(Component.translatable("gregtech.multiblock.large_miner.needspower").setStyle(new Style().setColor(TextFormatting.RED)));
+            textList.add(Component.translatable("gregtech.multiblock.large_miner.needspower").withStyle(ChatFormatting.RED));
     }
 
     private void addDisplayText2(@Nonnull List<Component> textList) {
@@ -156,8 +159,8 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
     public void addInformation(ItemStack stack, @Nullable Level player, @Nonnull List<Component> tooltip, boolean advanced) {
         int currentArea = getWorkingArea(minerLogic.getCurrentRadius());
         tooltip.add(Component.translatable("gregtech.machine.miner.tooltip", currentArea, currentArea));
-        tooltip.add(Component.translatable("gregtech.universal.tooltip.uses_per_tick", energyPerTick)
-                + TextFormatting.GRAY + ", " + Component.translatable("gregtech.machine.miner.per_block", this.minerLogic.getSpeed() / 20));
+        tooltip.add(Component.literal(Component.translatable("gregtech.universal.tooltip.uses_per_tick", energyPerTick).getString()
+                + ChatFormatting.GRAY + ", " + Component.translatable("gregtech.machine.miner.per_block", this.minerLogic.getSpeed() / 20).getString()));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.voltage_in", energyContainer.getInputVoltage(), GTValues.VNF[getTier()]));
         tooltip.add(Component.translatable("gregtech.universal.tooltip.energy_storage_capacity", energyContainer.getEnergyCapacity()));
         int maxArea = getWorkingArea(minerLogic.getMaximumRadius());
@@ -209,16 +212,16 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
             int currentRadius = this.minerLogic.getCurrentRadius();
             if (currentRadius == 1)
                 this.minerLogic.setCurrentRadius(this.minerLogic.getMaximumRadius());
-            else if (playerIn.isSneaking())
+            else if (playerIn.isCrouching())
                 this.minerLogic.setCurrentRadius(Math.max(1, Math.round(currentRadius / 2.0f)));
             else
                 this.minerLogic.setCurrentRadius(Math.max(1, currentRadius - 1));
 
             this.minerLogic.resetArea();
 
-            playerIn.sendSystemMessage(Component.translatable(Component.translatable("gregtech.multiblock.large_miner.radius", this.minerLogic.getCurrentRadius())));
+            playerIn.sendSystemMessage(Component.translatable("gregtech.multiblock.large_miner.radius", this.minerLogic.getCurrentRadius()));
         } else {
-            playerIn.sendSystemMessage(Component.translatable(Component.translatable("gregtech.multiblock.large_miner.errorradius")));
+            playerIn.sendSystemMessage(Component.translatable("gregtech.multiblock.large_miner.errorradius"));
         }
         return true;
     }
@@ -255,10 +258,12 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
         this.minerLogic.receiveCustomData(dataId, buf);
     }
 
+    LazyOptional<IControllable> controllableLazy = LazyOptional.of(() -> this);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if (capability == GregtechTileCapabilities.CAPABILITY_CONTROLLABLE) {
-            return GregtechTileCapabilities.CAPABILITY_CONTROLLABLE.cast(this);
+            return controllableLazy.cast();
         }
         return super.getCapability(capability, side);
     }
@@ -302,6 +307,6 @@ public class MetaTileEntityMiner extends TieredMetaTileEntity implements IMiner,
     @Nonnull
     @Override
     public List<Component> getDataInfo() {
-        return Collections.singletonList(Component.translatable(Component.translatable("gregtech.multiblock.large_miner.radius", this.minerLogic.getCurrentRadius())));
+        return Collections.singletonList(Component.translatable("gregtech.multiblock.large_miner.radius", this.minerLogic.getCurrentRadius()));
     }
 }

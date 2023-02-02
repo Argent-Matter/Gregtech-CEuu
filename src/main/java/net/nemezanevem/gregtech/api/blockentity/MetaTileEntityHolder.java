@@ -329,26 +329,22 @@ public class MetaTileEntityHolder extends TickableTileEntityBase implements IGre
         }
     }
 
-    @Override
     public boolean shouldRefresh(@Nonnull Level world, @Nonnull BlockPos pos, BlockState oldState, BlockState newState) {
         return oldState.getBlock() != newState.getBlock(); //MetaTileEntityHolder should never refresh (until block changes)
     }
 
-    @Override
     public void rotate(@Nonnull Rotation rotationIn) {
         if (metaTileEntity != null) {
             metaTileEntity.setFrontFacing(rotationIn.rotate(metaTileEntity.getFrontFacing()));
         }
     }
 
-    @Override
     public void mirror(@Nonnull Mirror mirrorIn) {
         if (metaTileEntity != null) {
             rotate(mirrorIn.getRotation(metaTileEntity.getFrontFacing()));
         }
     }
 
-    @Override
     public boolean shouldRenderInPass(int pass) {
         if (metaTileEntity == null) return false;
         for (Direction side : Direction.values()) {

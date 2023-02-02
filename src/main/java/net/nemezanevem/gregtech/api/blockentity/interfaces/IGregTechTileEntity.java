@@ -1,8 +1,8 @@
 package net.nemezanevem.gregtech.api.blockentity.interfaces;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.nemezanevem.gregtech.api.gui.IUIHolder;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.gui.IUIHolder;
 
 import java.util.function.Consumer;
 
@@ -24,4 +24,9 @@ public interface IGregTechTileEntity extends IHasWorldObjectAndCoords, IUIHolder
 
     @Deprecated
     boolean isFirstTick();
+
+    @Override
+    default boolean isClientSide() {
+        return IHasWorldObjectAndCoords.super.isClientSide();
+    }
 }

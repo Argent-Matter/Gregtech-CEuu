@@ -4,47 +4,49 @@ import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.capability.IControllable;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.pipenet.tile.TileEntityPipeBase;
-import gregtech.client.renderer.texture.Textures;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.server.ServerLifecycleHooks;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
+import net.nemezanevem.gregtech.api.capability.IControllable;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerHandler;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static gregtech.api.capability.GregtechDataCodes.IS_WORKING;
-import static gregtech.api.capability.GregtechDataCodes.SYNC_TILE_MODE;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.IS_WORKING;
+import static net.nemezanevem.gregtech.api.capability.GregtechDataCodes.SYNC_TILE_MODE;
 
 public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity implements IControllable {
 
     private static Class<?> cofhTileClass;
 
-    private static boolean considerTile(TileEntity tile) {
+    private static boolean considerTile(BlockEntity tile) {
         // TODO interface for this?
         if (tile instanceof IGregTechTileEntity || tile instanceof TileEntityPipeBase) {
             return false;
@@ -64,7 +66,7 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
     private boolean isActive = false;
     private boolean isPaused = false;
     private int lastTick;
-    private Supplier<Iterable<BlockPos.MutableBlockPos>> range;
+    private Supplier<Iterable<BlockPos>> range;
 
     public MetaTileEntityWorldAccelerator(ResourceLocation metaTileEntityId, int tier) {
         super(metaTileEntityId, tier);
@@ -130,33 +132,33 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
             if (!isActive) {
                 setActive(true);
             }
-            int currentTick = FMLCommonHandler.instance().getMinecraftServerInstance().getTickCounter();
+
+            int currentTick = ServerLifecycleHooks.getCurrentServer().getTickCount();
             if (currentTick != lastTick) { // Prevent other tick accelerators from accelerating us
                 Level world = getWorld();
                 BlockPos currentPos = getPos();
                 lastTick = currentTick;
                 if (isTEMode()) {
                     energyContainer.removeEnergy(energyPerTick);
-                    for (Direction neighbourFace : Direction.VALUES) {
-                        TileEntity neighbourTile = world.getTileEntity(currentPos.offset(neighbourFace));
-                        if (neighbourTile instanceof ITickable && !neighbourTile.isInvalid() && considerTile(neighbourTile)) {
-                            ITickable neighbourTickTile = (ITickable) neighbourTile;
-                            for (int i = 0; i < speed; i++) {
-                                neighbourTickTile.update();
-                            }
+                    for (Direction neighbourFace : Direction.values()) {
+                        var pos = currentPos.offset(neighbourFace.getNormal());
+                        BlockEntity neighbourTile = world.getBlockEntity(pos);
+                        BlockState block = world.getBlockState(pos);
+                        if (block.getBlock() instanceof EntityBlock entityBlock && !neighbourTile.isRemoved() && considerTile(neighbourTile)) {
+                            tickBlockEntity(entityBlock, neighbourTile, block, pos);
                         }
                     }
                 } else {
                     energyContainer.removeEnergy(energyPerTick / 2);
                     if (range == null) {
                         int area = getTier() * 2;
-                        range = () -> BlockPos.getAllInBoxMutable(currentPos.add(-area, -area, -area), currentPos.add(area, area, area));
+                        range = () -> BlockPos.betweenClosed(currentPos.offset(-area, -area, -area), currentPos.offset(area, area, area));
                     }
-                    for (BlockPos.MutableBlockPos pos : range.get()) {
+                    for (BlockPos pos : range.get()) {
                         if (pos.getY() > 256 || pos.getY() < 0) { // Early termination
                             continue;
                         }
-                        if (world.isBlockLoaded(pos)) {
+                        if (world.isLoaded(pos)) {
                             for (int i = 0; i < speed; i++) {
                                 if (GTValues.RNG.nextInt(100) < getTier()) {
                                     // Rongmario:
@@ -164,14 +166,23 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
                                     // Fresh BlockState before every randomTick, this could easily change after every randomTick call
                                     BlockState state = world.getBlockState(pos);
                                     Block block = state.getBlock();
-                                    if (block.getTickRandomly()) {
-                                        block.randomTick(world, pos.toImmutable(), state, world.rand);
+                                    if (block.isRandomlyTicking(state)) {
+                                        block.randomTick(state, (ServerLevel) world, pos, world.random);
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private <T extends BlockEntity> void tickBlockEntity(EntityBlock block, T neighbourTile, BlockState blockState, BlockPos pos) {
+        BlockEntityTicker<T> ticker = block.getTicker(getLevel(), blockState, (BlockEntityType<T>) neighbourTile.getType());
+        if(ticker != null) {
+            for (int i = 0; i < speed; i++) {
+                ticker.tick(getLevel(), pos, blockState, neighbourTile);
             }
         }
     }
@@ -201,10 +212,10 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
         if (!getWorld().isClientSide) {
             if (isTEMode()) {
                 setTEMode(false);
-                playerIn.sendStatusMessage(Component.translatable("gregtech.machine.world_accelerator.mode_entity"), false);
+                playerIn.displayClientMessage(Component.translatable("gregtech.machine.world_accelerator.mode_entity"), false);
             } else {
                 setTEMode(true);
-                playerIn.sendStatusMessage(Component.translatable("gregtech.machine.world_accelerator.mode_tile"), false);
+                playerIn.displayClientMessage(Component.translatable("gregtech.machine.world_accelerator.mode_tile"), false);
             }
         }
         return true;
@@ -284,10 +295,12 @@ public class MetaTileEntityWorldAccelerator extends TieredMetaTileEntity impleme
         notifyBlockUpdate();
     }
 
+    LazyOptional<IControllable> controllableLazy = LazyOptional.of(() -> this);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
         if (capability == GregtechTileCapabilities.CAPABILITY_CONTROLLABLE) {
-            return GregtechTileCapabilities.CAPABILITY_CONTROLLABLE.cast(this);
+            return controllableLazy.cast();
         }
         return super.getCapability(capability, side);
     }

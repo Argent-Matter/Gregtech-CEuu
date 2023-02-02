@@ -1,23 +1,17 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import gregtech.api.gui.Widget;
-import gregtech.api.gui.resources.picturetexture.PictureTexture;
-import gregtech.api.gui.resources.utils.DownloadThread;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.network.chat.Component;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.PictureTexture;
+import net.nemezanevem.gregtech.api.gui.resources.utils.DownloadThread;
 
 public class URLTexture implements IGuiTexture{
     public final String url;
-    @SideOnly(Side.CLIENT)
     private DownloadThread downloader;
-    @SideOnly(Side.CLIENT)
     private PictureTexture texture;
-    @SideOnly(Side.CLIENT)
     private boolean failed;
-    @SideOnly(Side.CLIENT)
     private String error;
 
 
@@ -25,7 +19,6 @@ public class URLTexture implements IGuiTexture{
         this.url = url;
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
     public void updateTick() {
         if(this.texture != null) {
@@ -36,10 +29,10 @@ public class URLTexture implements IGuiTexture{
     @Override
     public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         if (texture != null && texture.hasTexture()) {
-            texture.render((float)x, (float)y, width, height, 0, 1, 1, false, false);
+            texture.render(poseStack, (float)x, (float)y, width, height, 0, 1, 1, false, false);
         } else {
             if (failed || url == null || this.url.equals("")) {
-                Minecraft.getMinecraft().fontRenderer.drawString(Component.translatable("texture.url_texture.fail"), (int)x + 2, (int)(y + height / 2.0 - 4), 0xffff0000);
+                Minecraft.getInstance().font.draw(poseStack, Component.translatable("texture.url_texture.fail"), (int)x + 2, (int)(y + height / 2.0 - 4), 0xffff0000);
             } else {
                 this.loadTexture();
                 int s = (int) Math.floorMod(System.currentTimeMillis() / 200, 24);
@@ -49,7 +42,6 @@ public class URLTexture implements IGuiTexture{
         }
     }
 
-    @SideOnly(Side.CLIENT)
     public void loadTexture() {
         if (texture == null && !failed) {
             if (downloader == null && DownloadThread.activeDownloads < DownloadThread.MAXIMUM_ACTIVE_DOWNLOADS) {

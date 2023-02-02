@@ -4,7 +4,7 @@ import gregtech.api.util.Util;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.common.util.Tag;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;

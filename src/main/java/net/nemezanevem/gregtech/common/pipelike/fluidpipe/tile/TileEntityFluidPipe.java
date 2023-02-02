@@ -55,8 +55,8 @@ public class TileEntityFluidPipe extends TileEntityMaterialPipeBase<FluidPipeTyp
     }
 
     public static void spawnParticles(Level worldIn, BlockPos pos, Direction direction, EnumParticleTypes particleType, int particleCount) {
-        if (worldIn instanceof WorldServer) {
-            ((WorldServer) worldIn).spawnParticle(particleType,
+        if (worldIn instanceof ServerLevel) {
+            ((ServerLevel) worldIn).spawnParticle(particleType,
                     pos.getX() + 0.5,
                     pos.getY() + 0.5,
                     pos.getZ() + 0.5,

@@ -27,7 +27,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.Player;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
@@ -38,7 +38,7 @@ import net.minecraft.util.math.AABB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.*;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerLevel;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -308,8 +308,8 @@ public class SteamMiner extends MetaTileEntity implements IMiner, IControllable,
         BlockPos ventingBlockPos = machinePos.offset(ventingSide);
         BlockState blockOnPos = this.getWorld().getBlockState(ventingBlockPos);
         if (blockOnPos.getCollisionBoundingBox(this.getWorld(), ventingBlockPos) == Block.NULL_AABB) {
-            this.getWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(ventingBlockPos), EntitySelectors.CAN_AI_TARGET).forEach((entity) -> entity.attackEntityFrom(DamageSources.getHeatDamage(), 6.0F));
-            WorldServer world = (WorldServer) this.getWorld();
+            this.getWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(ventingBlockPos), EntitySelectors.CAN_AI_TARGET).forEach((entity) -> entity.attackEntityFrom(DamageSources.getHeatDamage(), 6.0F));
+            ServerLevel world = (ServerLevel) this.getWorld();
             double posX = (double) machinePos.getX() + 0.5D + (double) ventingSide.getXOffset() * 0.6D;
             double posY = (double) machinePos.getY() + 0.5D + (double) ventingSide.getYOffset() * 0.6D;
             double posZ = (double) machinePos.getZ() + 0.5D + (double) ventingSide.getZOffset() * 0.6D;

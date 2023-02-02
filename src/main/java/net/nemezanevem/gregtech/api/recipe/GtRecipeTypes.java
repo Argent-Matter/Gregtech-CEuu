@@ -28,16 +28,16 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 	 	GTRecipeType.ALLOY_SMELTER_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.ingot, Materials.Tin)
-     * 			    .input(OrePrefix.ingot, Materials.Copper, 3)
-     * 			    .output(OrePrefix.ingot, Materials.Bronze, 4)
+     * 				.input(TagPrefix.ingot, Materials.Tin)
+     * 			    .input(TagPrefix.ingot, Materials.Copper, 3)
+     * 			    .output(TagPrefix.ingot, Materials.Bronze, 4)
      * 				.duration(600)
      * 				.EUt(5)
      * 				.buildAndRegister();
      * </pre>
      *
      * This is a relatively simple example for creating Bronze.
-     * Note that the use of <B>OrePrefix</B> ensures that OreDictionary Entries are used for the recipe.
+     * Note that the use of <B>TagPrefix</B> ensures that OreDictionary Entries are used for the recipe.
      */
     public static final RegistryObject<GTRecipeType<SimpleRecipeBuilder>> ALLOY_SMELTER_RECIPES = RECIPE_TYPES.register("alloy_smelter", () ->
             new GTRecipeType<>(1, 2, 1, 1, 0, 0, 0, 0, new SimpleRecipeBuilder(), false)
@@ -49,8 +49,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 	 	GTRecipeType.ARC_FURNACE_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.ingot, Materials.Iron)
-     * 			    .output(OrePrefix.ingot, Materials.WroughtIron)
+     * 				.input(TagPrefix.ingot, Materials.Iron)
+     * 			    .output(TagPrefix.ingot, Materials.WroughtIron)
      * 				.duration(200)
      * 				.EUt(GTValues.VA[GTValues.LV])
      * 				.buildAndRegister();
@@ -62,9 +62,9 @@ public class GtRecipeTypes {
      *
      * <pre>
      * 	 	GTRecipeType.ARC_FURNACE_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.ingot, Materials.Iron)
+     * 				.input(TagPrefix.ingot, Materials.Iron)
      * 			    .fluidInputs(Materials.Water.getFluid(100))
-     * 			    .output(OrePrefix.ingot, Materials.WroughtIron)
+     * 			    .output(TagPrefix.ingot, Materials.WroughtIron)
      * 				.duration(200)
      * 				.EUt(GTValues.VA[GTValues.LV])
      * 				.buildAndRegister();
@@ -87,7 +87,7 @@ public class GtRecipeTypes {
      *      GTRecipeTypes.ASSEMBLER_RECIPES.recipeBuilder()
      *               .circuitMeta(2)
      *               .inputs(new ItemStack(Items.COAL, 1, GTValues.W))
-     *               .input(OrePrefix.stick, Materials.Wood, 1)
+     *               .input(TagPrefix.stick, Materials.Wood, 1)
      *               .outputs(new ItemStack(Blocks.TORCH, 4))
      *               .duration(100).EUt(1).buildAndRegister();
      * </pre>
@@ -105,12 +105,12 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeTypes.ASSEMBLY_LINE_RECIPES.recipeBuilder()
-     *               .input(OrePrefix.stickLong, Materials.SamariumMagnetic)
-     *               .input(OrePrefix.stickLong, Materials.HSSS, 2)
-     *               .input(OrePrefix.ring, Materials.HSSS, 2)
-     *               .input(OrePrefix.round, Materials.HSSS, 4)
-     *               .input(OrePrefix.wireFine, Materials.Ruridit, 64)
-     *               .input(OrePrefix.cableGtSingle, Materials.NiobiumTitanium, 2)
+     *               .input(TagPrefix.stickLong, Materials.SamariumMagnetic)
+     *               .input(TagPrefix.stickLong, Materials.HSSS, 2)
+     *               .input(TagPrefix.ring, Materials.HSSS, 2)
+     *               .input(TagPrefix.round, Materials.HSSS, 4)
+     *               .input(TagPrefix.wireFine, Materials.Ruridit, 64)
+     *               .input(TagPrefix.cableGtSingle, Materials.NiobiumTitanium, 2)
      *               .fluidInputs(Materials.SolderingAlloy.getFluid(GTValues.L))
      *               .fluidInputs(Materials.Lubricant.getFluid(250))
      *               .output(MetaItems.ELECTRIC_MOTOR_LuV)
@@ -127,7 +127,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 	 	GTRecipeType.AUTOCLAVE_RECIPES.recipeBuilder()
-     * 				.inputs(OreDictUnifier.get(OrePrefix.dust, Materials.Carbon, 16))
+     * 				.inputs(OreDictUnifier.get(TagPrefix.dust, Materials.Carbon, 16))
      * 				.fluidInputs(Materials.Lutetium.getFluid(4))
      * 				.chancedOutput(MetaItems.CARBON_FIBERS.getStackForm(2), 3333, 1000)
      * 				.duration(600)
@@ -146,7 +146,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.BENDER_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.plate, Materials.Tin, 12)
+     * 				.input(TagPrefix.plate, Materials.Tin, 12)
      * 			    .circuitMeta(4)
      * 				.outputs(MetaItems.FLUID_CELL.getStackForm(4))
      * 				.duration(1200)
@@ -167,7 +167,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 	    GTRecipeType.BLAST_RECIPES.recipeBuilder()
-     * 				.inputs(OreDictUnifier.get(OrePrefix.dust, Materials.Glass), OreDictUnifier.get(OrePrefix.dust, Materials.Carbon))
+     * 				.inputs(OreDictUnifier.get(TagPrefix.dust, Materials.Glass), OreDictUnifier.get(TagPrefix.dust, Materials.Carbon))
      * 				.fluidInputs(Materials.Electrum.getFluid(16))
      * 				.outputs(ItemList.Circuit_Board_Fiberglass.get(16))
      * 				.duration(80)
@@ -212,7 +212,7 @@ public class GtRecipeTypes {
      * <pre>
      *       GTRecipeType.CANNER_RECIPES.recipeBuilder()
      * 				.input(MetaItems.BATTERY_HULL_LV)
-     * 			    .input(OrePrefix.dust, Materials.Cadmium, 2)
+     * 			    .input(TagPrefix.dust, Materials.Cadmium, 2)
      * 				.outputs(MetaItems.BATTERY_LV_CADMIUM)
      * 				.duration(100)
      * 				.EUt(2)
@@ -238,8 +238,8 @@ public class GtRecipeTypes {
      * <pre>
      * 		GTRecipeType.CENTRIFUGE_RECIPES.recipeBuilder()
      * 				.fluidInputs(Materials.ImpureNaquadriaSolution.getFluid(2000))
-     * 				.output(OrePrefix.dust, Materials.IndiumPhosphide)
-     * 			    .output(OrePrefix.dust, Materials.AntimonyTrifluoride, 2)
+     * 				.output(TagPrefix.dust, Materials.IndiumPhosphide)
+     * 			    .output(TagPrefix.dust, Materials.AntimonyTrifluoride, 2)
      * 			    .fluidOutputs(Materials.NaquadriaSolution.getFluid(1000))
      * 				.duration(400).EUt(GTValues.VA[GTValues.EV])
      * 				.buildAndRegister();
@@ -263,7 +263,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.CHEMICAL_BATH_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.gem, Materials.EnderEye)
+     * 				.input(TagPrefix.gem, Materials.EnderEye)
      * 				.fluidInputs(Materials.Radon.getFluid(250))
      * 				.output(MetaItems.QUANTUM_EYE)
      * 				.duration(480).EUt(GTValues.VA[GTValues.HV])
@@ -330,10 +330,10 @@ public class GtRecipeTypes {
      *      GTRecipeType.CIRCUIT_ASSEMBLER_RECIPES.recipeBuilder()
      * 				.input(MetaItems.BASIC_CIRCUIT_BOARD)
      * 				.input(MetaItems.INTEGRATED_LOGIC_CIRCUIT)
-     * 			    .input(OrePrefix.component, Component.Resistor, 2)
-     * 				.input(OrePrefix.component, Component.Diode, 2)
-     * 				.input(OrePrefix.wireFine, Materials.Copper, 2)
-     * 			    .input(OrePrefix.bolt, Materials.Tin, 2)
+     * 			    .input(TagPrefix.component, Component.Resistor, 2)
+     * 				.input(TagPrefix.component, Component.Diode, 2)
+     * 				.input(TagPrefix.wireFine, Materials.Copper, 2)
+     * 			    .input(TagPrefix.bolt, Materials.Tin, 2)
      * 				.duration(200)
      * 				.EUt(16)
      * 				.buildAndRegister();
@@ -372,8 +372,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.COKE_OVEN_RECIPES.recipeBuilder()
-     *         		.input(OrePrefix.log, Materials.Wood)
-     *         		.output(OrePrefix.gem, Materials.Charcoal)
+     *         		.input(TagPrefix.log, Materials.Wood)
+     *         		.output(TagPrefix.gem, Materials.Charcoal)
      *         	    .fluidOutputs(Materials.Creosote.getFluid(250))
      *         		.duration(900)
      *         		.buildAndRegister();
@@ -389,7 +389,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.COMPRESSOR_RECIPES.recipeBuilder()
-     *         		.input(OrePrefix.dust, Materials.Fireclay)
+     *         		.input(TagPrefix.dust, Materials.Fireclay)
      *         		.outputs(MetaItems.COMPRESSED_FIRECLAY.getStackForm())
      *         		.duration(80)
      *         		.EUt(4)
@@ -431,7 +431,7 @@ public class GtRecipeTypes {
      * <pre>
      *      GTRecipeType.CUTTER_RECIPES.recipeBuilder()
      * 				.inputs(new ItemStack(Blocks.LOG, 1, GTValues.W))
-     * 				.outputs(new ItemStack(Blocks.PLANKS), OreDictUnifier.get(OrePrefix.dust, Materials.Wood, 1L))
+     * 				.outputs(new ItemStack(Blocks.PLANKS), OreDictUnifier.get(TagPrefix.dust, Materials.Wood, 1L))
      * 				.duration(200)
      * 				.EUt(8)
      * 				.buildAndRegister();
@@ -483,7 +483,7 @@ public class GtRecipeTypes {
      * <pre>
      * 	    GTRecipeType.DISTILLATION_RECIPES.recipeBuilder()
      * 	        	.fluidInputs(Materials.CoalTar.getFluid(1000))
-     * 	        	.output(OrePrefix.dustSmall, Materials.Coke)
+     * 	        	.output(TagPrefix.dustSmall, Materials.Coke)
      * 	        	.fluidOutputs(Materials.Naphthalene.getFluid(400))
      * 	            .fluidOutputs(Materials.HydrogenSulfide.getFluid(300))
      * 	            .fluidOutputs(Materials.Creosote.getFluid(200))
@@ -530,7 +530,7 @@ public class GtRecipeTypes {
      * <pre>
      * 		GTRecipeType.ELECTROLYZER_RECIPES.recipeBuilder()
      * 				.fluidInputs(Materials.SaltWater.getFluid(1000))
-     * 				.output(OrePrefix.dust, Materials.SodiumHydroxide, 3)
+     * 				.output(TagPrefix.dust, Materials.SodiumHydroxide, 3)
      * 				.fluidOutputs(Materials.Chlorine.getFluid(1000))
      * 				.fluidOutputs(Materials.Hydrogen.getFluid(1000))
      * 				.duration(720)
@@ -550,10 +550,10 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 	    GTRecipeType.ELECTROMAGNETIC_SEPARATOR_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.dustPure, Materials.Aluminium)
-     * 				.outputs(OrePrefix.dust, Materials.Aluminium)
-     * 				.chancedOutput(OreDictUnifier.get(OrePrefix.dustSmall, Materials.Aluminium), 4000, 850)
-     * 				.chancedOutput(OreDictUnifier.get(OrePrefix.dustSmall, Materials.Aluminium), 2000, 600)
+     * 				.input(TagPrefix.dustPure, Materials.Aluminium)
+     * 				.outputs(TagPrefix.dust, Materials.Aluminium)
+     * 				.chancedOutput(OreDictUnifier.get(TagPrefix.dustSmall, Materials.Aluminium), 4000, 850)
+     * 				.chancedOutput(OreDictUnifier.get(TagPrefix.dustSmall, Materials.Aluminium), 2000, 600)
      * 				.duration(200)
      * 				.EUt(24)
      * 				.buildAndRegister();
@@ -571,7 +571,7 @@ public class GtRecipeTypes {
      * <pre>
      *      GTRecipeType.EXTRACTOR_RECIPES.recipeBuilder()
      * 				.inputs(new ItemStack(MetaBlocks.RUBBER_LEAVES, 16))
-     * 				.output(OrePrefix.dust, Materials.RawRubber)
+     * 				.output(TagPrefix.dust, Materials.RawRubber)
      * 				.duration(300)
      * 				.buildAndRegister();
      * </pre>
@@ -589,9 +589,9 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.EXTRUDER_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.ingot, Materials.BorosilicateGlass)
+     * 				.input(TagPrefix.ingot, Materials.BorosilicateGlass)
      * 				.notConsumable(MetaItems.SHAPE_EXTRUDER_WIRE)
-     * 				.output(OrePrefix.wireFine, Materials.BorosilicateGlass, 8)
+     * 				.output(TagPrefix.wireFine, Materials.BorosilicateGlass, 8)
      * 				.duration(160)
      * 				.EUt(96)
      * 				.buildAndRegister();
@@ -755,9 +755,9 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.IMPLOSION_RECIPES.recipeBuilder()
-     *         		.input(OreDictUnifier.get(OrePrefix.gem, Materials.Coal, 64))
+     *         		.input(OreDictUnifier.get(TagPrefix.gem, Materials.Coal, 64))
      *         		.explosivesAmount(8)
-     *         		.outputs(OreDictUnifier.get(OrePrefix.gem, Materials.Diamond, 1), OreDictUnifier.get(OrePrefix.dustTiny, Materials.DarkAsh, 4))
+     *         		.outputs(OreDictUnifier.get(TagPrefix.gem, Materials.Diamond, 1), OreDictUnifier.get(TagPrefix.dustTiny, Materials.DarkAsh, 4))
      *         	    .duration(400)
      *         	    .EUt(GTValues.VA[GTValues.HV])
      *         		.buildAndRegister();
@@ -765,9 +765,9 @@ public class GtRecipeTypes {
      *
      * <pre>
      *      GTRecipeType.IMPLOSION_RECIPES.recipeBuilder()
-     *         		.input(OreDictUnifier.get(OrePrefix.gem, Materials.Coal, 64))
+     *         		.input(OreDictUnifier.get(TagPrefix.gem, Materials.Coal, 64))
      *         		.explosivesType(MetaItems.DYNAMITE.getStackForm(4))
-     *         		.outputs(OreDictUnifier.get(OrePrefix.gem, Materials.Diamond, 1), OreDictUnifier.get(OrePrefix.dustTiny, Materials.DarkAsh, 4))
+     *         		.outputs(OreDictUnifier.get(TagPrefix.gem, Materials.Diamond, 1), OreDictUnifier.get(TagPrefix.dustTiny, Materials.DarkAsh, 4))
      *         	    .duration(400)
      *         	    .EUt(GTValues.VA[GTValues.HV])
      *         		.buildAndRegister();
@@ -823,7 +823,7 @@ public class GtRecipeTypes {
      * <pre>
      * 		GTRecipeType.LASER_ENGRAVER_RECIPES.recipeBuilder()
      * 				.input(MetaItems.SILICON_WAFER)
-     * 				.notConsumable(OrePrefix.craftingLens, MarkerMaterials.Color.Red)
+     * 				.notConsumable(TagPrefix.craftingLens, MarkerMaterials.Color.Red)
      * 				.output(MetaItems.INTEGRATED_LOGIC_CIRCUIT_WAFER)
      * 				.duration(900)
      * 				.EUt(GTValues.VA[GTValues.MV])
@@ -842,7 +842,7 @@ public class GtRecipeTypes {
      * 	     GTRecipeType.LATHE_RECIPES.recipeBuilder()
      * 				.inputs(new ItemStack(Blocks.WOODEN_SLAB, 1, GTValues.W))
      * 				.outputs(new ItemStack(Items.BOWL))
-     * 				.output(OrePrefix.dustSmall, Materials.Wood)
+     * 				.output(TagPrefix.dustSmall, Materials.Wood)
      * 				.duration(50).EUt(GTValues.VA[GTValues.ULV])
      * 				.buildAndRegister();
      * </pre>
@@ -861,8 +861,8 @@ public class GtRecipeTypes {
      * <pre>
      * 		GTRecipeType.MACERATOR_RECIPES.recipeBuilder()
      * 				.inputs(new ItemStack(Items.CHICKEN))
-     * 				.output(OrePrefix.dust, Materials.Meat)
-     * 				.output(OrePrefix.dustTiny, Materials.Bone)
+     * 				.output(TagPrefix.dust, Materials.Meat)
+     * 				.output(TagPrefix.dustTiny, Materials.Bone)
      * 				.duration(102).buildAndRegister();
      * </pre>
      *
@@ -894,8 +894,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.MIXER_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.dust, Materials.Redstone, 5)
-     * 				.input(OrePrefix.dust, Materials.Ruby, 4)
+     * 				.input(TagPrefix.dust, Materials.Redstone, 5)
+     * 				.input(TagPrefix.dust, Materials.Ruby, 4)
      * 				.notConsumable(new IntCircuitIngredient(1))
      * 				.output(MetaItems.ENERGIUM_DUST, 9)
      * 				.duration(600).EUt(GTValues.VA[GTValues.MV])
@@ -913,10 +913,10 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.ORE_WASHER_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.crushed, Materials.Aluminum)
+     * 				.input(TagPrefix.crushed, Materials.Aluminum)
      * 				.notConsumable(new IntCircuitIngredient(2))
      * 				.fluidInputs(Materials.Water.getFluid(100))
-     * 				.output(OrePrefix.crushedPurified, Materials.Aluminum)
+     * 				.output(TagPrefix.crushedPurified, Materials.Aluminum)
      * 				.duration(8).EUt(4).buildAndRegister();
      * </pre>
      *
@@ -955,8 +955,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.POLARIZER_RECIPES.recipeBuilder()
-     * 				.inputs(OreDictUnifier.get(OrePrefix.plate, Materials.Iron))
-     * 				.outputs(OreDictUnifier.get(OrePrefix.plate, Materials.IronMagnetic))
+     * 				.inputs(OreDictUnifier.get(TagPrefix.plate, Materials.Iron))
+     * 				.outputs(OreDictUnifier.get(TagPrefix.plate, Materials.IronMagnetic))
      * 				.duration(100)
      * 				.EUt(16)
      * 				.buildAndRegister();
@@ -971,10 +971,10 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.PRIMITIVE_BLAST_FURNACE_RECIPES.recipeBuilder()
-     *     			.input(OrePrefix.ingot, Materials.Iron)
-     *     			.input(OrePrefix.gem, Materials.Coal, 2)
-     *     			.output(OrePrefix.ingot, Materials.Steel)
-     *     			.output(OrePrefix.dustTiny, Materials.DarkAsh, 2)))
+     *     			.input(TagPrefix.ingot, Materials.Iron)
+     *     			.input(TagPrefix.gem, Materials.Coal, 2)
+     *     			.output(TagPrefix.ingot, Materials.Steel)
+     *     			.output(TagPrefix.dustTiny, Materials.DarkAsh, 2)))
      *     			.duration(1800)
      *     			.buildAndRegister();
      * </pre>
@@ -989,7 +989,7 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *      GTRecipeType.PYROLYSE_RECIPES.recipeBuilder()
-     *     			.input(OrePrefix.log, Materials.Wood, 16)
+     *     			.input(TagPrefix.log, Materials.Wood, 16)
      *     			.circuitMeta(2)
      *     			.fluidInputs(Materials.Nitrogen.getFluid(1000))
      *     			.outputs(new ItemStack(Items.COAL, 20, 1))
@@ -1039,11 +1039,11 @@ public class GtRecipeTypes {
      * <pre>
      *     GTRecipeType.SIFTER_RECIPES.recipeBuilder()
      *     			.inputs(new ItemStack(Blocks.SAND))
-     *     			.chancedOutput(OreDictUnifier.get(OrePrefix.gemExquisite, Materials.Ruby, 1L), 300)
-     *     			.chancedOutput(OreDictUnifier.get(OrePrefix.gemFlawless, Materials.Ruby, 1L), 1200)
-     *     			.chancedOutput(OreDictUnifier.get(OrePrefix.gemFlawed, Materials.Ruby, 1L), 4500)
-     *     			.chancedOutput(OreDictUnifier.get(OrePrefix.gemChipped, Materials.Ruby, 1L), 1400)
-     *     			.chancedOutput(OreDictUnifier.get(OrePrefix.dust, Materials.Ruby, 1L), 2800)
+     *     			.chancedOutput(OreDictUnifier.get(TagPrefix.gemExquisite, Materials.Ruby, 1L), 300)
+     *     			.chancedOutput(OreDictUnifier.get(TagPrefix.gemFlawless, Materials.Ruby, 1L), 1200)
+     *     			.chancedOutput(OreDictUnifier.get(TagPrefix.gemFlawed, Materials.Ruby, 1L), 4500)
+     *     			.chancedOutput(OreDictUnifier.get(TagPrefix.gemChipped, Materials.Ruby, 1L), 1400)
+     *     			.chancedOutput(OreDictUnifier.get(TagPrefix.dust, Materials.Ruby, 1L), 2800)
      *     			.duration(800)
      *     			.EUt(16)
      *     			.buildAndRegister();
@@ -1058,8 +1058,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      *     GTRecipeType.THERMAL_CENTRIFUGE_RECIPES.recipeBuilder()
-     *     			.input(OrePrefix.crushed, Materials.Aluminum)
-     *     			.outputs(OreDictUnifier.get(OrePrefix.crushedPurified, Materials.Aluminum), OreDictUnifier.get(OrePrefix.dustTiny, Materials.Bauxite, 3), OreDictUnifier.get(OrePrefix.dust, Materials.Stone))
+     *     			.input(TagPrefix.crushed, Materials.Aluminum)
+     *     			.outputs(OreDictUnifier.get(TagPrefix.crushedPurified, Materials.Aluminum), OreDictUnifier.get(TagPrefix.dustTiny, Materials.Bauxite, 3), OreDictUnifier.get(TagPrefix.dust, Materials.Stone))
      *     			.duration(800)
      *     			.EUt(16)
      *     			.buildAndRegister();
@@ -1095,8 +1095,8 @@ public class GtRecipeTypes {
      * Example:
      * <pre>
      * 		GTRecipeType.WIREMILL_RECIPES.recipeBuilder()
-     * 				.input(OrePrefix.ingot, Materials.Iron)
-     * 				.output(OrePrefix.wireGtSingle, Materials.Iron, 2)
+     * 				.input(TagPrefix.ingot, Materials.Iron)
+     * 				.output(TagPrefix.wireGtSingle, Materials.Iron, 2)
      * 				.duration(200)
      * 				.EUt(GTValues.VA[GTValues.ULV])
      * 				.buildAndRegister();

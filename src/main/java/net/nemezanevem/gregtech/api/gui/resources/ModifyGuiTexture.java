@@ -2,7 +2,7 @@ package net.nemezanevem.gregtech.api.gui.resources;
 
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.File;
 import java.util.Arrays;
@@ -87,7 +87,7 @@ public class ModifyGuiTexture implements IGuiTexture{
         try {
             switch (config.get("type").getAsString()) {
                 case "resource":
-                    setTexture(new TextureArea(new ResourceLocation(config.get("resource").getAsString()), 0.0, 0.0, 1.0, 1.0));
+                    setTexture(new TextureArea(new ResourceLocation(config.get("resource").getAsString()), 0.0f, 0.0f, 1.0f, 1.0f));
                 case "url":
                     setTexture(new URLTexture(config.get("url").getAsString()));
                 case "text":

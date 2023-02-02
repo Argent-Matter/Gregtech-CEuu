@@ -1,23 +1,34 @@
 package net.nemezanevem.gregtech.common.pipelike.cable.tile;
 
 import codechicken.lib.vec.Cuboid6;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.nemezanevem.gregtech.api.GTValues;
-import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import net.nemezanevem.gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
 import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
+import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
+import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
+import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
+import net.nemezanevem.gregtech.api.pipenet.block.material.TileEntityMaterialPipeBase;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.WireProperty;
 import net.nemezanevem.gregtech.api.util.PerTickLongCounter;
 import net.nemezanevem.gregtech.api.util.TaskScheduler;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.particle.GTParticleManager;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
 import net.nemezanevem.gregtech.common.pipelike.cable.BlockCable;
 import net.nemezanevem.gregtech.common.pipelike.cable.Insulation;
 import net.nemezanevem.gregtech.common.pipelike.cable.net.EnergyNet;
 import net.nemezanevem.gregtech.common.pipelike.cable.net.EnergyNetHandler;
+import net.nemezanevem.gregtech.common.pipelike.cable.net.WorldENet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -150,19 +161,19 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
         int temp = temperature;
         setTemperature(293);
         int index = getPipeType().insulationLevel;
-        BlockCable newBlock = MetaBlocks.CABLES[index];
-        level.setBlockState(pos, newBlock.getDefaultState());
-        TileEntityCable newCable = (TileEntityCable) world.getBlockEntity(pos);
+        BlockCable newBlock = MetaBlocks.CABLES.get(index).get();
+        level.setBlock(worldPosition, newBlock.defaultBlockState(), 3);
+        TileEntityCable newCable = (TileEntityCable) level.getBlockEntity(worldPosition);
         if (newCable != null) { // should never be null
             newCable.setPipeData(newBlock, newBlock.getItemPipeType(null), getPipeMaterial());
-            for (Direction facing : Direction.VALUES) {
+            for (Direction facing : Direction.values()) {
                 if (isConnected(facing)) {
                     newCable.setConnection(facing, true, true);
                 }
             }
             newCable.setTemperature(temp);
             if (!newCable.isTicking) {
-                TaskScheduler.scheduleTask(world, newCable::update);
+                TaskScheduler.scheduleTask(level, newCable::update);
                 newCable.isTicking = true;
             }
         }
@@ -170,7 +181,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
 
     public void setTemperature(int temperature) {
         this.temperature = temperature;
-        world.checkLight(pos);
+        level.getLightEngine().checkBlock(worldPosition);
         if (!world.isClientSide) {
             writeCustomData(100, buf -> buf.writeVarInt(temperature));
         } else {
@@ -198,13 +209,11 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
         return meltTemp;
     }
 
-    @SideOnly(Side.CLIENT)
     public void createParticle() {
-        particle = new GTOverheatParticle(world, pos, meltTemp, getPipeBoxes(), getPipeType().insulationLevel >= 0);
+        particle = new GTOverheatParticle(level, worldPosition, meltTemp, getPipeBoxes(), getPipeType().insulationLevel >= 0);
         GTParticleManager.INSTANCE.addEffect(particle);
     }
 
-    @SideOnly(Side.CLIENT)
     public void killParticle() {
         if (isParticleAlive()) {
             particle.setExpired();
@@ -213,15 +222,15 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     }
 
     public double getAverageAmperage() {
-        return averageAmperageCounter.getAverage(getWorld());
+        return averageAmperageCounter.getAverage(getLevel());
     }
 
     public long getCurrentMaxVoltage() {
-        return maxVoltageCounter.get(getWorld());
+        return maxVoltageCounter.get(getLevel());
     }
 
     public double getAverageVoltage() {
-        return averageVoltageCounter.getAverage(getWorld());
+        return averageVoltageCounter.getAverage(getLevel());
     }
 
     public long getMaxAmperage() {
@@ -236,7 +245,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     @Override
     public <T> LazyOptional<T> getCapabilityInternal(Capability<T> capability, @Nullable Direction facing) {
         if (capability == GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER) {
-            if (world.isClientSide)
+            if (level.isClientSide)
                 return GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER.cast(clientCapability);
             if (handlers.size() == 0)
                 initHandlers();
@@ -260,14 +269,14 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     }
 
     private EnergyNet getEnergyNet() {
-        if (world == null || world.isClientSide)
+        if (level == null || level.isClientSide)
             return null;
         EnergyNet currentEnergyNet = this.currentEnergyNet.get();
         if (currentEnergyNet != null && currentEnergyNet.isValid() &&
-                currentEnergyNet.containsNode(getPos()))
+                currentEnergyNet.containsNode(getBlockPos()))
             return currentEnergyNet; //return current net if it is still valid
-        WorldENet worldENet = WorldENet.getWorldENet(getWorld());
-        currentEnergyNet = worldENet.getNetFromPos(getPos());
+        WorldENet worldENet = WorldENet.getWorldENet(getLevel());
+        currentEnergyNet = worldENet.getNetFromPos(getBlockPos());
         if (currentEnergyNet != null) {
             this.currentEnergyNet = new WeakReference<>(currentEnergyNet);
         }
@@ -291,7 +300,6 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
         }
     }
 
-    @SideOnly(Side.CLIENT)
     public boolean isParticleAlive() {
         return particle != null && particle.isAlive();
     }
@@ -302,7 +310,7 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
         if ((getConnections() & 63) < 63) {
             pipeBoxes.add(BlockPipe.getSideBox(null, thickness));
         }
-        for (Direction facing : Direction.VALUES) {
+        for (Direction facing : Direction.values()) {
             if (isConnected(facing))
                 pipeBoxes.add(BlockPipe.getSideBox(facing, thickness));
         }
@@ -328,10 +336,10 @@ public class TileEntityCable extends TileEntityMaterialPipeBase<Insulation, Wire
     public List<Component> getDataInfo() {
         List<Component> list = new ArrayList<>();
         list.add(Component.translatable("behavior.tricorder.eut_per_sec",
-                Component.translatable(Util.formatNumbers(this.getAverageVoltage())).setStyle(new Style().setColor(TextFormatting.RED))
+                Component.translatable(Util.formatNumbers(this.getAverageVoltage())).withStyle(ChatFormatting.RED))
         ));
         list.add(Component.translatable("behavior.tricorder.amp_per_sec",
-                Component.translatable(Util.formatNumbers(this.getAverageAmperage())).setStyle(new Style().setColor(TextFormatting.RED))
+                Component.translatable(Util.formatNumbers(this.getAverageAmperage())).withStyle(ChatFormatting.RED))
         ));
         return list;
     }

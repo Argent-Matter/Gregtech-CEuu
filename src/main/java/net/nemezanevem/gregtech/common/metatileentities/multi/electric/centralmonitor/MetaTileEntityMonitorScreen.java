@@ -1,57 +1,48 @@
 package net.nemezanevem.gregtech.common.metatileentities.multi.electric.centralmonitor;
 
 import codechicken.lib.raytracer.VoxelShapeBlockHitResult;
-import gregtech.api.capability.GregtechDataCodes;
-import gregtech.api.cover.CoverBehavior;
-import gregtech.api.cover.ICoverable;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.*;
-import gregtech.api.items.behavior.MonitorPluginBaseBehavior;
-import gregtech.api.items.behavior.ProxyHolderPluginBehavior;
-import gregtech.api.items.toolitem.ToolClasses;
-import gregtech.api.items.toolitem.ToolHelper;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.MetaTileEntityUIFactory;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.MultiblockControllerBase;
-import gregtech.api.pipenet.tile.TileEntityPipeBase;
-import gregtech.api.util.BlockPosFace;
-import gregtech.api.util.GTLog;
-import gregtech.client.utils.RenderUtil;
-import gregtech.common.covers.CoverDigitalInterface;
-import gregtech.common.gui.widget.WidgetARGB;
-import gregtech.common.gui.widget.monitor.WidgetCoverList;
-import gregtech.common.gui.widget.monitor.WidgetMonitorScreen;
-import gregtech.common.gui.widget.monitor.WidgetPluginConfig;
-import gregtech.common.metatileentities.MetaTileEntities;
-import gregtech.common.metatileentities.multi.multiblockpart.MetaTileEntityMultiblockPart;
-import net.minecraft.block.state.BlockState;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.entity.player.PlayerMP;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NBTUtil;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.Direction;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityUIFactory;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockControllerBase;
+import net.nemezanevem.gregtech.api.capability.GregtechDataCodes;
+import net.nemezanevem.gregtech.api.cover.CoverBehavior;
+import net.nemezanevem.gregtech.api.cover.ICoverable;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.*;
+import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.util.BlockPosFace;
+import net.nemezanevem.gregtech.client.util.RenderUtil;
+import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntities;
+import net.nemezanevem.gregtech.common.metatileentities.multi.multiblockpart.MetaTileEntityMultiblockPart;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -122,7 +113,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
         ICoverable mte = null;
         IGregTechTileEntity holder = getHolderFromPos(posFacing.pos);
         if (holder == null) {
-            TileEntity te = this.getWorld() == null ? null : this.getWorld().getTileEntity(posFacing.pos);
+            BlockEntity te = this.getWorld() == null ? null : this.getWorld().getBlockEntity(posFacing.pos);
             if (te instanceof TileEntityPipeBase) {
                 mte = ((TileEntityPipeBase<?, ?>) te).getCoverableImplementation();
             }
@@ -139,7 +130,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     }
 
     public IGregTechTileEntity getHolderFromPos(BlockPos pos) {
-        TileEntity te = this.getWorld() == null || pos == null ? null : this.getWorld().getTileEntity(pos);
+        BlockEntity te = this.getWorld() == null || pos == null ? null : this.getWorld().getBlockEntity(pos);
         if (te instanceof IGregTechTileEntity && ((IGregTechTileEntity) te).isValid()) {
             return (IGregTechTileEntity) te;
         }
@@ -158,7 +149,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
         buf.writeBoolean(this.coverPos != null);
         if (this.coverPos != null) {
             buf.writeBlockPos(coverPos.pos);
-            buf.writeByte(coverPos.facing.getIndex());
+            buf.writeByte(coverPos.facing.ordinal());
         }
         buf.writeByte(this.mode.ordinal());
         buf.writeVarInt(this.slot);
@@ -169,7 +160,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     private void readSync(FriendlyByteBuf buf) {
         if (buf.readBoolean()) {
             BlockPos pos = buf.readBlockPos();
-            Direction side = Direction.byIndex(buf.readByte());
+            Direction side = Direction.from3DDataValue(buf.readByte());
             BlockPosFace pair = new BlockPosFace(pos, side);
             if (!pair.equals(this.coverPos)) {
                 this.coverTMP = null;
@@ -259,12 +250,12 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    public void renderScreen(float partialTicks, RayTraceResult rayTraceResult) {
+    public void renderScreen(float partialTicks, HitResult rayTraceResult) {
         if (getController() == null) return;
         Direction side = getController().getFrontFacing();
-        GlStateManager.translate((scale - 1) * 0.5, (scale - 1) * 0.5, 0);
-        GlStateManager.scale(this.scale, this.scale, 1);
+        PoseStack poseStack = RenderSystem.getModelViewStack();
+        poseStack.translate((scale - 1) * 0.5, (scale - 1) * 0.5, 0);
+        poseStack.scale(this.scale, this.scale, 1);
 
         if (plugin != null) {
             plugin.renderPlugin(partialTicks, rayTraceResult);
@@ -281,20 +272,20 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
             if (flag) {
                 coverTMP.renderMode(this.mode, this.slot, partialTicks);
 
-                TileEntity te = coverTMP.getCoveredTE();
+                BlockEntity te = coverTMP.getCoveredTE();
                 if (te != null) {
                     ItemStack itemStack;
                     if (te instanceof IGregTechTileEntity) {
                         itemStack = ((IGregTechTileEntity) te).getMetaTileEntity().getStackForm();
                     } else {
-                        BlockPos pos = te.getPos();
-                        itemStack = te.getBlockType().getPickBlock(te.getWorld().getBlockState(pos), new RayTraceResult(new Vec3d(0.5, 0.5, 0.5), coverTMP.getCoveredFacing(), pos), te.getWorld(), pos, Minecraft.getMinecraft().player);
+                        BlockPos pos = te.getBlockPos();
+                        itemStack = te.getBlockState().getCloneItemStack(new BlockHitResult(new Vec3(0.5, 0.5, 0.5), coverTMP.getCoveredFacing(), pos), te.getLevel(), pos, Minecraft.getInstance().player);
                     }
-                    String name = itemStack.getDisplayName();
+                    Component name = itemStack.getDisplayName();
                     // render machine
-                    RenderUtil.renderItemOverLay(-2.6f, -2.65f, 0.003f, 1 / 100f, itemStack);
+                    RenderUtil.renderItemOverLay(poseStack, -2.6f, -2.65f, 0.003f, 1 / 100f, itemStack);
                     // render name
-                    RenderUtil.renderText(0, -3.5f / 16, 0, 1.0f / 200, 0XFFFFFFFF, name, true);
+                    RenderUtil.renderText(poseStack, 0, -3.5f / 16, 0, 1.0f / 200, 0XFFFFFFFF, name, true);
                 }
 
             }
@@ -315,7 +306,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     public void writeInitialSyncData(FriendlyByteBuf buf) {
         super.writeInitialSyncData(buf);
         writeSync(buf);
-        buf.writeItemStack(this.inventory.getStackInSlot(0));
+        buf.writeItem(this.inventory.getStackInSlot(0));
         if (plugin != null) {
             plugin.writeInitialSyncData(buf);
         }
@@ -326,7 +317,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
         super.receiveInitialSyncData(buf);
         readSync(buf);
         try {
-            ItemStack itemStack = buf.readItemStack();
+            ItemStack itemStack = buf.readItem();
             MonitorPluginBaseBehavior behavior = MonitorPluginBaseBehavior.getBehavior(itemStack);
             if (behavior == null) {
                 unloadPlugin();
@@ -336,7 +327,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
                 plugin.receiveInitialSyncData(buf);
             }
         } catch (IOException e) {
-            GTLog.logger.error("Could not initialize Monitor Screen from InitialSyncData buffer", e);
+            GregTech.LOGGER.error("Could not initialize Monitor Screen from InitialSyncData buffer", e);
         }
     }
 
@@ -351,7 +342,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
             }
         } else if (dataId == GregtechDataCodes.UPDATE_PLUGIN_ITEM) {
             try {
-                ItemStack itemStack = buf.readItemStack();
+                ItemStack itemStack = buf.readItem();
                 MonitorPluginBaseBehavior behavior = MonitorPluginBaseBehavior.getBehavior(itemStack);
                 if (behavior == null) {
                     unloadPlugin();
@@ -360,7 +351,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
                     loadPlugin(behavior);
                 }
             } catch (IOException e) {
-                GTLog.logger.error("Could not initialize Monitor Screen from CustomData buffer", e);
+                GregTech.LOGGER.error("Could not initialize Monitor Screen from CustomData buffer", e);
             }
         }
     }
@@ -368,11 +359,11 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     @Override
     public CompoundTag writeToNBT(CompoundTag data) {
         if (this.coverPos != null) {
-            data.put("coverPos", NBTUtil.createPosTag(this.coverPos.pos));
-            data.setByte("coverSide", (byte) this.coverPos.facing.getIndex());
+            data.put("coverPos", NbtUtils.writeBlockPos(this.coverPos.pos));
+            data.putByte("coverSide", (byte) this.coverPos.facing.ordinal());
         }
-        data.setByte("mode", (byte) this.mode.ordinal());
-        data.setFloat("scale", this.scale);
+        data.putByte("mode", (byte) this.mode.ordinal());
+        data.putFloat("scale", this.scale);
         data.putInt("color", this.frameColor);
         data.putInt("slot", this.slot);
         data.put("Inventory", this.inventory.serializeNBT());
@@ -382,14 +373,14 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
     @Override
     public void readFromNBT(CompoundTag data) {
         super.readFromNBT(data);
-        this.frameColor = data.hasKey("color") ? data.getInt("color") : 0XFF00Ff00;
-        this.scale = data.hasKey("scale") ? data.getFloat("scale") : 1;
-        this.slot = data.hasKey("slot") ? data.getInt("slot") : 0;
-        this.mode = CoverDigitalInterface.MODE.VALUES[data.hasKey("mode") ? data.getByte("mode") : 0];
+        this.frameColor = data.contains("color") ? data.getInt("color") : 0XFF00Ff00;
+        this.scale = data.contains("scale") ? data.getFloat("scale") : 1;
+        this.slot = data.contains("slot") ? data.getInt("slot") : 0;
+        this.mode = CoverDigitalInterface.MODE.VALUES[data.contains("mode") ? data.getByte("mode") : 0];
         this.inventory.deserializeNBT(data.getCompound("Inventory"));
-        if (data.hasKey("coverPos") && data.hasKey("coverSide")) {
-            BlockPos pos = NBTUtil.getPosFromTag(data.getCompound("coverPos"));
-            Direction side = Direction.byIndex(data.getByte("coverSide"));
+        if (data.contains("coverPos") && data.contains("coverSide")) {
+            BlockPos pos = NBTUtils.getPosFromTag(data.getCompound("coverPos"));
+            Direction side = Direction.from3DDataValue(data.getByte("coverSide"));
             this.coverPos = new BlockPosFace(pos, side);
         } else {
             this.coverPos = null;
@@ -423,7 +414,7 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
                 if (!getWorld().isClientSide && !getStackInSlot(slot).isEmpty() && !simulate) {
                     unloadPlugin();
                     writeCustomData(GregtechDataCodes.UPDATE_PLUGIN_ITEM, packetBuffer -> {
-                        packetBuffer.writeItemStack(ItemStack.EMPTY);
+                        packetBuffer.writeItem(ItemStack.EMPTY);
                     });
                 }
                 return super.extractItem(slot, amount, simulate);
@@ -453,13 +444,13 @@ public class MetaTileEntityMonitorScreen extends MetaTileEntityMultiblockPart {
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY || capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        if (capability == ForgeCapabilities.FLUID_HANDLER || capability == ForgeCapabilities.ITEM_HANDLER) {
             CoverBehavior coverBehavior = getCoverFromPosSide(this.coverPos);
             if (coverBehavior != null && coverBehavior.coverHolder != null) {
                 return coverBehavior.coverHolder.getCapability(capability, coverBehavior.attachedSide);
             }
         }
-        return null;
+        return LazyOptional.empty();
     }
 
     @Override

@@ -143,7 +143,7 @@ public class MetaTileEntityCreativeTank extends MetaTileEntityQuantumTank {
     @Override
     public void initFromItemStackData(CompoundTag itemStack) {
         super.initFromItemStackData(itemStack);
-        if (itemStack.hasKey(FLUID_NBT_KEY, Constants.NBT.TAG_COMPOUND)) {
+        if (itemStack.hasKey(FLUID_NBT_KEY, Tag.TAG_COMPOUND)) {
             fluidTank.setFluid(FluidStack.loadFluidStackFromNBT(itemStack.getCompound(FLUID_NBT_KEY)));
             mBPerCycle = itemStack.getInt("mBPerCycle");
             ticksPerCycle = itemStack.getInt("ticksPerCycle");

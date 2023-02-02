@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.nemezanevem.gregtech.api.gui.GuiTextures;
@@ -26,19 +27,19 @@ import java.util.function.Consumer;
  */
 public class TagFilterTestSlot extends Widget implements IGhostIngredientTarget {
 
-    private ItemStack testStack = ItemStack.EMPTY;
-    private Consumer<ItemStack> listener;
+    private List<MutableComponent> testStack = ItemStack.EMPTY;
+    private Consumer<List<MutableComponent>> listener;
 
     public TagFilterTestSlot(int xPosition, int yPosition) {
         super(xPosition, yPosition, 18, 18);
     }
 
-    public TagFilterTestSlot setListener(Consumer<ItemStack> listener) {
+    public TagFilterTestSlot setListener(Consumer<List<MutableComponent>> listener) {
         this.listener = listener;
         return this;
     }
 
-    public TagFilterTestSlot setTestStack(ItemStack testStack) {
+    public TagFilterTestSlot setTestStack(List<MutableComponent> testStack) {
         if (testStack != null) {
             this.testStack = testStack;
         }

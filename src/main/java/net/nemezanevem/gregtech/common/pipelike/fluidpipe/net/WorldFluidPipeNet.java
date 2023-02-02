@@ -15,10 +15,6 @@ public class WorldFluidPipeNet extends WorldPipeNet<FluidPipeProperty, FluidPipe
         if(!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
             WorldFluidPipeNet netWorldData = serverLevel.getDataStorage().computeIfAbsent(WorldFluidPipeNet::load, WorldFluidPipeNet::new, DATA_ID);
-            if (netWorldData == null) {
-                netWorldData = new WorldFluidPipeNet();
-                serverLevel.getDataStorage().set(DATA_ID, netWorldData);
-            }
             netWorldData.setWorldAndInit(level);
             return netWorldData;
         }

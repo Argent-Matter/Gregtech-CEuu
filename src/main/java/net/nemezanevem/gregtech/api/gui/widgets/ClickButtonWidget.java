@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 public class ClickButtonWidget extends Widget {
 
-    protected TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0.0, 0.0, 1.0, 0.5);
+    protected TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0, 0, 1, 0.5f);
     protected final String displayText;
     protected int textColor = 0xFFFFFF;
     protected final Consumer<Widget.ClickData> onPressCallback;
@@ -83,7 +83,7 @@ public class ClickButtonWidget extends Widget {
         Position position = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
-            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(position.x, position.y, size.width, size.height, 0.0, 1.0);
+            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(position.x, position.y, size.width, size.height, 0.0f, 1.0f);
         } else {
             buttonTexture.drawSubArea(position.x, position.y, size.width, size.height, 0.0f, 0.0f, 1.0f, 1.0f);
         }

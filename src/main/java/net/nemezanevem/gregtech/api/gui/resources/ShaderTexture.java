@@ -1,27 +1,21 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
-import codechicken.lib.render.shader.ShaderObject;
-import codechicken.lib.render.shader.ShaderProgram;
+import codechicken.lib.render.shader.*;
 import com.mojang.blaze3d.vertex.PoseStack;
-import gregtech.api.gui.Widget;
-import gregtech.client.shader.Shaders;
-import gregtech.common.ConfigHolder;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.nemezanevem.gregtech.api.gui.Widget;
+import net.nemezanevem.gregtech.common.ConfigHolder;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class ShaderTexture implements IGuiTexture{
-    @SideOnly(Side.CLIENT)
     private static final Map<String, ShaderTexture> PROGRAMS = new HashMap<>();
-    @SideOnly(Side.CLIENT)
     private ShaderProgram program;
-    @SideOnly(Side.CLIENT)
     private ShaderObject object;
-    private float resolution = (float)ConfigHolder.client.resolution;
+    private float resolution = (float) ConfigHolder.client.resolution;
 
     public static void clear(){
         PROGRAMS.values().forEach(ShaderTexture::dispose);
@@ -34,28 +28,28 @@ public class ShaderTexture implements IGuiTexture{
 
     public void dispose() {
         if (object != null) {
-            object.disposeObject();
+            program.release();
         }
     }
 
-    @SideOnly(Side.CLIENT)
     public void updateRawShader(String rawShader) {
         dispose();
-        object = new ShaderObject(ShaderObject.ShaderType.FRAGMENT, rawShader).compileShader();
-        program = new ShaderProgram();
-        program.attachShader(object);
+        program = ShaderProgramBuilder.builder()
+                .addShader(rawShader, (consumer) ->
+                        consumer.source(rawShader)
+                                .type(ShaderObject.StandardShaderType.FRAGMENT))
+                .build();
     }
 
-    @SideOnly(Side.CLIENT)
     private ShaderTexture(ShaderProgram program, ShaderObject object) {
         this.program = program;
         this.object = object;
     }
 
     public static ShaderTexture createShader(String location) {
-        if (FMLCommonHandler.instance().getSide().isClient() && Shaders.allowedShader()) {
+        if (FMLLoader.getDist().isClient() && Shaders.allowedShader()) {
             if (!PROGRAMS.containsKey(location)) {
-                ShaderObject object = Shaders.loadShader(ShaderObject.ShaderType.FRAGMENT, location);
+                ShaderObject object = Shaders.loadShader(ShaderObject.StandardShaderType.FRAGMENT, location);
                 if (object != null) {
                     ShaderProgram program = new ShaderProgram();
                     program.attachShader(object);
@@ -95,9 +89,9 @@ public class ShaderTexture implements IGuiTexture{
         this.draw(x, y, width, height, null);
     }
 
-    public void draw(double x, double y, int width, int height, Consumer<ShaderProgram.UniformCache> uniformCache) {
+    public void draw(double x, double y, int width, int height, Consumer<CCUniform> uniformCache) {
         if (program != null) {
-            program.useShader(cache->{
+            program.getUniform(cache->{
                 cache.glUniform2F("u_resolution", width * resolution, height * resolution);
                 if (uniformCache != null) {
                     uniformCache.accept(cache);

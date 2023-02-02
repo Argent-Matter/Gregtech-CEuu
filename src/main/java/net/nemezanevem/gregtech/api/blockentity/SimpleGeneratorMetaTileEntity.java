@@ -3,32 +3,33 @@ package net.nemezanevem.gregtech.api.blockentity;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.capability.IActiveOutputSide;
-import gregtech.api.capability.impl.EnergyContainerHandler;
-import gregtech.api.capability.impl.FluidTankList;
-import gregtech.api.capability.impl.FuelRecipeLogic;
-import gregtech.api.capability.impl.RecipeLogicEnergy;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.CycleButtonWidget;
-import gregtech.api.gui.widgets.LabelWidget;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.recipes.RecipeType;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.PipelineUtil;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.core.Direction;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.capability.IActiveOutputSide;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerHandler;
+import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
+import net.nemezanevem.gregtech.api.capability.impl.FuelRecipeLogic;
+import net.nemezanevem.gregtech.api.capability.impl.RecipeLogicEnergy;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.CycleButtonWidget;
+import net.nemezanevem.gregtech.api.gui.widgets.LabelWidget;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.util.PipelineUtil;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -77,16 +78,19 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
         return true;
     }
 
+    private LazyOptional<IFluidHandler> fluidHandlerLazyOptional = LazyOptional.of(() -> this.fluidInventory);
+    private LazyOptional<IItemHandler> itemHandlerLazyOptional = LazyOptional.of(() -> this.itemInventory);
+
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side) {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER) {
-            if (fluidInventory.getTankProperties().length > 0) {
-                return CapabilityFluidHandler.FLUID_HANDLER.cast(fluidInventory);
+        if (capability == ForgeCapabilities.FLUID_HANDLER) {
+            if (fluidInventory.getTanks() > 0) {
+                return fluidHandlerLazyOptional.cast();
             }
             return null;
-        } else if (capability == CapabilityItemHandler.ITEM_HANDLER) {
+        } else if (capability == ForgeCapabilities.ITEM_HANDLER) {
             if (itemInventory.getSlots() > 0) {
-                return CapabilityItemHandler.ITEM_HANDLER.cast(itemInventory);
+                return itemHandlerLazyOptional.cast();
             }
             return null;
         }
@@ -105,7 +109,7 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
         if (handlesRecipeOutputs) builder = workableRecipeType.createUITemplate(workable::getProgressPercent, importItems, exportItems, importFluids, exportFluids, yOffset);
         else builder = workableRecipeType.createUITemplateNoOutputs(workable::getProgressPercent, importItems, exportItems, importFluids, exportFluids, yOffset);
         builder.widget(new LabelWidget(6, 6, getMetaFullName()))
-                .bindPlayerInventory(player.inventory, GuiTextures.SLOT, yOffset);
+                .bindPlayerInventory(player.getInventory(), GuiTextures.SLOT, yOffset);
 
         builder.widget(new CycleButtonWidget(7, 62 + yOffset, 18, 18,
                 workable.getAvailableOverclockingTiers(), workable::getOverclockTier, workable::setOverclockTier)
@@ -131,7 +135,7 @@ public class SimpleGeneratorMetaTileEntity extends WorkableTieredMetaTileEntity 
     public void addInformation(ItemStack stack, @Nullable Level player, @Nonnull List<Component> tooltip, boolean advanced) {
         String key = this.metaTileEntityId.getPath().split("\\.")[0];
         String mainKey = String.format("gregtech.machine.%s.tooltip", key);
-        if (I18n.hasKey(mainKey)) {
+        if (Language.getInstance().has(mainKey)) {
             tooltip.add(1, Component.translatable(mainKey));
         }
         tooltip.add(Component.translatable("gregtech.universal.tooltip.voltage_out", energyContainer.getOutputVoltage(), GTValues.VNF[getTier()]));

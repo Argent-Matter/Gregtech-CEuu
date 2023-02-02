@@ -1,18 +1,18 @@
 package net.nemezanevem.gregtech.common.pipelike.itempipe.net;
 
-import gregtech.api.pipenet.Node;
-import gregtech.api.pipenet.PipeNet;
-import gregtech.api.pipenet.WorldPipeNet;
-import gregtech.api.unification.material.properties.ItemPipeProperty;
-import gregtech.api.util.FacingPos;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
+import net.nemezanevem.gregtech.api.pipenet.Node;
+import net.nemezanevem.gregtech.api.pipenet.PipeNet;
+import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
+import net.nemezanevem.gregtech.api.unification.material.properties.properties.ItemPipeProperty;
+import net.nemezanevem.gregtech.api.util.FacingPos;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -59,7 +59,7 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperty> {
     @Override
     protected void writeNodeData(ItemPipeProperty nodeData, CompoundTag tagCompound) {
         tagCompound.putInt("Resistance", nodeData.getPriority());
-        tagCompound.setFloat("Rate", nodeData.getTransferRate());
+        tagCompound.putFloat("Rate", nodeData.getTransferRate());
     }
 
     @Override
@@ -112,13 +112,13 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperty> {
         }
 
         public BlockPos getHandlerPos() {
-            return pipePos.offset(faceToHandler);
+            return pipePos.offset(faceToHandler.getNormal());
         }
 
         public IItemHandler getHandler(Level world) {
             BlockEntity tile = world.getBlockEntity(getHandlerPos());
             if (tile != null)
-                return tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, faceToHandler.getOpposite());
+                return tile.getCapability(ForgeCapabilities.ITEM_HANDLER, faceToHandler.getOpposite()).isPresent() ? tile.getCapability(ForgeCapabilities.ITEM_HANDLER, faceToHandler.getOpposite()).resolve().get() : null;
             return null;
         }
 

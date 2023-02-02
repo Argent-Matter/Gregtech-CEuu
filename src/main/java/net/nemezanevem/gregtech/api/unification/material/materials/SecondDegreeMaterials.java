@@ -1,7 +1,6 @@
 package net.nemezanevem.gregtech.api.unification.material.materials;
 
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.BlastProperty.GasTier;
@@ -328,13 +327,13 @@ public class SecondDegreeMaterials {
                 .build());
 
         SulfuricNickelSolution = MATERIALS.register("sulfuric_nickel_solution", () -> new Material.Builder("sulfuric_nickel_solution")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0x3EB640)
                 .components(Nickel, 1, Oxygen, 1, SulfuricAcid, 1)
                 .build());
 
         SulfuricCopperSolution = MATERIALS.register("sulfuric_copper_solution", () -> new Material.Builder("sulfuric_copper_solution")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0x48A5C0)
                 .components(Copper, 1, Oxygen, 1, SulfuricAcid, 1)
                 .build());
@@ -346,21 +345,21 @@ public class SecondDegreeMaterials {
                 .build());
 
         NitrationMixture = MATERIALS.register("nitration_mixture", () -> new Material.Builder("nitration_mixture")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xE6E2AB)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(NitricAcid, 1, SulfuricAcid, 1)
                 .build());
 
         DilutedSulfuricAcid = MATERIALS.register("diluted_sulfuric_acid", () -> new Material.Builder("diluted_sulfuric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xC07820)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(SulfuricAcid, 2, Water, 1)
                 .build());
 
         DilutedHydrochloricAcid = MATERIALS.register("diluted_hydrochloric_acid", () -> new Material.Builder("diluted_hydrochloric_acid")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0x99A7A3)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(HydrochloricAcid, 1, Water, 1)
@@ -377,7 +376,7 @@ public class SecondDegreeMaterials {
                 .build());
 
         Air = MATERIALS.register("air", () -> new Material.Builder("air")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0xA9D0F5)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Nitrogen, 78, Oxygen, 21, Argon, 9)
@@ -392,7 +391,7 @@ public class SecondDegreeMaterials {
                 .build());
 
         NetherAir = MATERIALS.register("nether_air", () -> new Material.Builder("nether_air")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x4C3434)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(CarbonMonoxide, 78, HydrogenSulfide, 21, Neon, 9)
@@ -407,7 +406,7 @@ public class SecondDegreeMaterials {
                 .build());
 
         EnderAir = MATERIALS.register("ender_air", () -> new Material.Builder("ender_air")
-                .fluid(GtFluidTypes.GAS.get())
+                .fluid(GTFluidTypes.GAS)
                 .color(0x283454)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(NitrogenDioxide, 78, Deuterium, 21, Xenon, 9)
@@ -422,7 +421,7 @@ public class SecondDegreeMaterials {
                 .build());
 
         AquaRegia = MATERIALS.register("aqua_regia", () -> new Material.Builder("aqua_regia")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xFFB132)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(NitricAcid, 1, HydrochloricAcid, 2)
@@ -457,7 +456,7 @@ public class SecondDegreeMaterials {
                 .setFormula("NH4Cl", true));
 
         AcidicOsmiumSolution = MATERIALS.register("acidic_osmium_solution", () -> new Material.Builder("acidic_osmium_solution")
-                .fluid(GtFluidTypes.ACID.get())
+                .fluid(GTFluidTypes.ACID)
                 .color(0xA3AA8A)
                 .flags(DISABLE_DECOMPOSITION.get())
                 .components(Osmium, 1, Oxygen, 4, Water, 1, HydrochloricAcid, 1)

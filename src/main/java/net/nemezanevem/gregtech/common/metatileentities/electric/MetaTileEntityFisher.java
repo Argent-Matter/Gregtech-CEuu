@@ -3,34 +3,33 @@ package net.nemezanevem.gregtech.common.metatileentities.electric;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
-import gregtech.api.GTValues;
-import gregtech.api.gui.GuiTextures;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.widgets.SlotWidget;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
-import gregtech.api.util.GTTransferUtils;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.api.unification.OreDictUnifier;
-import gregtech.common.ConfigHolder;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootTable;
-import net.minecraft.world.storage.loot.LootTableList;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.LootTables;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSet;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.TieredMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.gui.GuiTextures;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.widgets.SlotWidget;
+import net.nemezanevem.gregtech.api.util.GTTransferUtils;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -75,7 +74,7 @@ public class MetaTileEntityFisher extends TieredMetaTileEntity {
             }
         }
 
-        builder.bindPlayerInventory(entityPlayer.inventory, GuiTextures.SLOT, 7, 18 + 18 * rowSize + 12);
+        builder.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 18 + 18 * rowSize + 12);
         return builder.build(getHolder(), entityPlayer);
     }
 
@@ -84,22 +83,22 @@ public class MetaTileEntityFisher extends TieredMetaTileEntity {
         super.tick();
         ItemStack baitStack = importItems.getStackInSlot(0);
         if (!getWorld().isClientSide && energyContainer.getEnergyStored() >= energyAmountPerFish && getOffsetTimer() % fishingTicks == 0L && !baitStack.isEmpty()) {
-            WorldServer world = (WorldServer) this.getWorld();
+            ServerLevel world = (ServerLevel) this.getWorld();
             int waterCount = 0;
             int edgeSize = (int) Math.sqrt(WATER_CHECK_SIZE);
             for (int x = 0; x < edgeSize; x++) {
                 for (int z = 0; z < edgeSize; z++) {
-                    BlockPos waterCheckPos = getPos().down().add(x - edgeSize / 2, 0, z - edgeSize / 2);
-                    if (world.getBlockState(waterCheckPos).getBlock() instanceof BlockLiquid &&
+                    BlockPos waterCheckPos = getPos().below().offset(x - edgeSize / 2, 0, z - edgeSize / 2);
+                    if (world.getBlockState(waterCheckPos).getBlock() instanceof LiquidBlock &&
                             world.getBlockState(waterCheckPos).getMaterial() == Material.WATER) {
                         waterCount++;
                     }
                 }
             }
             if (waterCount == WATER_CHECK_SIZE) {
-                LootTable table = world.getLootTableManager().getLootTableFromLocation(LootTableList.GAMEPLAY_FISHING);
+                LootTable table = world.getServer().getLootTables().get(BuiltInLootTables.FISHING);
                 NonNullList<ItemStack> itemStacks = NonNullList.create();
-                itemStacks.addAll(table.generateLootForPools(world.rand, new LootContext.Builder(world).build()));
+                itemStacks.addAll(table.getRandomItems(new LootContext.Builder(world).create(LootContextParamSet.builder().build())));
                 if (GTTransferUtils.addItemsToItemHandler(exportItems, true, itemStacks)) {
                     GTTransferUtils.addItemsToItemHandler(exportItems, false, itemStacks);
                     energyContainer.removeEnergy(energyAmountPerFish);

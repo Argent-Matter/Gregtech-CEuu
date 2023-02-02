@@ -19,7 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -125,7 +125,7 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
         if (worldIn.isClientSide) return;
         TileEntityFluidPipe pipe = (TileEntityFluidPipe) getPipeTileEntity(worldIn, pos);
         if (pipe instanceof TileEntityFluidPipeTickable && pipe.getFrameMaterial() == null && ((TileEntityFluidPipeTickable) pipe).getOffsetTimer() % 10 == 0) {
-            if (entityIn instanceof EntityLivingBase) {
+            if (entityIn instanceof LivingEntity) {
                 if (((TileEntityFluidPipeTickable) pipe).getFluidTanks().length > 1) {
                     // apply temperature damage for the hottest and coldest pipe (multi fluid pipes)
                     int maxTemperature = Integer.MIN_VALUE;
@@ -137,16 +137,16 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
                         }
                     }
                     if (maxTemperature != Integer.MIN_VALUE) {
-                        EntityDamageUtil.applyTemperatureDamage((EntityLivingBase) entityIn, maxTemperature, 1.0F, 5);
+                        EntityDamageUtil.applyTemperatureDamage((LivingEntity) entityIn, maxTemperature, 1.0F, 5);
                     }
                     if (minTemperature != Integer.MAX_VALUE) {
-                        EntityDamageUtil.applyTemperatureDamage((EntityLivingBase) entityIn, minTemperature, 1.0F, 5);
+                        EntityDamageUtil.applyTemperatureDamage((LivingEntity) entityIn, minTemperature, 1.0F, 5);
                     }
                 } else {
                     FluidTank tank = ((TileEntityFluidPipeTickable) pipe).getFluidTanks()[0];
                     if (tank.getFluid() != null && tank.getFluid().amount > 0) {
                         // Apply temperature damage for the pipe (single fluid pipes)
-                        EntityDamageUtil.applyTemperatureDamage((EntityLivingBase) entityIn, tank.getFluid().getFluid().getTemperature(), 1.0F, 5);
+                        EntityDamageUtil.applyTemperatureDamage((LivingEntity) entityIn, tank.getFluid().getFluid().getTemperature(), 1.0F, 5);
                     }
                 }
             }
@@ -154,7 +154,7 @@ public class BlockFluidPipe extends BlockMaterialPipe<FluidPipeType, FluidPipePr
     }
 
     @Override
-    public TileEntityPipeBase<FluidPipeType, FluidPipeProperty> createNewTileEntity(boolean supportsTicking) {
+    public TileEntityPipeBase<FluidPipeType, FluidPipeProperty> createNewTileEntity(boolean supportsTicking, BlockPos pPos, BlockState pState) {
         return new TileEntityFluidPipeTickable(); // fluid pipes are always ticking
     }
 

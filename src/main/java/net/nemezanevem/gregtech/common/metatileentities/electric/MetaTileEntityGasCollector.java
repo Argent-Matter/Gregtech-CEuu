@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.common.metatileentities.electric;
 
-import mezz.jei.api.constants.RecipeTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
@@ -9,6 +8,8 @@ import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
 import net.nemezanevem.gregtech.api.capability.impl.RecipeLogicEnergy;
 import net.nemezanevem.gregtech.api.recipe.GTRecipe;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
+import net.nemezanevem.gregtech.api.recipe.GtRecipeTypes;
 import net.nemezanevem.gregtech.api.recipe.property.GasCollectorDimensionProperty;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 import net.nemezanevem.gregtech.client.renderer.texture.Textures;
@@ -26,7 +27,7 @@ public class MetaTileEntityGasCollector extends SimpleMachineMetaTileEntity {
 
     @Override
     public MetaTileEntity createMetaTileEntity(IGregTechTileEntity tileEntity) {
-        return new MetaTileEntityGasCollector(this.metaTileEntityId, RecipeTypes.GAS_COLLECTOR_RECIPES,
+        return new MetaTileEntityGasCollector(this.metaTileEntityId, GtRecipeTypes.GAS_COLLECTOR_RECIPES.get(),
                 Textures.GAS_COLLECTOR_OVERLAY, this.getTier(), this.hasFrontFacing(), this.getTankScalingFunction());
     }
 

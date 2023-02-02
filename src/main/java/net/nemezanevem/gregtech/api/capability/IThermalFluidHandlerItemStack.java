@@ -3,7 +3,6 @@ package net.nemezanevem.gregtech.api.capability;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidType;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 
 /**
  * Interface for FluidHandlerItemStacks which handle GT's unique fluid mechanics
@@ -29,8 +28,8 @@ public interface IThermalFluidHandlerItemStack {
 
         if (fluid instanceof MaterialFluid) {
             FluidType fluidType = ((MaterialFluid) fluid).getFluidType();
-            if (fluidType == GtFluidTypes.ACID.get() && !isAcidProof()) return false;
-            if (fluidType == GtFluidTypes.PLASMA.get() && !isPlasmaProof()) return false;
+            if (fluidType == GTFluidTypes.ACID && !isAcidProof()) return false;
+            if (fluidType == GTFluidTypes.PLASMA && !isPlasmaProof()) return false;
         }
         return true;
     }

@@ -36,10 +36,10 @@ import net.minecraft.util.InteractionHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AABB;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerLevel;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootTable;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.common.util.Tag;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.oredict.OreDictionary;
 import org.apache.commons.lang3.tuple.Pair;
@@ -227,7 +227,7 @@ public class MetaTileEntityLockedSafe extends MetaTileEntity implements IFastRen
 
     private void generateChestContents() {
         ResourceLocation lootTableLocation = new ResourceLocation(GTValues.MODID, "chests/abandoned_safe_" + unlockComponentTier);
-        WorldServer worldServer = (WorldServer) getWorld();
+        ServerLevel worldServer = (ServerLevel) getWorld();
         LootTable lootTable = worldServer.getLootTableManager().getLootTableFromLocation(lootTableLocation);
         LootContext lootContext = new LootContext.Builder(worldServer).build();
         Random random = new Random();

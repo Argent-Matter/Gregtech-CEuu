@@ -1,12 +1,11 @@
 package net.nemezanevem.gregtech.api.gui.resources;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderSystem;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class ItemStackTexture implements IGuiTexture{
     private final ItemStack[] itemStack;
@@ -37,15 +36,15 @@ public class ItemStackTexture implements IGuiTexture{
     @Override
     public void draw(PoseStack poseStack, double x, double y, int width, int height) {
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
-        RenderSystem.disableDepth();
-            Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
-        RenderSystem.pushMatrix();
-        RenderSystem.scale(width / 16f, height / 16f, 0.0001);
-        RenderSystem.translate(x * 16 / width, y * 16 / height, 0);
-        RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
-        itemRender.renderItemAndEffectIntoGUI(itemStack[index], 0, 0);
-        RenderSystem.enableAlpha();
-        RenderSystem.popMatrix();
+        RenderSystem.disableDepthTest();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+        poseStack.pushPose();
+        poseStack.scale(width / 16f, height / 16f, 0.0001f);
+        poseStack.translate(x * 16 / width, y * 16 / height, 0);
+        ItemRenderer itemRender = Minecraft.getInstance().getItemRenderer();
+        itemRender.renderAndDecorateItem(itemStack[index], 0, 0);
+        RenderSystem.enableDepthTest();
+        poseStack.popPose();
         Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
     }
 }

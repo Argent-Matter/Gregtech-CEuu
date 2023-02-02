@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -330,7 +331,7 @@ public abstract class Widget {
         RenderSystem.disableDepthTest();
     }
 
-    public static List<Component> getItemToolTip(ItemStack itemStack) {
+    public static List<Component> getItemToolTip(List<MutableComponent> itemStack) {
         Minecraft mc = Minecraft.getInstance();
         TooltipFlag flag = mc.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL;
         List<Component> tooltip = itemStack.getTooltipLines(mc.player, flag);

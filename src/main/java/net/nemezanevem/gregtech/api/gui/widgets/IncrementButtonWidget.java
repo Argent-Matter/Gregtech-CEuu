@@ -14,13 +14,12 @@ import net.nemezanevem.gregtech.api.gui.resources.TextureArea;
 import net.nemezanevem.gregtech.api.util.Position;
 import net.nemezanevem.gregtech.api.util.Size;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntConsumer;
 
 public class IncrementButtonWidget extends Widget {
 
-    private TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0.0, 0.0, 1.0, 0.5);
+    private TextureArea buttonTexture = GuiTextures.VANILLA_BUTTON.getSubArea(0, 0, 1, 0.5f);
     private final int increment;
     private final int incrementShift;
     private final int incrementCtrl;
@@ -70,7 +69,7 @@ public class IncrementButtonWidget extends Widget {
     }
 
     @Override
-    public void updateScreen() {
+    public void updateScreenOnFrame() {
         this.clickValue = getClickValue();
     }
 
@@ -80,22 +79,22 @@ public class IncrementButtonWidget extends Widget {
         Position position = getPosition();
         Size size = getSize();
         if (buttonTexture instanceof SizedTextureArea) {
-            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(position.x, position.y, size.width, size.height, 0.0, 1.0);
+            ((SizedTextureArea) buttonTexture).drawHorizontalCutSubArea(position.x, position.y, size.width, size.height, 0.0f, 1.0f);
         } else {
-            buttonTexture.drawSubArea(position.x, position.y, size.width, size.height, 0.0, 0.0, 1.0, 1.0);
+            buttonTexture.drawSubArea(position.x, position.y, size.width, size.height, 0, 0, 1, 1);
         }
 
-        Font fontRenderer = Minecraft.getInstance().font;.
+        Font fontRenderer = Minecraft.getInstance().font;
         String text = String.valueOf(clickValue);
         if(clickValue >= 0)
             text = "+" + text;
-        drawText(text,
+        drawText(poseStack, text,
                 position.x + size.width / 2f - (fontRenderer.width(text) / 2f) * textScale,
                 position.y + size.height / 2f - (fontRenderer.lineHeight / 2f) * textScale, textScale, 0xFFFFFF);
     }
 
     @Override
-    public void drawInForeground(PoseStack poseStack, double mouseX, double mouseY) {
+    public void drawInForeground(PoseStack poseStack, int mouseX, int mouseY) {
         boolean isHovered = isMouseOverElement(mouseX, mouseY);
         boolean wasHovered = isMouseHovered;
         if (isHovered && !wasHovered) {
@@ -107,8 +106,8 @@ public class IncrementButtonWidget extends Widget {
         } else if (isHovered) {
             long timeSinceHover = System.currentTimeMillis() - hoverStartTime;
             if (timeSinceHover > 750L && tooltip != null) {
-                List<String> hoverList = Arrays.asList(Component.translatable(tooltip).split("/n"));
-                drawHoveringText(ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
+                List<Component> hoverList = List.of(Component.translatable(tooltip));
+                drawHoveringText(poseStack, ItemStack.EMPTY, hoverList, 300, mouseX, mouseY);
             }
         }
     }
@@ -125,7 +124,7 @@ public class IncrementButtonWidget extends Widget {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseOverElement(mouseX, mouseY)) {
             if(shouldClientCallback)
                 updater.accept(clickValue);

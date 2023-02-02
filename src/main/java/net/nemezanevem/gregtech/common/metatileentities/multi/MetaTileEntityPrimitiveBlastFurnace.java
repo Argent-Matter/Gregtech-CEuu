@@ -31,7 +31,7 @@ import gregtech.common.ConfigHolder;
 import gregtech.common.blocks.BlockMetalCasing;
 import gregtech.common.blocks.MetaBlocks;
 import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.Player;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.*;
@@ -147,7 +147,7 @@ public class MetaTileEntityPrimitiveBlastFurnace extends RecipeTypePrimitiveMult
     private void damageEntitiesAndBreakSnow() {
         BlockPos middlePos = this.getPos();
         middlePos = middlePos.offset(getFrontFacing().getOpposite());
-        this.getWorld().getEntitiesWithinAABB(EntityLivingBase.class, new AABB(middlePos)).forEach(entity -> entity.attackEntityFrom(DamageSource.LAVA, 3.0f));
+        this.getWorld().getEntitiesWithinAABB(LivingEntity.class, new AABB(middlePos)).forEach(entity -> entity.attackEntityFrom(DamageSource.LAVA, 3.0f));
 
         if (getOffsetTimer() % 10 == 0) {
             BlockState state = getWorld().getBlockState(middlePos);

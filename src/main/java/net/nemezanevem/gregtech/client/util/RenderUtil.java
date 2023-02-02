@@ -10,10 +10,10 @@ import com.mojang.math.Quaternion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
@@ -332,6 +332,18 @@ public class RenderUtil {
         GL11.glShadeModel(GL11.GL_FLAT);
         RenderSystem.disableBlend();
         RenderSystem.enableTexture();
+    }
+
+    public static void renderText(PoseStack poseStack, float x, float y, float z, float scale, int color, final Component renderedText, boolean centered) {
+        poseStack.pushPose();
+        final Font fr = Minecraft.getInstance().font;
+        final int width = fr.width(renderedText.getVisualOrderText());
+        poseStack.translate(x, y - scale * 4, z);
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(-0.5f * (centered? 1:0)*width, 0.0f, 0.5f );
+
+        fr.draw(poseStack, renderedText, 0, 0, color);
+        poseStack.popPose();
     }
 
     public static void renderText(PoseStack poseStack, float x, float y, float z, float scale, int color, final String renderedText, boolean centered) {

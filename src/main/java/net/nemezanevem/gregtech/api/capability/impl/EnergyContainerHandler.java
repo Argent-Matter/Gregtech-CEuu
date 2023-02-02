@@ -1,6 +1,5 @@
 package net.nemezanevem.gregtech.api.capability.impl;
 
-import gregtech.api.GTValues;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -11,14 +10,7 @@ import net.nemezanevem.gregtech.api.capability.FeCompat;
 import net.nemezanevem.gregtech.api.capability.GregtechCapabilities;
 import net.nemezanevem.gregtech.api.capability.IElectricItem;
 import net.nemezanevem.gregtech.api.capability.IEnergyContainer;
-import gregtech.api.metatileentity.MTETrait;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.util.Util;
-import gregtech.common.ConfigHolder;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandlerModifiable;

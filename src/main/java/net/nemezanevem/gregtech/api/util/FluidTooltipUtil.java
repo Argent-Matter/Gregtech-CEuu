@@ -7,8 +7,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
-import net.nemezanevem.gregtech.api.fluids.type.GTFluidType;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.Material;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
@@ -115,7 +113,7 @@ public class FluidTooltipUtil {
             tooltip.add(Component.literal(material.getChemicalFormula()).withStyle(ChatFormatting.YELLOW));
         tooltip.add(Component.translatable("gregtech.fluid.temperature", temperature));
         if (isPlasma) {
-            tooltip.add(Component.translatable(GtFluidTypes.PLASMA.get().getDescriptionId()));
+            tooltip.add(Component.translatable(GTFluidTypes.PLASMA.getDescriptionId()));
         } else {
             tooltip.add(Component.translatable(material.getProperty(GtMaterialProperties.FLUID.get()).getFluidType().getDescriptionId()));
         }

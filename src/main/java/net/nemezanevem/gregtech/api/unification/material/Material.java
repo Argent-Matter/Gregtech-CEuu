@@ -10,7 +10,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.registries.RegistryObject;
 import net.nemezanevem.gregtech.GregTech;
-import net.nemezanevem.gregtech.api.fluids.GtFluidTypes;
 import net.nemezanevem.gregtech.api.fluids.type.GTFluidType;
 import net.nemezanevem.gregtech.api.fluids.type.GTFluidTypes;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;

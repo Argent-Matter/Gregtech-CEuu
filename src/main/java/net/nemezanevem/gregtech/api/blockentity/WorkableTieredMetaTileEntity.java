@@ -16,6 +16,7 @@ import net.nemezanevem.gregtech.api.GTValues;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomProvider;
 import net.nemezanevem.gregtech.api.blockentity.multiblock.ICleanroomReceiver;
 import net.nemezanevem.gregtech.api.capability.impl.*;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 

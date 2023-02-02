@@ -1,17 +1,16 @@
 package net.nemezanevem.gregtech.api.cover;
 
-import gregtech.api.GTValues;
-import gregtech.api.GregTechAPI;
-import gregtech.api.capability.GregtechTileCapabilities;
-import gregtech.api.gui.ModularUI;
-import gregtech.api.gui.UIFactory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.Player;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.capability.GregtechTileCapabilities;
+import net.nemezanevem.gregtech.api.gui.ModularUI;
+import net.nemezanevem.gregtech.api.gui.UIFactory;
+import net.nemezanevem.gregtech.api.registry.gui.UIFactoryRegistry;
 
 public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
 
@@ -21,7 +20,7 @@ public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
     }
 
     public void init() {
-        GregTechAPI.UI_FACTORY_REGISTRY.register(2, new ResourceLocation(GregTech.MODID, "cover_behavior_factory"), this);
+        UIFactoryRegistry.UI_FACTORIES.register("cover_behavior_factory", () -> this);
     }
 
     @Override
@@ -33,10 +32,10 @@ public class CoverBehaviorUIFactory extends UIFactory<CoverBehavior> {
     protected CoverBehavior readHolderFromSyncData(FriendlyByteBuf syncData) {
         BlockPos blockPos = syncData.readBlockPos();
         Direction attachedSide = Direction.values()[syncData.readByte()];
-        BlockEntity tileEntity = Minecraft.getMinecraft().world.getBlockEntity(blockPos);
-        ICoverable coverable = tileEntity == null ? null : tileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, attachedSide);
-        if (coverable != null) {
-            return coverable.getCoverAtSide(attachedSide);
+        BlockEntity tileEntity = Minecraft.getInstance().level.getBlockEntity(blockPos);
+        LazyOptional<ICoverable> coverable = tileEntity == null ? null : tileEntity.getCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, attachedSide);
+        if (coverable.isPresent()) {
+            return coverable.resolve().get().getCoverAtSide(attachedSide);
         }
         return null;
     }

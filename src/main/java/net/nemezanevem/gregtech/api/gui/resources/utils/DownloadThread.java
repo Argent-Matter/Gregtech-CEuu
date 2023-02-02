@@ -1,14 +1,12 @@
 package net.nemezanevem.gregtech.api.gui.resources.utils;
 
-import gregtech.api.gui.resources.picturetexture.AnimatedPictureTexture;
-import gregtech.api.gui.resources.picturetexture.OrdinaryTexture;
-import gregtech.api.gui.resources.picturetexture.PictureTexture;
-import gregtech.api.gui.resources.picturetexture.VideoTexture;
-import gregtech.api.util.GTLog;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.nemezanevem.gregtech.GregTech;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.AnimatedPictureTexture;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.OrdinaryTexture;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.PictureTexture;
+import net.nemezanevem.gregtech.api.gui.resources.picturetexture.VideoTexture;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -24,7 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-@SideOnly(Side.CLIENT)
 public class DownloadThread extends Thread {
     public static final Logger LOGGER = GregTech.LOGGER;
 
