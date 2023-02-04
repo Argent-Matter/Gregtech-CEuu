@@ -1,19 +1,19 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.VariantActiveBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.Block;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.nemezanevem.gregtech.api.block.VariantActiveBlock;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -22,29 +22,16 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class BlockGlassCasing extends VariantActiveBlock<BlockGlassCasing.CasingType> {
 
     public BlockGlassCasing() {
-        super(Material.IRON);
-        setTranslationKey("transparent_casing");
-        setHardness(5.0F);
-        setResistance(5.0F);
-        setSoundType(SoundType.GLASS);
-        setHarvestLevel(ToolClasses.PICKAXE, 1);
-        setDefaultState(getState(CasingType.TEMPERED_GLASS));
+        super(BlockBehaviour.Properties.of(Material.METAL).sound(SoundType.GLASS).strength(5.0f, 5.0f).isValidSpawn((pState, pLevel, pPos, pValue) -> false));
+        registerDefaultState(getState(CasingType.TEMPERED_GLASS));
     }
 
-    @Override
-    public boolean canCreatureSpawn(BlockState state, BlockGetter world, BlockPos pos, EntityLiving.SpawnPlacementType type) {
-        return false;
-    }
-
-    @Override
     @Nonnull
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
+    public RenderType getRenderLayer() {
+        return RenderType.cutout();
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    @SuppressWarnings("deprecation")
     public boolean isOpaqueCube(BlockState state) {
         return false;
     }
@@ -55,16 +42,13 @@ public class BlockGlassCasing extends VariantActiveBlock<BlockGlassCasing.Casing
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    @SuppressWarnings("deprecation")
-    public boolean shouldSideBeRendered(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
-        BlockState BlockState = blockAccess.getBlockState(pos.offset(side));
-        Block block = BlockState.getBlock();
+    public boolean skipRendering(BlockState pState, BlockState pAdjacentBlockState, Direction pDirection) {
+        Block block = pAdjacentBlockState.getBlock();
 
-        return block != this && super.shouldSideBeRendered(blockState, blockAccess, pos, side);
+        return block != this && super.skipRendering(pState, pAdjacentBlockState, pDirection);
     }
 
-    public enum CasingType implements IStringSerializable {
+    public enum CasingType implements StringRepresentable {
 
         TEMPERED_GLASS("tempered_glass"),
         FUSION_GLASS("fusion_glass"),
@@ -79,7 +63,7 @@ public class BlockGlassCasing extends VariantActiveBlock<BlockGlassCasing.Casing
 
         @Override
         @Nonnull
-        public String getName() {
+        public String getSerializedName() {
             return this.name;
         }
 

@@ -1,30 +1,16 @@
 package net.nemezanevem.gregtech.common.block;
 
-import gregtech.api.block.IStateHarvestLevel;
-import gregtech.api.block.VariantBlock;
-import gregtech.api.items.toolitem.ToolClasses;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockGetter;
-import net.minecraft.world.World;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.nemezanevem.gregtech.api.block.IStateHarvestLevel;
 import net.nemezanevem.gregtech.api.block.VariantBlock;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -46,15 +32,15 @@ public class BlockCleanroomCasing extends VariantBlock<BlockCleanroomCasing.Casi
 
     @Nullable
     @Override
-    public String getHarvestTool(BlockState state) {
-        return state == getState(CasingType.PLASCRETE) ? ToolClasses.PICKAXE : ToolClasses.WRENCH;
+    public ToolClass getHarvestTool(BlockState state) {
+        return state == getState(CasingType.PLASCRETE) ? ToolClass.PICKAXE : ToolClass.WRENCH;
     }
 
     @Override
     public void appendHoverText(@Nonnull ItemStack stack, @Nullable BlockGetter level, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag advanced) {
         super.appendHoverText(stack, level, tooltip, advanced);
-        if (stack.is(getItemVariant(CasingType.FILTER_CASING))) tooltip.add(Component.translatable("tile.cleanroom_casing.filter.tooltip"));
-        if (stack.is(getItemVariant(CasingType.FILTER_CASING_STERILE))) tooltip.add(Component.translatable("tile.cleanroom_casing.filter_sterile.tooltip"));
+        if (stack.is(getItemVariant(CasingType.FILTER_CASING).getItem())) tooltip.add(Component.translatable("tile.cleanroom_casing.filter.tooltip"));
+        if (stack.is(getItemVariant(CasingType.FILTER_CASING_STERILE).getItem())) tooltip.add(Component.translatable("tile.cleanroom_casing.filter_sterile.tooltip"));
     }
 
     public enum CasingType implements StringRepresentable {

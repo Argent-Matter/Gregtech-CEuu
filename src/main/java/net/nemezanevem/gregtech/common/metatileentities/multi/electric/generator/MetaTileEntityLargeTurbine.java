@@ -21,6 +21,7 @@ import net.nemezanevem.gregtech.api.capability.impl.FluidTankList;
 import net.nemezanevem.gregtech.api.pattern.BlockPattern;
 import net.nemezanevem.gregtech.api.pattern.FactoryBlockPattern;
 import net.nemezanevem.gregtech.api.pattern.PatternMatchContext;
+import net.nemezanevem.gregtech.api.recipe.GTRecipeType;
 import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
 
 import javax.annotation.Nonnull;
@@ -146,7 +147,7 @@ public class MetaTileEntityLargeTurbine extends FuelMultiblockController impleme
                 .where('R', metaTileEntities(MultiblockAbility.REGISTRY.get(GtMultiblockAbilities.ROTOR_HOLDER.get()).stream()
                         .filter(mte -> (mte instanceof ITieredMetaTileEntity) && (((ITieredMetaTileEntity) mte).getTier() >= tier))
                         .toArray(MetaTileEntity[]::new))
-                        .addTooltips("gregtech.multiblock.pattern.clear_amount_3")
+                        .addTooltips(Component.translatable("gregtech.multiblock.pattern.clear_amount_3"))
                         .addTooltip("gregtech.multiblock.pattern.error.limited.1", GTValues.VN[tier])
                         .setExactLimit(1)
                         .or(abilities(GtMultiblockAbilities.OUTPUT_ENERGY.get())).setExactLimit(1))

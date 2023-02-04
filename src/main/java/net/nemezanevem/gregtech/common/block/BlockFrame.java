@@ -18,10 +18,12 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -37,7 +39,9 @@ import net.nemezanevem.gregtech.api.pipenet.block.BlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.block.ItemBlockPipe;
 import net.nemezanevem.gregtech.api.pipenet.tile.IPipeTile;
 import net.nemezanevem.gregtech.api.pipenet.tile.TileEntityPipeBase;
+import net.nemezanevem.gregtech.api.recipe.ModHandler;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.material.properties.info.GtMaterialIconTypes;
 import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.model.IModelSupplier;
@@ -62,7 +66,7 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     }
 
     @Override
-    public String getHarvestTool(BlockState state) {
+    public ToolClass getHarvestTool(BlockState state) {
         Material material = state.getValue(variantProperty);
         if (ModHandler.isMaterialWood(material)) {
             return ToolClass.AXE;
@@ -94,10 +98,10 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     @Override
     @SuppressWarnings("deprecation")
-    public net.minecraft.block.material.Material getMaterial(BlockState state) {
+    public net.minecraft.world.level.material.Material getMaterial(BlockState state) {
         Material material = state.getValue(variantProperty);
         if (ModHandler.isMaterialWood(material)) {
-            return net.minecraft.block.material.Material.WOOD;
+            return net.minecraft.world.level.material.Material.WOOD;
         }
         return super.getMaterial(state);
     }
@@ -116,6 +120,10 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
 
     public Material getGtMaterial(String id) {
         return variantProperty.getValue(id).get();
+    }
+
+    public Material getGtMaterial(ItemStack itemStack) {
+        return TagUnifier.getMaterial(itemStack.getItem()).material;
     }
 
     public InteractionResult replaceWithFramedPipe(Level worldIn, BlockPos pos, BlockState state, Player playerIn, ItemStack stackInHand, Direction facing) {
@@ -230,6 +238,11 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
         return COLLISION_BOX;
     }
 
+    @Override
+    protected StateDefinition<Block, BlockState> createStateContainer() {
+        return new StateDefinition.Builder<Block, BlockState>(this).add(variantProperty).create(Block::defaultBlockState, BlockState::new);
+    }
+
     public RenderType getRenderType() {
         return RenderType.cutoutMipped();
     }
@@ -246,8 +259,8 @@ public final class BlockFrame extends DelayedStateBlock implements IModelSupplie
     public void onModelRegister(ModelEvent.RegisterAdditional event) {
         Minecraft.getInstance().getModelManager().
         ModelLoader.setCustomStateMapper(this, new SimpleStateMapper(MODEL_LOCATION));
-        for (BlockState state : this.getBlockState().getValidStates()) {
-            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(this), this.getMetaFromState(state), MODEL_LOCATION);
+        for (BlockState state : this.stateDefinition.getPossibleStates()) {
+            ModelLoader.setCustomModelResourceLocation(new ItemStack(this), this.getMetaFromState(state), MODEL_LOCATION);
         }
     }
 }

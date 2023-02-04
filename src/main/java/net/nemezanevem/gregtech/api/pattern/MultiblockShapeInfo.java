@@ -1,16 +1,20 @@
 package net.nemezanevem.gregtech.api.pattern;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 import net.nemezanevem.gregtech.common.block.MetaBlocks;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class MultiblockShapeInfo {
 
@@ -48,11 +52,11 @@ public class MultiblockShapeInfo {
         }
 
         public Builder where(char symbol, MetaTileEntity tileEntity, Direction frontSide) {
-            MetaTileEntityHolder holder = new MetaTileEntityHolder();
+            MetaTileEntityHolder holder = new MetaTileEntityHolder(BlockPos.ZERO, MetaBlocks.MACHINE.get().defaultBlockState());
             holder.setMetaTileEntity(tileEntity);
             holder.getMetaTileEntity().onPlacement();
             holder.getMetaTileEntity().setFrontFacing(frontSide);
-            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.defaultBlockState(), holder));
+            return where(symbol, new BlockInfo(MetaBlocks.MACHINE.get().defaultBlockState(), holder));
         }
 
         /**
@@ -79,7 +83,7 @@ public class MultiblockShapeInfo {
                         if (tileEntity != null) {
                             MetaTileEntityHolder holder = (MetaTileEntityHolder) tileEntity;
                             final MetaTileEntity mte = holder.getMetaTileEntity();
-                            holder = new MetaTileEntityHolder();
+                            holder = new MetaTileEntityHolder(new BlockPos(x, y, z), info.getBlockState());
                             holder.setMetaTileEntity(mte);
                             holder.getMetaTileEntity().onPlacement();
                             holder.getMetaTileEntity().setFrontFacing(mte.getFrontFacing());

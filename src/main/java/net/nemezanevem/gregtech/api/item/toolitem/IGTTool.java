@@ -1,5 +1,7 @@
 package net.nemezanevem.gregtech.api.item.toolitem;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
@@ -8,8 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -30,16 +34,17 @@ import net.nemezanevem.gregtech.api.gui.widgets.ClickButtonWidget;
 import net.nemezanevem.gregtech.api.gui.widgets.DynamicLabelWidget;
 import net.nemezanevem.gregtech.api.item.gui.ItemUIFactory;
 import net.nemezanevem.gregtech.api.item.gui.PlayerInventoryHolder;
+import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.toolitem.behavior.IToolBehavior;
 import net.nemezanevem.gregtech.api.recipe.ModHandler;
 import net.nemezanevem.gregtech.api.unification.material.GtMaterials;
 import net.nemezanevem.gregtech.api.unification.material.Material;
+import net.nemezanevem.gregtech.api.unification.material.TagUnifier;
 import net.nemezanevem.gregtech.api.unification.material.properties.GtMaterialProperties;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.DustProperty;
 import net.nemezanevem.gregtech.api.unification.material.properties.properties.ToolProperty;
 import net.nemezanevem.gregtech.api.unification.stack.UnificationEntry;
 import net.nemezanevem.gregtech.api.unification.tag.TagPrefix;
-import net.nemezanevem.gregtech.api.util.Util;
 import net.nemezanevem.gregtech.client.util.ToolChargeBarRenderer;
 import net.nemezanevem.gregtech.client.util.TooltipHelper;
 import net.nemezanevem.gregtech.common.ConfigHolder;
@@ -55,6 +60,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static net.minecraft.world.item.enchantment.EnchantmentCategory.*;
+import static net.nemezanevem.gregtech.api.item.armor.IArmorLogic.ATTACK_DAMAGE_MODIFIER;
+import static net.nemezanevem.gregtech.api.item.armor.IArmorLogic.ATTACK_SPEED_MODIFIER;
+import static net.nemezanevem.gregtech.api.item.toolitem.ToolHelper.*;
 
 public interface IGTTool extends ItemUIFactory {
 
@@ -85,8 +93,8 @@ public interface IGTTool extends ItemUIFactory {
     @Nullable
     Supplier<ItemStack> getMarkerItem();
 
-    default Item get() {
-        return (Item) this;
+    default MetaItem get() {
+        return (MetaItem) this;
     }
 
     default ItemStack getRaw() {
@@ -99,7 +107,7 @@ public interface IGTTool extends ItemUIFactory {
     default ItemStack get(Material material) {
         ItemStack stack = new ItemStack(get());
 
-        CompoundTag stackCompound = Util.getOrCreateNbtCompound(stack);
+        CompoundTag stackCompound = stack.getOrCreateTag();
         stackCompound.putBoolean(DISALLOW_CONTAINER_ITEM_KEY, false);
 
         CompoundTag toolTag = getToolTag(stack);
@@ -109,7 +117,7 @@ public interface IGTTool extends ItemUIFactory {
         stackCompound.putInt(HIDE_FLAGS, 2);
 
         // Set Material
-        toolTag.setString(MATERIAL_KEY, material.toString());
+        toolTag.putString(MATERIAL_KEY, material.toString());
 
         // Set other tool stats (durability)
         ToolProperty toolProperty = material.getProperty(GtMaterialProperties.TOOL.get());
@@ -389,11 +397,11 @@ public interface IGTTool extends ItemUIFactory {
     default boolean definition$getIsRepairable(ItemStack toRepair, ItemStack repair) {
         // full durability tools in the left slot are not repairable
         // this is needed so enchantment merging works when both tools are full durability
-        if (toRepair.getItemDamage() == 0) return false;
+        if (toRepair.getDamageValue() == toRepair.getMaxDamage()) return false;
         if (repair.getItem() instanceof IGTTool) {
             return getToolMaterial(toRepair) == ((IGTTool) repair.getItem()).getToolMaterial(repair);
         }
-        UnificationEntry entry = OreDictUnifier.getUnificationEntry(repair);
+        UnificationEntry entry = TagUnifier.getUnificationEntry(repair.getItem());
         if (entry == null || entry.material == null) return false;
         if (entry.material == getToolMaterial(toRepair)) {
             // special case wood to allow Wood Planks
@@ -401,24 +409,24 @@ public interface IGTTool extends ItemUIFactory {
                 return entry.tagPrefix == TagPrefix.plank;
             }
             // Gems can use gem and plate, Ingots can use ingot and plate
-            if (entry.orePrefix == TagPrefix.plate) {
+            if (entry.tagPrefix == TagPrefix.plate) {
                 return true;
             }
             if (entry.material.hasProperty(GtMaterialProperties.INGOT.get())) {
-                return entry.orePrefix == TagPrefix.ingot;
+                return entry.tagPrefix == TagPrefix.ingot;
             }
             if (entry.material.hasProperty(GtMaterialProperties.GEM.get())) {
-                return entry.orePrefix == TagPrefix.gem;
+                return entry.tagPrefix == TagPrefix.gem;
             }
         }
         return false;
     }
 
-    default Multimap<String, AttributeModifier> definition$getAttributeModifiers(EntityEquipmentSlot equipmentSlot, ItemStack stack) {
+    default Multimap<String, AttributeModifier> definition$getAttributeModifiers(EquipmentSlot equipmentSlot, ItemStack stack) {
         Multimap<String, AttributeModifier> multimap = HashMultimap.create();
-        if (equipmentSlot == EntityEquipmentSlot.MAINHAND) {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Weapon modifier", getTotalAttackDamage(stack), 0));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Weapon modifier", Math.max(-3.9D, getTotalAttackSpeed(stack)), 0));
+        if (equipmentSlot == EquipmentSlot.MAINHAND) {
+            multimap.put(Attributes.ATTACK_DAMAGE.getDescriptionId(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Weapon modifier", getTotalAttackDamage(stack), AttributeModifier.Operation.ADDITION));
+            multimap.put(Attributes.ATTACK_SPEED.getDescriptionId(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Weapon modifier", Math.max(-3.9D, getTotalAttackSpeed(stack)), AttributeModifier.Operation.ADDITION));
         }
         return multimap;
     }
@@ -440,7 +448,7 @@ public interface IGTTool extends ItemUIFactory {
     }
 
     default boolean definition$hasContainerItem(ItemStack stack) {
-        return stack.getTagCompound() == null || !stack.getTagCompound().getBoolean(DISALLOW_CONTAINER_ITEM_KEY);
+        return stack.getTag() == null || !stack.getTag().getBoolean(DISALLOW_CONTAINER_ITEM_KEY);
     }
 
     default ItemStack definition$getContainerItem(ItemStack stack) {
@@ -487,7 +495,7 @@ public interface IGTTool extends ItemUIFactory {
 
     default int definition$getDamage(ItemStack stack) {
         CompoundTag toolTag = getToolTag(stack);
-        if (toolTag.hasKey(DURABILITY_KEY, Tag.TAG_INT)) {
+        if (toolTag.contains(DURABILITY_KEY, Tag.TAG_INT)) {
             return toolTag.getInt(DURABILITY_KEY);
         }
         toolTag.putInt(DURABILITY_KEY, 0);

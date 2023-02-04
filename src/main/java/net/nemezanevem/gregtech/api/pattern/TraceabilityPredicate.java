@@ -4,10 +4,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.nemezanevem.gregtech.GregTech;
 import net.nemezanevem.gregtech.api.block.IHeatingCoilBlockStats;
 import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
 import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockControllerBase;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 
 import java.util.*;
@@ -20,7 +22,7 @@ public class TraceabilityPredicate {
     // Allow any block.
     public static TraceabilityPredicate ANY = new TraceabilityPredicate((state) -> true);
     // Allow the air block.
-    public static TraceabilityPredicate AIR = new TraceabilityPredicate(blockWorldState -> blockWorldState.getBlockState().getBlock().isAir(blockWorldState.getBlockState(), blockWorldState.getWorld(), blockWorldState.getPos()));
+    public static TraceabilityPredicate AIR = new TraceabilityPredicate(blockWorldState -> blockWorldState.getBlockState().isAir());
     // Allow all heating coils, and require them to have the same type.
     public static Supplier<TraceabilityPredicate> HEATING_COILS = () -> new TraceabilityPredicate(blockWorldState -> {
         BlockState blockState = blockWorldState.getBlockState();
@@ -40,7 +42,7 @@ public class TraceabilityPredicate {
             .sorted(Comparator.comparingInt(entry -> entry.getValue().getTier()))
             .map(entry -> new BlockInfo(entry.getKey(), null))
             .toArray(BlockInfo[]::new))
-            .addTooltips("gregtech.multiblock.pattern.error.coils");
+            .addTooltips(Component.translatable("gregtech.multiblock.pattern.error.coils"));
 
     public final List<SimplePredicate> common = new ArrayList<>();
     public final List<SimplePredicate> limited = new ArrayList<>();
@@ -90,12 +92,11 @@ public class TraceabilityPredicate {
 
     /**
      * Add tooltips for candidates. They are shown in JEI Pages.
-     * Do NOT pass {@link I18n#format(String, Object...)} calls here! Everything is will be translated when it's needed.
-     * If you need parameters, use {@link #addTooltip(String, Object...)} instead.
      */
-    public TraceabilityPredicate addTooltips(String... tips) {
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT && tips.length > 0) {
-            List<Component> tooltips = Arrays.stream(tips).collect(Collectors.toList());
+    public TraceabilityPredicate addTooltips(Component... tips) {
+
+        if (FMLLoader.getDist().isClient() && tips.length > 0) {
+            List<Component> tooltips = Arrays.stream(tips).toList();
             common.forEach(predicate -> {
                 if (predicate.candidates == null) return;
                 if (predicate.toolTips == null) {
@@ -118,7 +119,7 @@ public class TraceabilityPredicate {
      * Note: This method does not translate dynamically!! Parameters can not be updated once set.
      */
     public TraceabilityPredicate addTooltip(String langKey, Object... data) {
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+        if (FMLLoader.getDist().isClient()) {
             addTooltips(Component.translatable(langKey, data));
         }
         return this;
@@ -254,7 +255,7 @@ public class TraceabilityPredicate {
         public List<Component> getToolTips(TraceabilityPredicate predicates) {
             List<Component> result = new ArrayList<>();
             if (toolTips != null) {
-                toolTips.forEach(tip -> result.add(Component.translatable(tip)));
+                result.addAll(toolTips);
             }
             if (minGlobalCount == maxGlobalCount && maxGlobalCount != -1) {
                 result.add(Component.translatable("gregtech.multiblock.pattern.error.limited_exact", minGlobalCount));

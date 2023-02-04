@@ -1,58 +1,52 @@
 package net.nemezanevem.gregtech.common.metatileentities.multi.electric;
 
-import appeng.core.AEConfig;
-import appeng.core.features.AEFeature;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Matrix4;
 import com.google.common.collect.Sets;
-import gregtech.api.GTValues;
-import gregtech.api.capability.*;
-import gregtech.api.capability.impl.CleanroomLogic;
-import gregtech.api.capability.impl.EnergyContainerList;
-import gregtech.api.metatileentity.IDataInfoProvider;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.MetaTileEntityHolder;
-import gregtech.api.metatileentity.SimpleGeneratorMetaTileEntity;
-import gregtech.api.metatileentity.interfaces.IGregTechTileEntity;
-import gregtech.api.metatileentity.multiblock.*;
-import gregtech.api.pattern.*;
-import gregtech.api.util.BlockInfo;
-import gregtech.api.util.Util;
-import gregtech.client.renderer.ICubeRenderer;
-import gregtech.client.renderer.texture.Textures;
-import gregtech.client.utils.TooltipHelper;
-import gregtech.common.ConfigHolder;
-import gregtech.common.blocks.BlockCleanroomCasing;
-import gregtech.common.blocks.BlockGlassCasing;
-import gregtech.common.blocks.MetaBlocks;
-import gregtech.common.metatileentities.MetaTileEntities;
-import gregtech.common.metatileentities.multi.MetaTileEntityCokeOven;
-import gregtech.common.metatileentities.multi.MetaTileEntityPrimitiveBlastFurnace;
-import gregtech.common.metatileentities.multi.MetaTileEntityPrimitiveWaterPump;
-import gregtech.common.metatileentities.multi.electric.centralmonitor.MetaTileEntityCentralMonitor;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Mth;
-import net.minecraft.util.text.Component;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.common.util.LazyOptional;
+import net.nemezanevem.gregtech.api.GTValues;
+import net.nemezanevem.gregtech.api.blockentity.IDataInfoProvider;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
+import net.nemezanevem.gregtech.api.blockentity.SimpleGeneratorMetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.*;
+import net.nemezanevem.gregtech.api.capability.*;
+import net.nemezanevem.gregtech.api.capability.impl.CleanroomLogic;
+import net.nemezanevem.gregtech.api.capability.impl.EnergyContainerList;
+import net.nemezanevem.gregtech.api.pattern.*;
+import net.nemezanevem.gregtech.api.util.BlockInfo;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.client.renderer.ICubeRenderer;
+import net.nemezanevem.gregtech.client.renderer.texture.Textures;
+import net.nemezanevem.gregtech.client.util.TooltipHelper;
+import net.nemezanevem.gregtech.common.ConfigHolder;
+import net.nemezanevem.gregtech.common.block.BlockCleanroomCasing;
+import net.nemezanevem.gregtech.common.block.BlockGlassCasing;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import net.nemezanevem.gregtech.common.metatileentities.MetaTileEntities;
+import net.nemezanevem.gregtech.common.metatileentities.multi.MetaTileEntityCokeOven;
+import net.nemezanevem.gregtech.common.metatileentities.multi.MetaTileEntityPrimitiveBlastFurnace;
+import net.nemezanevem.gregtech.common.metatileentities.multi.MetaTileEntityPrimitiveWaterPump;
+import net.nemezanevem.gregtech.common.metatileentities.multi.electric.centralmonitor.MetaTileEntityCentralMonitor;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nonnull;
@@ -92,7 +86,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     }
 
     protected void initializeAbilities() {
-        this.energyContainer = new EnergyContainerList(getAbilities(MultiblockAbility.INPUT_ENERGY));
+        this.energyContainer = new EnergyContainerList(getAbilities(GtMultiblockAbilities.INPUT_ENERGY.get()));
     }
 
     private void resetTileAbilities() {
@@ -155,14 +149,14 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
         Level world = getWorld();
         Direction front = getFrontFacing();
         Direction back = front.getOpposite();
-        Direction left = front.rotateYCCW();
+        Direction left = front.getCounterClockWise();
         Direction right = left.getOpposite();
 
-        BlockPos.MutableBlockPos lPos = new BlockPos.MutableBlockPos(getPos());
-        BlockPos.MutableBlockPos rPos = new BlockPos.MutableBlockPos(getPos());
-        BlockPos.MutableBlockPos fPos = new BlockPos.MutableBlockPos(getPos());
-        BlockPos.MutableBlockPos bPos = new BlockPos.MutableBlockPos(getPos());
-        BlockPos.MutableBlockPos hPos = new BlockPos.MutableBlockPos(getPos());
+        BlockPos.MutableBlockPos lPos = getPos().mutable();
+        BlockPos.MutableBlockPos rPos = getPos().mutable();
+        BlockPos.MutableBlockPos fPos = getPos().mutable();
+        BlockPos.MutableBlockPos bPos = getPos().mutable();
+        BlockPos.MutableBlockPos hPos = getPos().mutable();
 
         // find the distances from the controller to the plascrete blocks on one horizontal axis and the Y axis
         // repeatable aisles take care of the second horizontal axis
@@ -216,7 +210,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
      * @return if a block is a valid wall block at pos moved in direction
      */
     public boolean isBlockEdge(@Nonnull Level world, @Nonnull BlockPos.MutableBlockPos pos, @Nonnull Direction direction) {
-        return world.getBlockState(pos.move(direction)) == MetaBlocks.CLEANROOM_CASING.getState(BlockCleanroomCasing.CasingType.PLASCRETE);
+        return world.getBlockState(pos.move(direction)) == MetaBlocks.CLEANROOM_CASING.get().getState(BlockCleanroomCasing.CasingType.PLASCRETE);
     }
 
     /**
@@ -226,7 +220,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
      * @return if a block is a valid floor block at pos moved in direction
      */
     public boolean isBlockFloor(@Nonnull Level world, @Nonnull BlockPos.MutableBlockPos pos, @Nonnull Direction direction) {
-        return isBlockEdge(world, pos, direction) || world.getBlockState(pos) == MetaBlocks.TRANSPARENT_CASING.getState(BlockGlassCasing.CasingType.CLEANROOM_GLASS);
+        return isBlockEdge(world, pos, direction) || world.getBlockState(pos) == MetaBlocks.TRANSPARENT_CASING.get().getState(BlockGlassCasing.CasingType.CLEANROOM_GLASS);
     }
 
     @Override
@@ -321,7 +315,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
         }
 
         TraceabilityPredicate wallPredicate = states(getCasingState(), getGlassState());
-        TraceabilityPredicate basePredicate = autoAbilities().or(abilities(MultiblockAbility.INPUT_ENERGY)
+        TraceabilityPredicate basePredicate = autoAbilities().or(abilities(GtMultiblockAbilities.INPUT_ENERGY.get())
                 .setMinGlobalLimited(1).setMaxGlobalLimited(3));
 
         // layer the slices one behind the next
@@ -335,7 +329,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
                 .where('B', states(getCasingState()).or(basePredicate))
                 .where('X', wallPredicate.or(basePredicate)
                         .or(doorPredicate().setMaxGlobalLimited(8))
-                        .or(abilities(MultiblockAbility.PASSTHROUGH_HATCH).setMaxGlobalLimited(30)))
+                        .or(abilities(GtMultiblockAbilities.PASSTHROUGH_HATCH.get()).setMaxGlobalLimited(30)))
                 .where('K', wallPredicate) // the block beneath the controller must only be a casing for structure dimension checks
                 .where('F', filterPredicate())
                 .where(' ', innerPredicate())
@@ -352,7 +346,7 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
                 if (casingType.equals(BlockCleanroomCasing.CasingType.PLASCRETE)) return false;
 
                 Object currentFilter = blockWorldState.getMatchContext().getOrPut("FilterType", casingType);
-                if (!currentFilter.toString().equals(casingType.getName())) {
+                if (!currentFilter.toString().equals(casingType.getSerializedName())) {
                     blockWorldState.setError(new PatternStringError("gregtech.multiblock.pattern.error.filters"));
                     return false;
                 }
@@ -363,9 +357,9 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
         }, () -> ArrayUtils.addAll(
                 Arrays.stream(BlockCleanroomCasing.CasingType.values())
                         .filter(type -> !type.equals(BlockCleanroomCasing.CasingType.PLASCRETE))
-                        .map(type -> new BlockInfo(MetaBlocks.CLEANROOM_CASING.getState(type), null))
+                        .map(type -> new BlockInfo(MetaBlocks.CLEANROOM_CASING.get().getState(type), null))
                         .toArray(BlockInfo[]::new)))
-                .addTooltips("gregtech.multiblock.pattern.error.filters");
+                .addTooltips(Component.translatable("gregtech.multiblock.pattern.error.filters"));
     }
 
     @Override
@@ -376,24 +370,24 @@ public class MetaTileEntityCleanroom extends MultiblockWithDisplayBase implement
     // protected to allow easy addition of addon "cleanrooms"
     @Nonnull
     protected BlockState getCasingState() {
-        return MetaBlocks.CLEANROOM_CASING.getState(BlockCleanroomCasing.CasingType.PLASCRETE);
+        return MetaBlocks.CLEANROOM_CASING.get().getState(BlockCleanroomCasing.CasingType.PLASCRETE);
     }
 
     @Nonnull
     protected BlockState getGlassState() {
-        return MetaBlocks.TRANSPARENT_CASING.getState(BlockGlassCasing.CasingType.CLEANROOM_GLASS);
+        return MetaBlocks.TRANSPARENT_CASING.get().getState(BlockGlassCasing.CasingType.CLEANROOM_GLASS);
     }
 
     @Nonnull
     protected static TraceabilityPredicate doorPredicate() {
-        return new TraceabilityPredicate(blockWorldState -> blockWorldState.getBlockState().getBlock() instanceof BlockDoor);
+        return new TraceabilityPredicate(blockWorldState -> blockWorldState.getBlockState().getBlock() instanceof DoorBlock);
     }
 
     @Nonnull
     protected TraceabilityPredicate innerPredicate() {
         return new TraceabilityPredicate(blockWorldState -> {
             // all non-MetaTileEntities are allowed inside by default
-            TileEntity tileEntity = blockWorldState.getTileEntity();
+            BlockEntity tileEntity = blockWorldState.getBlockEntity();
             if (!(tileEntity instanceof MetaTileEntityHolder)) return true;
 
             MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) tileEntity).getMetaTileEntity();

@@ -29,15 +29,22 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.nemezanevem.gregtech.api.block.BuiltInRenderBlock;
 import net.nemezanevem.gregtech.api.cover.CoverBehavior;
 import net.nemezanevem.gregtech.api.cover.ICoverable;
 import net.nemezanevem.gregtech.api.cover.IFacadeCover;
+import net.nemezanevem.gregtech.api.item.metaitem.MetaItem;
 import net.nemezanevem.gregtech.api.item.toolitem.IGTTool;
 import net.nemezanevem.gregtech.api.item.toolitem.ToolClass;
+import net.nemezanevem.gregtech.api.item.toolitem.ToolHelper;
 import net.nemezanevem.gregtech.api.pipenet.IBlockAppearance;
 import net.nemezanevem.gregtech.api.pipenet.PipeNet;
 import net.nemezanevem.gregtech.api.pipenet.WorldPipeNet;
@@ -296,7 +303,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
         if (pipeTile.getFrameMaterial() == null && pipeTile instanceof TileEntityPipeBase && itemStack.getItem() instanceof FrameItemBlock && pipeTile.getPipeType().getThickness() < 1) {
             BlockFrame frameBlock = (BlockFrame) ((FrameItemBlock) itemStack.getItem()).getBlock();
-            Material material = frameBlock.getGtMaterial(itemStack.getMetadata());
+            Material material = frameBlock.getGtMaterial(itemStack);
             ((TileEntityPipeBase<PipeType, NodeDataType>) pipeTile).setFrameMaterial(material);
             SoundType type = frameBlock.getSoundType(itemStack);
             world.playSound(entityPlayer, pos, type.getPlaceSound(), SoundSource.BLOCKS, (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
@@ -334,19 +341,22 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
             return activateFrame(world, state, pos, entityPlayer, hand, hit, pipeTile);
         }
 
-        if (itemStack.getItem().getToolClasses(itemStack).contains(ToolClass.SCREWDRIVER)) {
-            if (coverBehavior.onScrewdriverClick(entityPlayer, hand, hit) == InteractionResult.SUCCESS) {
-                ToolHelper.damageItem(itemStack, entityPlayer);
-                if (itemStack.getItem() instanceof IGTTool) {
-                    ((IGTTool) itemStack.getItem()).playSound(entityPlayer);
+        if(itemStack.getItem() instanceof MetaItem item) {
+            if (item.getToolClasses(itemStack).contains(ToolClass.SCREWDRIVER)) {
+                if (coverBehavior.onScrewdriverClick(entityPlayer, hand, hit) == InteractionResult.SUCCESS) {
+                    ToolHelper.damageItem(itemStack, entityPlayer);
+                    if (itemStack.getItem() instanceof IGTTool) {
+                        ((IGTTool) itemStack.getItem()).playSound(entityPlayer);
+                    }
+                    return InteractionResult.SUCCESS;
                 }
-                return InteractionResult.SUCCESS;
             }
         }
 
+
         InteractionResult result = coverBehavior.onRightClick(entityPlayer, hand, hit);
         if (result == InteractionResult.PASS) {
-            if (activateFrame(world, state, pos, entityPlayer, hand, hit, pipeTile)) {
+            if (activateFrame(world, state, pos, entityPlayer, hand, hit, pipeTile) != InteractionResult.PASS) {
                 return InteractionResult.SUCCESS;
             }
             return entityPlayer.isCrouching() && entityPlayer.getMainHandItem().isEmpty() && coverBehavior.onScrewdriverClick(entityPlayer, hand, hit) != InteractionResult.PASS ? InteractionResult.SUCCESS : InteractionResult.PASS;
@@ -357,7 +367,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     private InteractionResult activateFrame(Level world, BlockState state, BlockPos pos, Player entityPlayer, InteractionHand hand, VoxelShapeBlockHitResult hit, IPipeTile<PipeType, NodeDataType> pipeTile) {
         if (pipeTile.getFrameMaterial() != null && !(entityPlayer.getItemInHand(hand).getItem() instanceof ItemBlockPipe)) {
             BlockFrame blockFrame = MetaBlocks.FRAMES.get(pipeTile.getFrameMaterial());
-            return blockFrame.onBlockActivated(world, pos, state, entityPlayer, hand, hit.getDirection(), (float) hit.getLocation().x, (float) hit.getLocation().y, (float) hit.getLocation().z);
+            return blockFrame.use(state, world, pos, entityPlayer, hand, hit);
         }
         return InteractionResult.PASS;
     }
@@ -427,9 +437,9 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public List<ItemStack> getDrops(BlockState state, ServerLevel world, BlockPos pos, @Nullable BlockEntity pBlockEntity) {
+    public List<ItemStack> getDrops(BlockState pState, LootContext.Builder pBuilder) {
         List<ItemStack> drops = new ArrayList<>();
-        IPipeTile<PipeType, NodeDataType> pipeTile = tileEntities.get() == null ? getPipeTileEntity(world, pos) : tileEntities.get();
+        IPipeTile<PipeType, NodeDataType> pipeTile = tileEntities.get() == null ? getPipeTileEntity(pBuilder.getLevel(), new BlockPos(pBuilder.getParameter(LootContextParams.ORIGIN))) : tileEntities.get();
         if (pipeTile == null) return List.of();
         if (pipeTile.getFrameMaterial() != null) {
             BlockFrame blockFrame = MetaBlocks.FRAMES.get(pipeTile.getFrameMaterial());
@@ -444,30 +454,30 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
         // This iterator causes some heap memory overhead
         IPipeTile<PipeType, NodeDataType> pipeTile = getPipeTileEntity(worldIn, pos);
         if (pipeTile != null && pipeTile.getFrameMaterial() != null) {
-            AABB box = BlockFrame.COLLISION_BOX.offset(pos);
-            if (box.intersects(entityBox)) {
+            VoxelShape box = BlockFrame.COLLISION_BOX.move(pos.getX(), pos.getY(), pos.getZ());
+            if (box.collide(entityBox)) {
                 collidingBoxes.add(box);
             }
             return;
         }
-        for (Cuboid6 axisAlignedBB : getCollisionBox(worldIn, pos, entityIn)) {
-            AABB offsetBox = axisAlignedBB.aabb().offset(pos);
+        for (IndexedVoxelShape shape : getCollisionBox(worldIn, pos, entityIn)) {
+            AABB offsetBox = shape.toAabbs().offset(pos);
             if (offsetBox.intersects(entityBox)) collidingBoxes.add(offsetBox);
+            if(shape.c)
         }
     }
 
     @Nullable
     @Override
-    public RayTraceResult collisionRayTrace(@Nonnull BlockState blockState, Level worldIn, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
+    public HitResult collisionRayTrace(@Nonnull BlockState blockState, Level worldIn, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
         if (worldIn.isClientSide) {
             return getClientCollisionRayTrace(worldIn, pos, start, end);
         }
         return RayTracer.rayTraceCuboidsClosest(start, end, pos, FULL_CUBE_COLLISION);
     }
 
-    @SideOnly(Side.CLIENT)
-    public RayTraceResult getClientCollisionRayTrace(Level worldIn, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
-        return RayTracer.rayTraceCuboidsClosest(start, end, pos, getCollisionBox(worldIn, pos, Minecraft.getMinecraft().player));
+    public HitResult getClientCollisionRayTrace(Level worldIn, @Nonnull BlockPos pos, @Nonnull Vec3 start, @Nonnull Vec3 end) {
+        return RayTracer.rayTraceCuboidsClosest(start, end, pos, getCollisionBox(worldIn, pos, Minecraft.getInstance().player));
     }
 
     @Nonnull
@@ -477,12 +487,12 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     @Override
-    public boolean recolorBlock(Level world, @Nonnull BlockPos pos, @Nonnull Direction side, @Nonnull EnumDyeColor color) {
+    public boolean recolorBlock(Level world, @Nonnull BlockPos pos, @Nonnull Direction side, @Nonnull DyeColor color) {
         IPipeTile<PipeType, NodeDataType> tileEntityPipe = (IPipeTile<PipeType, NodeDataType>) world.getBlockEntity(pos);
         if (tileEntityPipe != null && tileEntityPipe.getPipeType() != null &&
                 tileEntityPipe.getPipeType().isPaintable() &&
-                tileEntityPipe.getPaintingColor() != color.colorValue) {
-            tileEntityPipe.setPaintingColor(color.colorValue);
+                tileEntityPipe.getPaintingColor() != color.getMaterialColor().col) {
+            tileEntityPipe.setPaintingColor(color.getMaterialColor().col);
             return true;
         }
         return false;
@@ -501,7 +511,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     }
 
     public IPipeTile<PipeType, NodeDataType> getPipeTileEntity(BlockEntity tileEntityAtPos) {
-        if (tileEntityAtPos instanceof IPipeTile && isThisPipeBlock(((IPipeTile) tileEntityAtPos).getPipeBlock())) {
+        if (tileEntityAtPos instanceof IPipeTile tile && isThisPipeBlock(tile.getPipeBlock())) {
             return (IPipeTile<PipeType, NodeDataType>) tileEntityAtPos;
         }
         return null;
@@ -552,7 +562,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
         // Always add normal collision so player doesn't "fall through" the cable/pipe when
         // a tool is put in hand, and will still be standing where they were before.
-        result.add(new IndexedVoxelShape(new ICoverable.PrimaryBoxData(true), getSideBox(null, thickness)));
+        result.add(new IndexedVoxelShape(Shapes.create(getSideBox(null, thickness).aabb()), new ICoverable.PrimaryBoxData(true)));
         for (Direction side : Direction.values()) {
             if ((actualConnections & 1 << side.getIndex()) > 0) {
                 result.add(new IndexedCuboid6(new PipeConnectionData(side), getSideBox(side, thickness)));
@@ -564,9 +574,9 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
 
     public boolean hasPipeCollisionChangingItem(BlockGetter world, BlockPos pos, Entity entity) {
         if (entity instanceof Player) {
-            return hasPipeCollisionChangingItem(world, pos, ((Player) entity).getHeldItem(InteractionHand.MAIN_HAND)) ||
-                    hasPipeCollisionChangingItem(world, pos, ((Player) entity).getHeldItem(InteractionHand.OFF_HAND)) ||
-                    entity.isSneaking() && isHoldingPipe((Player) entity);
+            return hasPipeCollisionChangingItem(world, pos, ((Player) entity).getItemInHand(InteractionHand.MAIN_HAND)) ||
+                    hasPipeCollisionChangingItem(world, pos, ((Player) entity).getItemInHand(InteractionHand.OFF_HAND)) ||
+                    entity.isCrouching() && isHoldingPipe((Player) entity);
         }
         return false;
     }
@@ -574,7 +584,7 @@ public abstract class BlockPipe<PipeType extends Enum<PipeType> & IPipeType<Node
     public abstract boolean isHoldingPipe(Player player);
 
     public boolean hasPipeCollisionChangingItem(BlockGetter world, BlockPos pos, ItemStack stack) {
-        return isPipeTool(stack) || ToolHelper.isTool(stack, ToolClasses.SCREWDRIVER) ||
+        return isPipeTool(stack) || ToolHelper.isTool(stack, ToolClass.SCREWDRIVER) ||
                 Util.isCoverBehaviorItem(stack, () -> hasCover(getPipeTileEntity(world, pos)),
                 coverDef -> ICoverable.canPlaceCover(coverDef, getPipeTileEntity(world, pos).getCoverableImplementation()));
     }

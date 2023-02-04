@@ -4,15 +4,31 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.MetaTileEntityHolder;
 import net.nemezanevem.gregtech.api.blockentity.interfaces.IGregTechTileEntity;
+import net.nemezanevem.gregtech.api.blockentity.multiblock.MultiblockControllerBase;
+import net.nemezanevem.gregtech.api.registry.GregTechRegistries;
 import net.nemezanevem.gregtech.api.util.BlockInfo;
 import net.nemezanevem.gregtech.api.util.RelativeDirection;
+import net.nemezanevem.gregtech.api.util.Util;
+import net.nemezanevem.gregtech.common.block.MetaBlocks;
+import org.apache.commons.lang3.ArrayUtils;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BlockPattern {
 
@@ -125,18 +141,18 @@ public class BlockPattern {
                 for (int b = 0, y = -centerOffset[1]; b < this.thumbLength; b++, y++) {
                     for (int a = 0, x = -centerOffset[0]; a < this.palmLength; a++, x++) {
                         TraceabilityPredicate predicate = this.blockMatches[c][b][a];
-                        BlockPos pos = setActualRelativeOffset(x, y, z, facing).add(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                        worldState.update(world, pos, matchContext, globalCount, layerCount, predicate);
+                        BlockPos pos = setActualRelativeOffset(x, y, z, facing).offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+                        worldState.tick(world, pos, matchContext, globalCount, layerCount, predicate);
                         BlockEntity tileEntity = worldState.getBlockEntity();
                         if (predicate != TraceabilityPredicate.ANY) {
                             if (tileEntity instanceof IGregTechTileEntity) {
                                 if (((IGregTechTileEntity) tileEntity).isValid()) {
-                                    cache.put(pos.toLong(), new BlockInfo(worldState.getBlockState(), tileEntity, predicate));
+                                    cache.put(pos.asLong(), new BlockInfo(worldState.getBlockState(), tileEntity, predicate));
                                 } else {
-                                    cache.put(pos.toLong(), new BlockInfo(worldState.getBlockState(), null, predicate));
+                                    cache.put(pos.asLong(), new BlockInfo(worldState.getBlockState(), null, predicate));
                                 }
                             } else {
-                                cache.put(pos.toLong(), new BlockInfo(worldState.getBlockState(), tileEntity, predicate));
+                                cache.put(pos.asLong(), new BlockInfo(worldState.getBlockState(), tileEntity, predicate));
                             }
                         }
                         if (!predicate.test(worldState)) {
@@ -187,7 +203,7 @@ public class BlockPattern {
     }
 
     public void autoBuild(Player player, MultiblockControllerBase controllerBase) {
-        Level world = player.world;
+        Level world = player.level;
         BlockWorldState worldState = new BlockWorldState();
         int minZ = -centerOffset[4];
         Direction facing = controllerBase.getFrontFacing().getOpposite();
@@ -202,8 +218,8 @@ public class BlockPattern {
                 for (int b = 0, y = -centerOffset[1]; b < this.thumbLength; b++, y++) {
                     for (int a = 0, x = -centerOffset[0]; a < this.palmLength; a++, x++) {
                         TraceabilityPredicate predicate = this.blockMatches[c][b][a];
-                        BlockPos pos = setActualRelativeOffset(x, y, z, facing).add(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                        worldState.update(world, pos, matchContext, globalCount, layerCount, predicate);
+                        BlockPos pos = setActualRelativeOffset(x, y, z, facing).offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+                        worldState.tick(world, pos, matchContext, globalCount, layerCount, predicate);
                         if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
                             blocks.put(pos, world.getBlockState(pos));
                             for (TraceabilityPredicate.SimplePredicate limit : predicate.limited) {
@@ -287,15 +303,15 @@ public class BlockPattern {
                                 if (metaTileEntity != null) {
                                     return metaTileEntity.getStackForm();
                                 } else {
-                                    return new ItemStack(Item.getItemFromBlock(blockState.getBlock()), 1, blockState.getBlock().damageDropped(blockState));
+                                    return new ItemStack(blockState.getBlock());
                                 }
                             }).collect(Collectors.toList());
                             if (candidates.isEmpty()) continue;
                             // check inventory
                             ItemStack found = null;
                             if (!player.isCreative()) {
-                                for (ItemStack itemStack : player.inventory.mainInventory) {
-                                    if (candidates.stream().anyMatch(candidate -> candidate.isItemEqual(itemStack)) && !itemStack.isEmpty() && itemStack.getItem() instanceof ItemBlock) {
+                                for (ItemStack itemStack : player.getInventory().items) {
+                                    if (candidates.stream().anyMatch(candidate -> candidate.is(itemStack.getItem())) && !itemStack.isEmpty() && itemStack.getItem() instanceof BlockItem) {
                                         found = itemStack.copy();
                                         itemStack.setCount(itemStack.getCount() - 1);
                                         break;
@@ -305,26 +321,26 @@ public class BlockPattern {
                             } else {
                                 for (int i = candidates.size() - 1; i >= 0; i--) {
                                     found = candidates.get(i).copy();
-                                    if (!found.isEmpty() && found.getItem() instanceof ItemBlock) {
+                                    if (!found.isEmpty() && found.getItem() instanceof BlockItem) {
                                         break;
                                     }
                                     found = null;
                                 }
                                 if (found == null) continue;
                             }
-                            ItemBlock itemBlock = (ItemBlock) found.getItem();
-                            BlockState state = itemBlock.getBlock().getStateFromMeta(itemBlock.getMetadata(found.getMetadata()));
+                            BlockItem itemBlock = (BlockItem) found.getItem();
+                            BlockState state = itemBlock.getBlock().stateById(itemBlock.getMetadata(found.getMetadata()));
                             blocks.put(pos, state);
-                            world.setBlockState(pos, state);
+                            world.setBlock(pos, state, 3);
                             BlockEntity holder = world.getBlockEntity(pos);
                             if (holder instanceof IGregTechTileEntity) {
-                                MetaTileEntity sampleMetaTileEntity = GregTechAPI.MTE_REGISTRY.getObjectById(found.getItemDamage());
+                                MetaTileEntity sampleMetaTileEntity = GregTechRegistries.META_TILE_ENTITY.get().getValue(Util.getId(found.getItem()));
                                 if (sampleMetaTileEntity != null) {
                                     MetaTileEntity metaTileEntity = ((IGregTechTileEntity) holder).setMetaTileEntity(sampleMetaTileEntity);
                                     metaTileEntity.onPlacement();
                                     blocks.put(pos, metaTileEntity);
-                                    if (found.hasTagCompound()) {
-                                        metaTileEntity.initFromItemStackData(found.getTagCompound());
+                                    if (found.hasTag()) {
+                                        metaTileEntity.initFromItemStackData(found.getTag());
                                     }
                                 }
                             }
@@ -336,22 +352,21 @@ public class BlockPattern {
         }
         Direction[] facings = ArrayUtils.addAll(new Direction[]{controllerBase.getFrontFacing()}, FACINGS); // follow controller first
         blocks.forEach((pos, block) -> { // adjust facing
-            if (block instanceof MetaTileEntity) {
-                MetaTileEntity metaTileEntity = (MetaTileEntity) block;
+            if (block instanceof MetaTileEntity metaTileEntity) {
                 boolean find = false;
-                for (Direction Direction : facings) {
-                    if (metaTileEntity.isValidFrontFacing(Direction)) {
-                        if (!blocks.containsKey(pos.offset(Direction))) {
-                            metaTileEntity.setFrontFacing(Direction);
+                for (Direction direction : facings) {
+                    if (metaTileEntity.isValidFrontFacing(direction)) {
+                        if (!blocks.containsKey(pos.offset(direction.getNormal()))) {
+                            metaTileEntity.setFrontFacing(direction);
                             find = true;
                             break;
                         }
                     }
                 }
                 if (!find) {
-                    for (Direction Direction : FACINGS) {
-                        if (world.isAirBlock(pos.offset(Direction)) && metaTileEntity.isValidFrontFacing(Direction)) {
-                            metaTileEntity.setFrontFacing(Direction);
+                    for (Direction direction : FACINGS) {
+                        if (world.getBlockState(pos.offset(direction.getNormal())).isAir() && metaTileEntity.isValidFrontFacing(direction)) {
+                            metaTileEntity.setFrontFacing(direction);
                             break;
                         }
                     }
@@ -503,10 +518,10 @@ public class BlockPattern {
                         BlockPos pos = setActualRelativeOffset(z, y, x, Direction.NORTH);
                         // TODO
                         if (info.getBlockEntity() instanceof MetaTileEntityHolder) {
-                            MetaTileEntityHolder holder = new MetaTileEntityHolder();
+                            MetaTileEntityHolder holder = new MetaTileEntityHolder(pos, info.getBlockState());
                             holder.setMetaTileEntity(((MetaTileEntityHolder) info.getBlockEntity()).getMetaTileEntity());
                             holder.getMetaTileEntity().onPlacement();
-                            info = new BlockInfo(MetaBlocks.MACHINE.getDefaultState(), holder);
+                            info = new BlockInfo(MetaBlocks.MACHINE.get().defaultBlockState(), holder);
                         }
                         blocks.put(pos, info);
                         minX = Math.min(pos.getX(), minX);
@@ -528,20 +543,20 @@ public class BlockPattern {
             if (info.getBlockEntity() instanceof MetaTileEntityHolder) {
                 MetaTileEntity metaTileEntity = ((MetaTileEntityHolder) info.getBlockEntity()).getMetaTileEntity();
                 boolean find = false;
-                for (Direction Direction : FACINGS) {
-                    if (metaTileEntity.isValidFrontFacing(Direction)) {
-                        if (!blocks.containsKey(pos.offset(Direction))) {
-                            metaTileEntity.setFrontFacing(Direction);
+                for (Direction direction : FACINGS) {
+                    if (metaTileEntity.isValidFrontFacing(direction)) {
+                        if (!blocks.containsKey(pos.offset(direction.getNormal()))) {
+                            metaTileEntity.setFrontFacing(direction);
                             find = true;
                             break;
                         }
                     }
                 }
                 if (!find) {
-                    for (Direction Direction : FACINGS) {
-                        BlockInfo blockInfo = blocks.get(pos.offset(Direction));
-                        if (blockInfo != null && blockInfo.getBlockState().getBlock() == Blocks.AIR && metaTileEntity.isValidFrontFacing(Direction)) {
-                            metaTileEntity.setFrontFacing(Direction);
+                    for (Direction direction : FACINGS) {
+                        BlockInfo blockInfo = blocks.get(pos.offset(direction.getNormal()));
+                        if (blockInfo != null && blockInfo.getBlockState().getBlock() == Blocks.AIR && metaTileEntity.isValidFrontFacing(direction)) {
+                            metaTileEntity.setFrontFacing(direction);
                             break;
                         }
                     }
@@ -556,24 +571,12 @@ public class BlockPattern {
         int[] c0 = new int[]{x, y, z}, c1 = new int[3];
         for (int i = 0; i < 3; i++) {
             switch (structureDir[i].getActualFacing(facing)) {
-                case UP:
-                    c1[1] = c0[i];
-                    break;
-                case DOWN:
-                    c1[1] = -c0[i];
-                    break;
-                case WEST:
-                    c1[0] = -c0[i];
-                    break;
-                case EAST:
-                    c1[0] = c0[i];
-                    break;
-                case NORTH:
-                    c1[2] = -c0[i];
-                    break;
-                case SOUTH:
-                    c1[2] = c0[i];
-                    break;
+                case UP -> c1[1] = c0[i];
+                case DOWN -> c1[1] = -c0[i];
+                case WEST -> c1[0] = -c0[i];
+                case EAST -> c1[0] = c0[i];
+                case NORTH -> c1[2] = -c0[i];
+                case SOUTH -> c1[2] = c0[i];
             }
         }
         return new BlockPos(c1[0], c1[1], c1[2]);
